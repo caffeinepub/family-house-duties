@@ -1,0 +1,58 @@
+{
+  "kind": "build_request",
+  "title": "Improve main-page placement and integration of Recurring Chores",
+  "priority": "normal",
+  "requirements": [
+    {
+      "id": "REQ-1",
+      "text": "Improve the discoverability and integration of the Recurring Chores feature within the main Tasks page by adding an inline, non-intrusive Recurring Chores section on the Task List view that surfaces a small preview of recurring chores (e.g., grouped by weekday and/or showing the next upcoming items) and provides a clear call-to-action to open the existing Recurring Chores management dialog.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-4"
+        ],
+        "quotes": [
+          "Can you find a better placement or integration for the recurring chores feature on the main page?"
+        ]
+      },
+      "acceptanceCriteria": [
+        "On the Tasks tab, users can see an inline Recurring Chores section without needing to open a modal first.",
+        "The inline section includes a prominent action (button/link) that opens the existing RecurringChoresDialog.",
+        "The inline section remains compact and does not visually compete with the primary task list (i.e., does not significantly increase clutter on mobile).",
+        "If there are no recurring chores, the inline section shows an empty-state message and a single action to add/manage recurring chores (opening the existing dialog)."
+      ]
+    },
+    {
+      "id": "REQ-2",
+      "text": "Refactor the existing Tasks page header actions so that Recurring Chores is not only a secondary header button; instead, align the action placement with the new inline integration (e.g., demote/remove the header button or change it to a subtle 'Manage' action within the new inline section) while keeping all recurring chore functionality unchanged.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-4"
+        ],
+        "quotes": [
+          "better placement or integration for the recurring chores feature on the main page"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Recurring chores management remains accessible from the Tasks page via an obvious action in/near the inline Recurring Chores section.",
+        "No existing recurring chore capabilities regress (create/edit/assign/delete still work via the dialog).",
+        "The Tasks page header remains focused on primary task actions (e.g., Add Task), with reduced competition from secondary actions."
+      ]
+    }
+  ],
+  "constraints": [
+    "Do not modify any files under frontend/src/components/ui (read-only shadcn components).",
+    "Do not change backend schemas or Motoko logic for this request; this is a UI/UX placement/integration change only.",
+    "Keep the existing RecurringChoresDialog functionality and permissions behavior unchanged."
+  ],
+  "nonGoals": [
+    "Do not add new recurring chore backend APIs or change recurring chore data models.",
+    "Do not redesign the RecurringChoresDialog UI layout beyond what is required for integration/triggering from the Tasks page.",
+    "Do not add new tabs/routes/navigation items for recurring chores."
+  ],
+  "imageRequirements": {
+    "required": [],
+    "edits": []
+  }
+}

@@ -1,0 +1,50 @@
+{
+  "kind": "implementation_plan",
+  "version": "1.0",
+  "title": "Inline Recurring Chores preview on Tasks page",
+  "requirements": [
+    {
+      "id": "REQ-1",
+      "summary": "Add a compact inline Recurring Chores preview section within the Tasks page that surfaces upcoming/grouped chores and provides a clear CTA to open the existing RecurringChoresDialog.",
+      "acceptanceCriteria": [
+        "On the Tasks tab, users can see an inline Recurring Chores section without needing to open a modal first.",
+        "The inline section includes a prominent action (button/link) that opens the existing RecurringChoresDialog.",
+        "The inline section remains compact and does not visually compete with the primary task list (i.e., does not significantly increase clutter on mobile).",
+        "If there are no recurring chores, the inline section shows an empty-state message and a single action to add/manage recurring chores (opening the existing dialog)."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/RecurringChoresInlineSection.tsx",
+          "operation": "create",
+          "description": "Create an inline, compact Recurring Chores section component that uses existing recurring chores query data to render a small preview (e.g., grouped by weekday and/or next-up ordering) and exposes a single obvious CTA to open the existing RecurringChoresDialog. Use shadcn-ui primitives (e.g., Card, Button, Badge, Separator) for consistent styling; verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/utils/recurringChoresPreview.ts",
+          "operation": "create",
+          "description": "Add a small utility to support the inline preview formatting (weekday labels, ordering by next upcoming day relative to today, and limiting/grouping logic) to keep the Tasks view component lean."
+        },
+        {
+          "path": "frontend/src/components/TaskList.tsx",
+          "operation": "modify",
+          "description": "Integrate the new inline RecurringChoresInlineSection into the Tasks page layout so it appears directly on the Task List view (without requiring a modal first). Wire the section’s CTA to open the existing RecurringChoresDialog using the current isRecurringChoresOpen state. Use shadcn-ui layout components already in use for a compact presentation; verify the component's usage instructions before implementing."
+        }
+      ]
+    },
+    {
+      "id": "REQ-2",
+      "summary": "Refactor Tasks page header actions to reduce competition from Recurring Chores by demoting/removing the header button and aligning management access with the new inline section while keeping dialog functionality unchanged.",
+      "acceptanceCriteria": [
+        "Recurring chores management remains accessible from the Tasks page via an obvious action in/near the inline Recurring Chores section.",
+        "No existing recurring chore capabilities regress (create/edit/assign/delete still work via the dialog).",
+        "The Tasks page header remains focused on primary task actions (e.g., Add Task), with reduced competition from secondary actions."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/TaskList.tsx",
+          "operation": "modify",
+          "description": "Update the header action area to remove/demote the prominent 'Recurring Chores' header button and keep the header focused on primary task actions (e.g., Add Task). Ensure the remaining Recurring Chores access is clearly provided via the inline section’s 'Manage' / 'Add' CTA that opens the existing RecurringChoresDialog, without changing any dialog logic or permissions behavior. Use shadcn-ui Button variants appropriately for visual hierarchy; verify the component's usage instructions before implementing."
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "frontend/src/App.tsx": "Main application component with Internet Identity authentication flow and tab navigation between Task List, Dinner Rota, and Calendar views, wrapped with ThemeProvider for dark mode support.",
+  "frontend/src/hooks/useQueries.ts": "React Query hooks for all backend operations including tasks, cooking assignments, and recurring chores with proper cache invalidation across related queries.",
+  "frontend/src/components/Header.tsx": "Application header displaying the app title, icon, and authenticated user dropdown menu showing shortened principal ID with logout functionality.",
+  "frontend/src/components/Footer.tsx": "Footer component with copyright notice and caffeine.ai attribution link with heart icon.",
+  "frontend/src/components/TaskList.tsx": "Task management interface with integrated inline recurring chores preview section, day-grouped pending and completed tasks, and streamlined header focused on primary \"Add Task\" action.",
+  "frontend/src/components/AddTaskDialog.tsx": "Dialog form for creating new tasks with fields for name, description, assignee (Principal ID), and due date with calendar picker, including \"Assign to Me\" functionality.",
+  "frontend/src/components/EditTaskDialog.tsx": "Dialog form for editing existing tasks with pre-populated fields, Principal ID assignment, and calendar picker for due dates, including \"Assign to Me\" functionality.",
+  "frontend/src/components/DinnerRota.tsx": "Weekly dinner cooking schedule showing 7 days with cooking assignments, displaying shortened principal IDs for cooks and assignors, with edit permissions based on assignment ownership and Principal ID assignment functionality.",
+  "frontend/src/components/CalendarView.tsx": "Monthly calendar grid view using backend's getCalendar method to fetch tasks (including recurring-generated ones) and cooking assignments for the visible date range with proper nanosecond timestamp conversion.",
+  "frontend/src/index.css": "Global styles with warm, family-friendly OKLCH color system featuring orange/amber primary colors and proper light/dark mode support with success color for completed tasks.",
+  "frontend/src/components/LoginScreen.tsx": "Full-screen login interface with Internet Identity authentication, featuring app branding and family cooking hero image.",
+  "frontend/src/components/ProfileSetup.tsx": "Profile setup screen for first-time users to enter their name after authentication, displayed before accessing the main app.",
+  "frontend/src/utils/taskDueDayGrouping.ts": "Utility function that groups tasks by calendar day (normalized to day-level), returning sorted day groups in ascending date order with a trailing \"No due date\" group for tasks without due dates.",
+  "frontend/src/components/RecurringChoresDialog.tsx": "Dialog component for creating, editing, and managing weekly recurring chores with responsive mobile-first layout that expands to two-column form on desktop, improved spacing and touch targets, and better visual hierarchy for chore list items.",
+  "frontend/src/utils/recurringChoresPreview.ts": "Utility functions for grouping and sorting recurring chores by weekday relative to today, with helpers for formatting weekday labels and getting upcoming chores.",
+  "frontend/src/components/RecurringChoresInlineSection.tsx": "Compact inline preview component showing recurring chores grouped by weekday with a prominent \"Manage\" button to open the full RecurringChoresDialog, includes empty state with add action."
+}

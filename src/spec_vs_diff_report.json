@@ -1,0 +1,26 @@
+{
+  "kind": "spec_vs_diff_report",
+  "version": "1.0",
+  "generatedAt": "2026-02-03T18:53:04.222Z",
+  "summary": "The diff adds a new inline Recurring Chores preview section on the Tasks page and appears to demote/remove the prior header-level Recurring Chores action in favor of an inline “Manage” CTA. However, due to truncation of TaskList.tsx, it’s not fully verifiable from the provided evidence that the inline CTA actually renders/opens the existing RecurringChoresDialog (i.e., that the dialog component is mounted and controlled by the new state).",
+  "missing_requirements": [
+    {
+      "id": "REQ-1",
+      "requirement": "The inline section includes a prominent action (button/link) that opens the existing RecurringChoresDialog.",
+      "reason": "The inline section defines an onManageClick callback and buttons that call it, and TaskList sets isRecurringChoresOpen state, but the provided TaskList.tsx diff is truncated before showing whether RecurringChoresDialog is actually rendered with open/onOpenChange (or equivalent) wired to isRecurringChoresOpen. Therefore, from the diff evidence alone, the dialog-opening behavior cannot be confirmed.",
+      "evidence": [
+        "frontend/src/components/TaskList.tsx (truncated)",
+        "frontend/src/components/RecurringChoresInlineSection.tsx (truncated)"
+      ]
+    }
+  ],
+  "hallucinated_features": [],
+  "confidence": 0.62,
+  "changed_files": [
+    "frontend-file-summaries.txt",
+    "frontend/src/components/RecurringChoresInlineSection.tsx",
+    "frontend/src/components/TaskList.tsx",
+    "frontend/src/utils/recurringChoresPreview.ts",
+    "project_state.json"
+  ]
+}

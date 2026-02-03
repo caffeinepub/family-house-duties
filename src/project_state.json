@@ -1,0 +1,240 @@
+{
+  "schemaVersion": "1.0.0",
+  "projectStateVersion": 15,
+  "summary": "Family House Duties is an Internet Computer (ICP) dapp for shared household management. Authenticated family members (via Internet Identity) can create and manage household tasks (with optional assignee and due date), mark tasks complete, and clear their own completed tasks. The app also provides a weekly “Dinner Rota” for assigning who cooks on each day, plus a monthly calendar overview combining tasks and cooking assignments. A Motoko canister implements task/rota storage and role-based access control, including an admin bootstrap mechanism via a secret token.",
+  "existing_features": [
+    {
+      "id": "IF-1",
+      "title": "Internet Identity authentication provider",
+      "synonyms": [
+        "Internet Identity login",
+        "II auth context"
+      ],
+      "description": "Provides login/logout via DFINITY AuthClient, loads persisted identity on mount, exposes login status flags, and supplies an Identity to the rest of the app through React context.",
+      "reqIds": [],
+      "version": 1
+    },
+    {
+      "id": "IF-2",
+      "title": "Actor creation and initialization per principal",
+      "synonyms": [
+        "useActor",
+        "ICP actor factory"
+      ],
+      "description": "Creates an anonymous actor when unauthenticated and an identity-bound actor when authenticated; initializes access control using a secret token; caches the actor per principal and forces refetch of dependent queries when the actor changes.",
+      "reqIds": [],
+      "version": 1
+    },
+    {
+      "id": "IF-3",
+      "title": "Secret admin token extraction from URL hash",
+      "synonyms": [
+        "hash secret token",
+        "URL token persistence"
+      ],
+      "description": "Utilities to read sensitive parameters from the URL hash fragment, store them in sessionStorage for the session, and remove them from the URL to reduce leakage (used for caffeineAdminToken).",
+      "reqIds": [],
+      "version": 1
+    },
+    {
+      "id": "IF-4",
+      "title": "Role-based access control (admin/user/guest)",
+      "synonyms": [
+        "AccessControl",
+        "authorization mixin"
+      ],
+      "description": "Motoko AccessControl module tracks user roles and permissions; MixinAuthorization exposes APIs to initialize roles, check caller admin status, read caller role, and assign roles (admin-only).",
+      "reqIds": [],
+      "version": 1
+    },
+    {
+      "id": "IF-5",
+      "title": "Task creation",
+      "synonyms": [
+        "add task",
+        "create chore"
+      ],
+      "description": "Authenticated users can add household tasks with name, description, optional due date, and optional assignee (Principal). Backend stores createdBy as the caller and assigns an incrementing task id.",
+      "reqIds": [],
+      "version": 1
+    },
+    {
+      "id": "IF-6",
+      "title": "Task editing with ownership enforcement",
+      "synonyms": [
+        "update task"
+      ],
+      "description": "Users can update task fields (name, description, due date, assignee). Backend enforces that only the original creator (createdBy) may edit the task; UI only shows edit controls to the creator.",
+      "reqIds": [],
+      "version": 1
+    },
+    {
+      "id": "IF-7",
+      "title": "Task deletion with ownership enforcement",
+      "synonyms": [
+        "delete task",
+        "remove chore"
+      ],
+      "description": "Users can delete tasks they created (with confirm in UI). Backend rejects deletion by non-creators.",
+      "reqIds": [],
+      "version": 1
+    },
+    {
+      "id": "IF-8",
+      "title": "Task completion toggling",
+      "synonyms": [
+        "mark complete",
+        "toggle completed"
+      ],
+      "description": "Users can toggle a task’s completed state; UI separates pending vs completed tasks and applies visual styling (line-through/opacity) for completed tasks.",
+      "reqIds": [],
+      "version": 1
+    },
+    {
+      "id": "IF-9",
+      "title": "Clear my completed tasks",
+      "synonyms": [
+        "bulk clear completed"
+      ],
+      "description": "Users can clear all completed tasks that they created; backend filters by completed == true and createdBy == caller.",
+      "reqIds": [],
+      "version": 1
+    },
+    {
+      "id": "IF-10",
+      "title": "Task browsing and display with principal metadata",
+      "synonyms": [
+        "task list UI",
+        "getAllTasks"
+      ],
+      "description": "UI fetches all tasks and displays creator and assignee principal IDs (shortened), optional due date badges, and uses loading skeletons and empty-state artwork.",
+      "reqIds": [],
+      "version": 1
+    },
+    {
+      "id": "IF-11",
+      "title": "Dinner rota: weekly cooking assignment management",
+      "synonyms": [
+        "cooking schedule",
+        "meal planning rota"
+      ],
+      "description": "Users can assign a cook (Principal) to each day of the current week. New assignments can be created; existing assignments can be updated only by the user who originally assigned them (assignedBy ownership rule).",
+      "reqIds": [],
+      "version": 1
+    },
+    {
+      "id": "IF-12",
+      "title": "Calendar overview (monthly)",
+      "synonyms": [
+        "calendar view",
+        "monthly dashboard"
+      ],
+      "description": "Monthly grid that visualizes tasks (up to 2 per day plus “+n more”) and cooking assignments per day, with navigation between months and styling for today/current month.",
+      "reqIds": [],
+      "version": 1
+    },
+    {
+      "id": "IF-13",
+      "title": "React Query API layer for tasks and cooking assignments",
+      "synonyms": [
+        "useQueries hooks"
+      ],
+      "description": "Typed query and mutation hooks for tasks (CRUD, toggle, clear completed), cooking assignments (list, assign, update), and calendar retrieval; includes cache invalidation and toast-based success/error feedback.",
+      "reqIds": [],
+      "version": 1
+    },
+    {
+      "id": "IF-14",
+      "title": "Motoko data migration for schema changes",
+      "synonyms": [
+        "canister upgrade migration"
+      ],
+      "description": "Migration module maps old task/assignment models (Text-based principals) to new models using Principal types and adds createdBy/assignedBy fields (initialized to anonymous for migrated records).",
+      "reqIds": [],
+      "version": 1
+    },
+    {
+      "id": "IF-15",
+      "title": "Application shell and theming",
+      "synonyms": [
+        "tabs layout",
+        "dark mode"
+      ],
+      "description": "Authenticated app shell with header (principal dropdown + logout), footer attribution, tab navigation between Tasks/Dinner/Calendar, toast notifications, and system/light/dark theme support.",
+      "reqIds": [],
+      "version": 1
+    },
+    {
+      "id": "IF-16",
+      "title": "Profile setup UI (member profile capture)",
+      "synonyms": [
+        "profile setup flow",
+        "ProfileSetup screen"
+      ],
+      "description": "Implements the previously-empty ProfileSetup component to support an in-app profile setup step for authenticated users (replacing the prior placeholder).",
+      "reqIds": [],
+      "version": 1
+    },
+    {
+      "id": "IF-17",
+      "title": "Recurring chores dialog (UI)",
+      "synonyms": [
+        "recurring tasks",
+        "RecurringChoresDialog"
+      ],
+      "description": "Adds a UI dialog for creating/managing recurring chores, complementing one-off task creation.",
+      "reqIds": [],
+      "version": 1
+    },
+    {
+      "id": "feature-improve-the-discoverability-and-integration-of-the-recurring-chores-feature-within-the-main-tasks-page-by-adding-an-inline-non-intrusive-recurring-chores-section-on-the-task-list-view-that-surfaces-a-small-preview-of-recurring-chores-e-g-grouped-by-weekday-and-or-showing-the-next-upcoming-items-and-provides-a-clear-call-to-action-to-open-the-existing-recurring-chores-management-dialog",
+      "title": "Improve the discoverability and integration of the Recurring Chores feature within the main Tasks page by adding an inline, non-intrusive Recurring Chores section on the Task List view that surfaces a small preview of recurring chores (e.g., grouped by weekday and/or showing the next upcoming items) and provides a clear call-to-action to open the existing Recurring Chores management dialog.",
+      "reqIds": [
+        "REQ-1"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-refactor-the-existing-tasks-page-header-actions-so-that-recurring-chores-is-not-only-a-secondary-header-button-instead-align-the-action-placement-with-the-new-inline-integration-e-g-demote-remove-the-header-button-or-change-it-to-a-subtle-manage-action-within-the-new-inline-section-while-keeping-all-recurring-chore-functionality-unchanged",
+      "title": "Refactor the existing Tasks page header actions so that Recurring Chores is not only a secondary header button; instead, align the action placement with the new inline integration (e.g., demote/remove the header button or change it to a subtle 'Manage' action within the new inline section) while keeping all recurring chore functionality unchanged.",
+      "reqIds": [
+        "REQ-2"
+      ],
+      "version": 1
+    }
+  ],
+  "new_feature_requests": [
+    {
+      "id": "AR-1",
+      "summary": "Improve placement/integration of the Recurring Chores feature on the main page (better UX discoverability without clutter).",
+      "reqIds": [],
+      "status": "pending"
+    }
+  ],
+  "architecturalNotes": [
+    "Frontend is a React SPA using @tanstack/react-query for data fetching, caching, mutations, and cache invalidation patterns (invalidateQueries on mutation success).",
+    "Authentication is handled through an InternetIdentityProvider (AuthClient) context that persists identities across reloads and exposes login/logout status flags.",
+    "Backend integration uses an ICP actor pattern: a custom useActor hook creates an anonymous or authenticated actor and keeps it cached per principal (staleTime: Infinity).",
+    "Role/permission enforcement is implemented on-canister via an AccessControl module and a MixinAuthorization mixin that adds admin/user role APIs to the main actor.",
+    "Admin bootstrap uses an environment variable (CAFFEINE_ADMIN_TOKEN) and a user-provided secret passed from the frontend; first matching principal can become admin, others default to user.",
+    "Sensitive token handling on the frontend uses hash-fragment secrets stored in sessionStorage and removed from the URL after extraction (getSecretParameter/getSecretFromHash).",
+    "UI is built with TailwindCSS (OKLCH-based design tokens) and shadcn-style components (cards, dialogs, tabs, dropdowns), plus next-themes for dark mode.",
+    "Motoko canister uses Map-based in-memory collections and includes a migration module to transform older schemas (Text principals) into new Principal-based records.",
+    "Repository now includes a reusable build-template (React + ICP) with deployment scripts and canister configuration to standardize builds/deploys across environments."
+  ],
+  "knownIssues": [
+    "Backend getCalendar() appears incorrect: it looks up cookingAssignments using cookingAssignments.get(task.name) instead of using the date key/day string (e.g., yyyy-MM-dd), so cooking assignments will not match calendar days as intended.",
+    "Backend getCalendar() currently creates one CalendarDay per task (not per date) and does not aggregate multiple tasks that share the same due date into a single day entry; it also omits days that have cooking assignments but no tasks in the range.",
+    "Backend getTasksByDate() compares dueDate == date using exact timestamps; if the UI treats due dates as day-level values, this strict equality may not behave as expected unless callers normalize timestamps.",
+    "Access control requires CAFFEINE_ADMIN_TOKEN to be set; _initializeAccessControlWithSecret traps if missing, preventing role initialization for authenticated users.",
+    "AccessControl.getUserRole traps for unregistered users; any direct canister calls that skip _initializeAccessControlWithSecret will fail (frontend mitigates by calling initialize during actor creation).",
+    "There are two different CSS files shown (frontend/src/index.css and frontend/index.css) with conflicting token sets; if both are used or accidentally referenced, styling may be inconsistent or confusing to maintain."
+  ],
+  "isFixRequest": false,
+  "gameProjectType": "none",
+  "projectName": "Family House Duties",
+  "clarification_mode": "instant",
+  "clarification_rounds": 0,
+  "requiresBackendChanges": false,
+  "requiresFrontendChanges": true
+}

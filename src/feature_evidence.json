@@ -1,0 +1,45 @@
+{
+  "kind": "feature_evidence_report",
+  "features": [
+    {
+      "featureId": "feature-improve-the-discoverability-and-integration-of-the-recurring-chores-feature-within-the-main-tasks-page-by-adding-an-inline-non-intrusive-recurring-chores-section-on-the-task-list-view-that-surfaces-a-small-preview-of-recurring-chores-e-g-grouped-by-weekday-and-or-showing-the-next-upcoming-items-and-provides-a-clear-call-to-action-to-open-the-existing-recurring-chores-management-dialog",
+      "featureTitle": "Improve the discoverability and integration of the Recurring Chores feature within the main Tasks page by adding an inline, non-intrusive Recurring Chores section on the Task List view that surfaces a small preview of recurring chores (e.g., grouped by weekday and/or showing the next upcoming items) and provides a clear call-to-action to open the existing Recurring Chores management dialog.",
+      "files": [
+        "frontend/src/components/RecurringChoresInlineSection.tsx",
+        "frontend/src/components/TaskList.tsx",
+        "frontend/src/utils/recurringChoresPreview.ts"
+      ],
+      "components": [
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "authorization@4.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-1"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-refactor-the-existing-tasks-page-header-actions-so-that-recurring-chores-is-not-only-a-secondary-header-button-instead-align-the-action-placement-with-the-new-inline-integration-e-g-demote-remove-the-header-button-or-change-it-to-a-subtle-manage-action-within-the-new-inline-section-while-keeping-all-recurring-chore-functionality-unchanged",
+      "featureTitle": "Refactor the existing Tasks page header actions so that Recurring Chores is not only a secondary header button; instead, align the action placement with the new inline integration (e.g., demote/remove the header button or change it to a subtle 'Manage' action within the new inline section) while keeping all recurring chore functionality unchanged.",
+      "files": [
+        "frontend/src/components/TaskList.tsx"
+      ],
+      "components": [
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "authorization@4.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-2"
+      ],
+      "confidence": "high"
+    }
+  ]
+}
