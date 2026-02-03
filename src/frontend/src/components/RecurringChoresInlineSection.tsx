@@ -1,10 +1,10 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Repeat, Plus, User, Settings } from 'lucide-react';
+import { Repeat, Plus, User, Settings, Calendar } from 'lucide-react';
 import { useGetAllRecurringChores } from '../hooks/useQueries';
 import { Skeleton } from '@/components/ui/skeleton';
-import { groupRecurringChoresByWeekday } from '../utils/recurringChoresPreview';
+import { groupRecurringChoresByWeekday, getTimelineLabel } from '../utils/recurringChoresPreview';
 import { Principal } from '@icp-sdk/core/principal';
 
 interface RecurringChoresInlineSectionProps {
@@ -68,7 +68,7 @@ export function RecurringChoresInlineSection({ onManageClick }: RecurringChoresI
         ) : (
           <>
             <p className="text-sm text-muted-foreground">
-              Weekly chores that automatically appear on their scheduled day
+              Recurring chores that automatically appear on their scheduled day
             </p>
             
             <div className="space-y-2">
@@ -93,7 +93,12 @@ export function RecurringChoresInlineSection({ onManageClick }: RecurringChoresI
                         className="flex items-start justify-between gap-2 text-sm"
                       >
                         <div className="flex-1 min-w-0">
-                          <p className="font-medium truncate">{chore.name}</p>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <p className="font-medium truncate">{chore.name}</p>
+                            <Badge variant="outline" className="text-xs font-normal">
+                              {getTimelineLabel(chore.timeline)}
+                            </Badge>
+                          </div>
                           {chore.description && (
                             <p className="text-xs text-muted-foreground truncate">
                               {chore.description}

@@ -2,12 +2,11 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-improve-the-discoverability-and-integration-of-the-recurring-chores-feature-within-the-main-tasks-page-by-adding-an-inline-non-intrusive-recurring-chores-section-on-the-task-list-view-that-surfaces-a-small-preview-of-recurring-chores-e-g-grouped-by-weekday-and-or-showing-the-next-upcoming-items-and-provides-a-clear-call-to-action-to-open-the-existing-recurring-chores-management-dialog",
-      "featureTitle": "Improve the discoverability and integration of the Recurring Chores feature within the main Tasks page by adding an inline, non-intrusive Recurring Chores section on the Task List view that surfaces a small preview of recurring chores (e.g., grouped by weekday and/or showing the next upcoming items) and provides a clear call-to-action to open the existing Recurring Chores management dialog.",
+      "featureId": "feature-add-a-persistent-today-focus-section-rendered-at-the-top-of-the-authenticated-app-content-below-the-header-and-above-the-tab-navigation-content-so-it-remains-visible-regardless-of-which-main-view-tab-is-active-tasks-dinner-rota-calendar-people",
+      "featureTitle": "Add a persistent \"Today Focus\" section rendered at the top of the authenticated app content (below the Header and above the tab navigation/content) so it remains visible regardless of which main view/tab is active (Tasks, Dinner Rota, Calendar, People).",
       "files": [
-        "frontend/src/components/RecurringChoresInlineSection.tsx",
-        "frontend/src/components/TaskList.tsx",
-        "frontend/src/utils/recurringChoresPreview.ts"
+        "frontend/src/App.tsx",
+        "frontend/src/components/TodayFocus.tsx"
       ],
       "components": [
         "core-infrastructure@1.0.2",
@@ -23,10 +22,11 @@
       "confidence": "high"
     },
     {
-      "featureId": "feature-refactor-the-existing-tasks-page-header-actions-so-that-recurring-chores-is-not-only-a-secondary-header-button-instead-align-the-action-placement-with-the-new-inline-integration-e-g-demote-remove-the-header-button-or-change-it-to-a-subtle-manage-action-within-the-new-inline-section-while-keeping-all-recurring-chore-functionality-unchanged",
-      "featureTitle": "Refactor the existing Tasks page header actions so that Recurring Chores is not only a secondary header button; instead, align the action placement with the new inline integration (e.g., demote/remove the header button or change it to a subtle 'Manage' action within the new inline section) while keeping all recurring chore functionality unchanged.",
+      "featureId": "feature-in-the-today-focus-section-display-only-tasks-that-are-due-today-based-on-local-calendar-day-and-show-today-s-assigned-cook-for-today-s-day-key-do-not-include-tasks-for-other-days-or-tasks-without-a-due-date",
+      "featureTitle": "In the Today Focus section, display only tasks that are due today (based on local calendar day) and show today’s assigned cook for today’s day key; do not include tasks for other days or tasks without a due date.",
       "files": [
-        "frontend/src/components/TaskList.tsx"
+        "frontend/src/components/TodayFocus.tsx",
+        "frontend/src/utils/taskDayKey.ts"
       ],
       "components": [
         "core-infrastructure@1.0.2",
@@ -38,6 +38,26 @@
       ],
       "testIds": [
         "REQ-2"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-implement-appropriate-loading-and-empty-states-within-the-today-focus-section-using-existing-data-sources-react-query-hooks-so-the-panel-remains-stable-and-informative-while-tasks-cooking-assignments-and-profiles-if-used-for-labels-are-loading-or-absent",
+      "featureTitle": "Implement appropriate loading and empty states within the Today Focus section using existing data sources (React Query hooks) so the panel remains stable and informative while tasks/cooking assignments (and profiles if used for labels) are loading or absent.",
+      "files": [
+        "frontend/src/components/TodayFocus.tsx",
+        "frontend/src/utils/cookingAssignmentLabel.ts"
+      ],
+      "components": [
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "authorization@4.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-3"
       ],
       "confidence": "high"
     }

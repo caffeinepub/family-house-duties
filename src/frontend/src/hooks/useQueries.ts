@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useActor } from './useActor';
-import type { Task, CookingAssignment, AddTaskRequest, AssignCookingDayRequest, UpdateCookingDayRequest, RecurringChore, CreateRecurringChoreRequest, UpdateRecurringChoreRequest } from '../backend';
+import type { Task, CookingAssignment, AddTaskRequest, AssignCookingDayRequest, UpdateCookingDayRequest, RecurringChore, CreateRecurringChoreRequest, UpdateRecurringChoreRequest, Timeline, PauseResumeChoreRequest } from '../backend';
 import { toast } from 'sonner';
 import { Principal } from '@icp-sdk/core/principal';
 
@@ -151,11 +151,12 @@ export function useAssignCookingDay() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (params: { day: string; cook: Principal | undefined }) => {
+    mutationFn: async (params: { day: string; cook: Principal | undefined; cookName?: string }) => {
       if (!actor) throw new Error('Actor not initialized');
       const request: AssignCookingDayRequest = {
         day: params.day,
         cook: params.cook,
+        cookName: params.cookName,
       };
       return actor.assignCookingDay(request);
     },
@@ -175,11 +176,12 @@ export function useUpdateCookingDay() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (params: { day: string; cook: Principal | undefined }) => {
+    mutationFn: async (params: { day: string; cook: Principal | undefined; cookName?: string }) => {
       if (!actor) throw new Error('Actor not initialized');
       const request: UpdateCookingDayRequest = {
         day: params.day,
         cook: params.cook,
+        cookName: params.cookName,
       };
       return actor.updateCookingDay(request);
     },
@@ -230,6 +232,7 @@ export function useCreateRecurringChore() {
       description: string;
       weekday: bigint;
       assignedTo: Principal | undefined;
+      timeline: Timeline;
     }) => {
       if (!actor) throw new Error('Actor not initialized');
       const request: CreateRecurringChoreRequest = {
@@ -237,6 +240,7 @@ export function useCreateRecurringChore() {
         description: params.description,
         weekday: params.weekday,
         assignedTo: params.assignedTo,
+        timeline: params.timeline,
       };
       return actor.createRecurringChore(request);
     },
@@ -263,6 +267,7 @@ export function useUpdateRecurringChore() {
       description: string;
       weekday: bigint;
       assignedTo: Principal | undefined;
+      timeline: Timeline;
     }) => {
       if (!actor) throw new Error('Actor not initialized');
       const request: UpdateRecurringChoreRequest = {
@@ -271,6 +276,7 @@ export function useUpdateRecurringChore() {
         description: params.description,
         weekday: params.weekday,
         assignedTo: params.assignedTo,
+        timeline: params.timeline,
       };
       return actor.updateRecurringChore(request);
     },
@@ -306,3 +312,31 @@ export function useDeleteRecurringChore() {
     },
   });
 }
+
+export function usePauseResumeRecurringChore() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (params: { id: bigint; pause: boolean }) => {
+      if (!actor) throw new Error('Actor not initialized');
+      const request: PauseResumeChoreRequest = {
+        id: params.id,
+        pause: params.pause,
+      };
+      return actor.pauseResumeRecurringChore(request);
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['recurring-chores'] });
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['calendar'] });
+      toast.success(variables.pause ? 'Recurring chore paused' : 'Recurring chore resumed');
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Failed to update recurring chore');
+    },
+  });
+}
+
+// Re-export people profile hooks
+export { useGetAllProfiles, useGetProfile, useUpsertProfile, useDeleteProfile } from './usePeopleProfilesQueries';

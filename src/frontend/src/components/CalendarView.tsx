@@ -1,8 +1,9 @@
 import { useState, useMemo } from 'react';
-import { ChevronLeft, ChevronRight, ChefHat, User } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ChefHat, Calendar as CalendarIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { useGetCalendar, useGetCookingAssignments } from '../hooks/useQueries';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { useGetAllTasks, useGetCookingAssignments, useGetAllRecurringChores, useGetAllProfiles } from '../hooks/useQueries';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   format,
@@ -16,42 +17,48 @@ import {
   startOfWeek,
   endOfWeek,
 } from 'date-fns';
-import type { Task, CalendarDay } from '../backend';
-import { Principal } from '@icp-sdk/core/principal';
+import type { Task, CookingAssignment } from '../backend';
+import { CalendarWeekPlanner } from './CalendarWeekPlanner';
+import { CalendarDayPlanner } from './CalendarDayPlanner';
+import { LightweightMonthOverview } from './LightweightMonthOverview';
+import { getCookingAssignmentDisplay } from '../utils/cookingAssignmentLabel';
 
 export function CalendarView() {
   const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [viewMode, setViewMode] = useState<'month' | 'week' | 'day'>('month');
+  const [selectedDate, setSelectedDate] = useState(new Date());
+
+  const { data: allTasks = [], isLoading: tasksLoading } = useGetAllTasks();
+  const { data: assignments = [], isLoading: assignmentsLoading } = useGetCookingAssignments();
+  const { data: recurringChores = [], isLoading: choresLoading } = useGetAllRecurringChores();
+  const { data: profiles = [], isLoading: profilesLoading } = useGetAllProfiles();
 
   const monthStart = startOfMonth(currentMonth);
   const monthEnd = endOfMonth(currentMonth);
   const calendarStart = startOfWeek(monthStart, { weekStartsOn: 0 });
   const calendarEnd = endOfWeek(monthEnd, { weekStartsOn: 0 });
 
-  // Convert dates to nanoseconds for backend
-  const startDateNano = BigInt(calendarStart.getTime() * 1000000);
-  const endDateNano = BigInt(calendarEnd.getTime() * 1000000);
-
-  const { data: calendarData = [], isLoading: calendarLoading } = useGetCalendar(startDateNano, endDateNano);
-  const { data: assignments = [], isLoading: assignmentsLoading } = useGetCookingAssignments();
-
   const calendarDays = eachDayOfInterval({ start: calendarStart, end: calendarEnd });
 
-  // Build a map of date -> tasks from calendar data
+  // Build a map of date -> tasks
   const tasksMap = useMemo(() => {
     const map = new Map<string, Task[]>();
-    calendarData.forEach((day: CalendarDay) => {
-      const dateKey = format(new Date(Number(day.date) / 1000000), 'yyyy-MM-dd');
-      map.set(dateKey, day.tasks);
+    allTasks.forEach((task) => {
+      if (task.dueDate) {
+        const dateKey = format(new Date(Number(task.dueDate) / 1000000), 'yyyy-MM-dd');
+        if (!map.has(dateKey)) {
+          map.set(dateKey, []);
+        }
+        map.get(dateKey)!.push(task);
+      }
     });
     return map;
-  }, [calendarData]);
+  }, [allTasks]);
 
   const assignmentsMap = useMemo(() => {
-    const map = new Map<string, Principal>();
+    const map = new Map<string, CookingAssignment>();
     assignments.forEach((assignment) => {
-      if (assignment.cook) {
-        map.set(assignment.day, assignment.cook);
-      }
+      map.set(assignment.day, assignment);
     });
     return map;
   }, [assignments]);
@@ -61,20 +68,19 @@ export function CalendarView() {
     return tasksMap.get(dateKey) || [];
   };
 
-  const getCookForDay = (date: Date) => {
+  const getAssignmentForDay = (date: Date) => {
     const dateKey = format(date, 'yyyy-MM-dd');
     return assignmentsMap.get(dateKey);
-  };
-
-  const formatPrincipal = (principal: Principal) => {
-    const str = principal.toString();
-    return str.slice(0, 5) + '...' + str.slice(-3);
   };
 
   const previousMonth = () => setCurrentMonth(subMonths(currentMonth, 1));
   const nextMonth = () => setCurrentMonth(addMonths(currentMonth, 1));
 
-  if (calendarLoading || assignmentsLoading) {
+  const handleDateSelect = (date: Date) => {
+    setSelectedDate(date);
+  };
+
+  if (tasksLoading || assignmentsLoading || choresLoading || profilesLoading) {
     return (
       <div className="space-y-4">
         <Skeleton className="h-12 w-full" />
@@ -88,89 +94,125 @@ export function CalendarView() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold">Calendar View</h2>
-          <p className="text-muted-foreground">Monthly overview of tasks and meal plans</p>
+          <p className="text-muted-foreground">Plan your tasks and meals</p>
         </div>
       </div>
 
-      <Card>
-        <CardContent className="p-6">
-          <div className="mb-6 flex items-center justify-between">
-            <h3 className="text-xl font-semibold">{format(currentMonth, 'MMMM yyyy')}</h3>
-            <div className="flex gap-2">
-              <Button variant="outline" size="icon" onClick={previousMonth}>
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <Button variant="outline" size="icon" onClick={nextMonth}>
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
+      <Tabs value={viewMode} onValueChange={(value) => setViewMode(value as 'month' | 'week' | 'day')}>
+        <TabsList className="grid w-full max-w-md grid-cols-3">
+          <TabsTrigger value="month">Month</TabsTrigger>
+          <TabsTrigger value="week">Week</TabsTrigger>
+          <TabsTrigger value="day">Day</TabsTrigger>
+        </TabsList>
 
-          <div className="grid grid-cols-7 gap-2">
-            {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
-              <div key={day} className="p-2 text-center text-sm font-medium text-muted-foreground">
-                {day}
-              </div>
-            ))}
+        <TabsContent value="month" className="mt-6 space-y-6">
+          {/* Lightweight Month Overview */}
+          <LightweightMonthOverview
+            currentMonth={currentMonth}
+            selectedDate={selectedDate}
+            allTasks={allTasks}
+            assignments={assignments}
+            onMonthChange={setCurrentMonth}
+            onDateSelect={handleDateSelect}
+          />
 
-            {calendarDays.map((day) => {
-              const dayTasks = getTasksForDay(day);
-              const cookPrincipal = getCookForDay(day);
-              const isCurrentMonth = isSameMonth(day, currentMonth);
-              const isToday = isSameDay(day, new Date());
-
-              return (
-                <div
-                  key={day.toISOString()}
-                  className={`min-h-24 rounded-lg border p-2 ${
-                    isCurrentMonth ? 'bg-card' : 'bg-muted/30'
-                  } ${isToday ? 'border-primary ring-2 ring-primary/20' : ''}`}
-                >
-                  <div className="mb-1 text-sm font-medium">{format(day, 'd')}</div>
-                  <div className="space-y-1">
-                    {cookPrincipal && (
-                      <div className="flex items-center gap-1 rounded bg-accent px-1.5 py-0.5 text-xs">
-                        <ChefHat className="h-3 w-3" />
-                        <span className="truncate">{formatPrincipal(cookPrincipal)}</span>
-                      </div>
-                    )}
-                    {dayTasks.slice(0, 2).map((task) => (
-                      <div
-                        key={task.id.toString()}
-                        className={`truncate rounded px-1.5 py-0.5 text-xs ${
-                          task.completed
-                            ? 'bg-success/10 text-success line-through'
-                            : 'bg-primary/10 text-primary'
-                        }`}
-                      >
-                        {task.name}
-                      </div>
-                    ))}
-                    {dayTasks.length > 2 && (
-                      <div className="text-xs text-muted-foreground">+{dayTasks.length - 2} more</div>
-                    )}
-                  </div>
+          {/* Full Month Grid */}
+          <Card>
+            <CardContent className="p-6">
+              <div className="mb-6 flex items-center justify-between">
+                <h3 className="text-xl font-semibold">{format(currentMonth, 'MMMM yyyy')}</h3>
+                <div className="flex gap-2">
+                  <Button variant="outline" size="icon" onClick={previousMonth}>
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <Button variant="outline" size="icon" onClick={nextMonth}>
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
                 </div>
-              );
-            })}
-          </div>
+              </div>
 
-          <div className="mt-6 flex flex-wrap gap-4 border-t pt-4">
-            <div className="flex items-center gap-2">
-              <div className="h-3 w-3 rounded bg-primary/10" />
-              <span className="text-sm text-muted-foreground">Pending Task</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="h-3 w-3 rounded bg-success/10" />
-              <span className="text-sm text-muted-foreground">Completed Task</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <ChefHat className="h-3 w-3" />
-              <span className="text-sm text-muted-foreground">Cooking Assignment</span>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+              <div className="grid grid-cols-7 gap-2">
+                {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
+                  <div key={day} className="p-2 text-center text-sm font-medium text-muted-foreground">
+                    {day}
+                  </div>
+                ))}
+
+                {calendarDays.map((day) => {
+                  const dayTasks = getTasksForDay(day);
+                  const assignment = getAssignmentForDay(day);
+                  const cookDisplay = getCookingAssignmentDisplay(assignment, profiles);
+                  const isCurrentMonth = isSameMonth(day, currentMonth);
+                  const isToday = isSameDay(day, new Date());
+
+                  return (
+                    <div
+                      key={day.toISOString()}
+                      className={`min-h-24 rounded-lg border p-2 ${
+                        isCurrentMonth ? 'bg-card' : 'bg-muted/30'
+                      } ${isToday ? 'border-primary ring-2 ring-primary/20' : ''}`}
+                    >
+                      <div className="mb-1 text-sm font-medium">{format(day, 'd')}</div>
+                      <div className="space-y-1">
+                        {cookDisplay.label && (
+                          <div className="flex items-center gap-1 rounded bg-accent px-1.5 py-0.5 text-xs">
+                            <ChefHat className="h-3 w-3" />
+                            {cookDisplay.color && (
+                              <span
+                                className="inline-block h-2 w-2 rounded-full"
+                                style={{ backgroundColor: cookDisplay.color }}
+                              />
+                            )}
+                            <span className="truncate">{cookDisplay.label}</span>
+                          </div>
+                        )}
+                        {dayTasks.slice(0, 2).map((task) => (
+                          <div
+                            key={task.id.toString()}
+                            className={`truncate rounded px-1.5 py-0.5 text-xs ${
+                              task.completed
+                                ? 'bg-success/10 text-success line-through'
+                                : 'bg-primary/10 text-primary'
+                            }`}
+                          >
+                            {task.name}
+                          </div>
+                        ))}
+                        {dayTasks.length > 2 && (
+                          <div className="text-xs text-muted-foreground">+{dayTasks.length - 2} more</div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="mt-6 flex flex-wrap gap-4 border-t pt-4">
+                <div className="flex items-center gap-2">
+                  <div className="h-3 w-3 rounded bg-primary/10" />
+                  <span className="text-sm text-muted-foreground">Pending Task</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="h-3 w-3 rounded bg-success/10" />
+                  <span className="text-sm text-muted-foreground">Completed Task</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <ChefHat className="h-3 w-3" />
+                  <span className="text-sm text-muted-foreground">Cooking Assignment</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="week" className="mt-6">
+          <CalendarWeekPlanner selectedDate={selectedDate} onDateChange={handleDateSelect} />
+        </TabsContent>
+
+        <TabsContent value="day" className="mt-6">
+          <CalendarDayPlanner selectedDate={selectedDate} onDateChange={handleDateSelect} />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

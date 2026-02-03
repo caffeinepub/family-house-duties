@@ -12,6 +12,7 @@ export interface CreateRecurringChoreRequest {
     assignedTo?: Principal;
     name: string;
     description: string;
+    timeline: Timeline;
 }
 export interface GetCookingAssignment {
     day: string;
@@ -24,6 +25,8 @@ export interface RecurringChore {
     name: string;
     createdBy: Principal;
     description: string;
+    paused: boolean;
+    timeline: Timeline;
 }
 export interface GetCalendarRequest {
     endDate: Time;
@@ -46,6 +49,7 @@ export interface CookingAssignment {
     day: string;
     assignedBy: Principal;
     cook?: Principal;
+    cookName?: string;
 }
 export interface CalendarDay {
     tasks: Array<Task>;
@@ -55,10 +59,16 @@ export interface CalendarDay {
 export interface UpdateCookingDayRequest {
     day: string;
     cook?: Principal;
+    cookName?: string;
+}
+export interface PauseResumeChoreRequest {
+    id: bigint;
+    pause: boolean;
 }
 export interface AssignCookingDayRequest {
     day: string;
     cook?: Principal;
+    cookName?: string;
 }
 export interface FilterByAssigneeRequest {
     assignee: Principal;
@@ -69,15 +79,23 @@ export interface AddTaskRequest {
     dueDate?: Time;
     description: string;
 }
-export interface GetTaskRequest {
-    id: bigint;
-}
 export interface UpdateRecurringChoreRequest {
     id: bigint;
     weekday: bigint;
     assignedTo?: Principal;
     name: string;
     description: string;
+    timeline: Timeline;
+}
+export interface PersonProfile {
+    principal: Principal;
+    displayName: string;
+    color: string;
+}
+export enum Timeline {
+    fortnightly = "fortnightly",
+    weeklies = "weeklies",
+    monthly = "monthly"
 }
 export enum UserRole {
     admin = "admin",
@@ -90,8 +108,11 @@ export interface backendInterface {
     assignCookingDay(request: AssignCookingDayRequest): Promise<void>;
     clearCompletedTasks(): Promise<void>;
     createRecurringChore(request: CreateRecurringChoreRequest): Promise<bigint>;
+    deleteProfile(principal: Principal): Promise<void>;
     deleteRecurringChore(id: bigint): Promise<void>;
     deleteTask(id: bigint): Promise<void>;
+    getActiveRecurringChores(): Promise<Array<RecurringChore>>;
+    getAllProfiles(): Promise<Array<PersonProfile>>;
     getAllRecurringChores(): Promise<Array<RecurringChore>>;
     getAllTasks(): Promise<Array<Task>>;
     getCalendar(request: GetCalendarRequest): Promise<Array<CalendarDay>>;
@@ -100,14 +121,17 @@ export interface backendInterface {
     getCookingAssignment(request: GetCookingAssignment): Promise<CookingAssignment>;
     getCookingAssignments(): Promise<Array<CookingAssignment>>;
     getPendingTasks(): Promise<Array<Task>>;
+    getProfile(principal: Principal): Promise<PersonProfile>;
     getRecurringChore(id: bigint): Promise<RecurringChore>;
-    getTask(request: GetTaskRequest): Promise<Task>;
+    getTask(id: bigint): Promise<Task>;
     getTasksByAssignee(request: FilterByAssigneeRequest): Promise<Array<Task>>;
     getTasksByDate(date: Time): Promise<Array<Task>>;
     isCallerAdmin(): Promise<boolean>;
+    pauseResumeRecurringChore(request: PauseResumeChoreRequest): Promise<void>;
     sortTasksByDueDate(request: SortTasksByDueDateRequest): Promise<Array<Task>>;
     toggleTaskCompletion(id: bigint): Promise<void>;
     updateCookingDay(request: UpdateCookingDayRequest): Promise<void>;
     updateRecurringChore(request: UpdateRecurringChoreRequest): Promise<void>;
     updateTask(id: bigint, name: string, description: string, dueDate: Time | null, assignedTo: Principal | null): Promise<void>;
+    upsertProfile(profile: PersonProfile): Promise<void>;
 }

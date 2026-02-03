@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ChefHat, Calendar as CalendarIcon, User } from 'lucide-react';
+import { ChefHat, Calendar as CalendarIcon, User, TrendingUp, TrendingDown } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,6 +16,7 @@ import {
   useGetCookingAssignments,
   useAssignCookingDay,
   useUpdateCookingDay,
+  useGetAllProfiles,
 } from '../hooks/useQueries';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
@@ -23,13 +24,20 @@ import { format, startOfWeek, addDays } from 'date-fns';
 import { useInternetIdentity } from '../hooks/useInternetIdentity';
 import { Principal } from '@icp-sdk/core/principal';
 import type { CookingAssignment } from '../backend';
+import { getCookingAssignmentDisplay, formatPrincipal } from '../utils/cookingAssignmentLabel';
+import { PersonProfileSelect } from './PersonProfileSelect';
+import { PersonBadge } from './PersonBadge';
+import { computeFairnessStats, type FairnessRange } from '../utils/fairness';
 
 export function DinnerRota() {
   const [editingDay, setEditingDay] = useState<string | null>(null);
   const [cookPrincipal, setCookPrincipal] = useState('');
+  const [cookName, setCookName] = useState('');
+  const [fairnessRange, setFairnessRange] = useState<FairnessRange>('last30days');
 
   const { identity } = useInternetIdentity();
-  const { data: assignments = [], isLoading } = useGetCookingAssignments();
+  const { data: assignments = [], isLoading: assignmentsLoading } = useGetCookingAssignments();
+  const { data: profiles = [], isLoading: profilesLoading } = useGetAllProfiles();
   const assignCooking = useAssignCookingDay();
   const updateCooking = useUpdateCookingDay();
 
@@ -52,6 +60,7 @@ export function DinnerRota() {
     const dayKey = format(date, 'yyyy-MM-dd');
     const assignment = getAssignmentForDay(date);
     setCookPrincipal(assignment?.cook?.toString() || '');
+    setCookName(assignment?.cookName || '');
     setEditingDay(dayKey);
   };
 
@@ -80,11 +89,13 @@ export function DinnerRota() {
         {
           day: editingDay,
           cook,
+          cookName: cookName.trim() || undefined,
         },
         {
           onSuccess: () => {
             setEditingDay(null);
             setCookPrincipal('');
+            setCookName('');
           },
         }
       );
@@ -94,29 +105,28 @@ export function DinnerRota() {
         {
           day: editingDay,
           cook,
+          cookName: cookName.trim() || undefined,
         },
         {
           onSuccess: () => {
             setEditingDay(null);
             setCookPrincipal('');
+            setCookName('');
           },
         }
       );
     }
   };
 
-  const assignToMe = () => {
-    if (identity) {
-      setCookPrincipal(identity.getPrincipal().toString());
-    }
-  };
+  // Compute fairness stats
+  const fairnessStats = computeFairnessStats(assignments, profiles, fairnessRange);
 
-  const formatPrincipal = (principal: Principal) => {
-    const str = principal.toString();
-    return str.slice(0, 5) + '...' + str.slice(-3);
-  };
+  // Calculate max count for visual indicator scaling
+  const maxCount = fairnessStats.counts.size > 0 
+    ? Math.max(...Array.from(fairnessStats.counts.values())) 
+    : 0;
 
-  if (isLoading) {
+  if (assignmentsLoading || profilesLoading) {
     return (
       <div className="space-y-4">
         <Skeleton className="h-32 w-full" />
@@ -143,11 +153,129 @@ export function DinnerRota() {
         <div className="absolute inset-0 rounded-lg bg-gradient-to-t from-background/80 to-transparent" />
       </div>
 
+      {/* Fairness Section */}
+      <Card>
+        <CardHeader>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <ChefHat className="h-5 w-5" />
+                Fairness Indicator
+              </CardTitle>
+              <CardDescription>See who's cooking most and least</CardDescription>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                variant={fairnessRange === 'last30days' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setFairnessRange('last30days')}
+              >
+                Last 30 Days
+              </Button>
+              <Button
+                variant={fairnessRange === 'alltime' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setFairnessRange('alltime')}
+              >
+                All Time
+              </Button>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {/* Period Indicator */}
+          <div className="mb-4 rounded-md bg-muted/50 px-3 py-2 text-sm text-muted-foreground">
+            <span className="font-medium">Period:</span> {fairnessStats.periodLabel}
+          </div>
+
+          {fairnessStats.isEmpty ? (
+            <div className="rounded-md border border-dashed p-6 text-center text-sm text-muted-foreground">
+              No cooking assignments in this period
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {/* Most and Least Cooked */}
+              <div className="grid gap-3 md:grid-cols-2">
+                {fairnessStats.mostCooked && (
+                  <div className="rounded-lg border bg-accent/50 p-4">
+                    <div className="mb-2 flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                      <TrendingUp className="h-4 w-4" />
+                      Most Cooked
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <PersonBadge
+                        label={fairnessStats.mostCooked.label}
+                        color={fairnessStats.mostCooked.color}
+                        variant="default"
+                      />
+                      <Badge variant="secondary" className="text-lg font-bold">
+                        {fairnessStats.mostCooked.count}
+                      </Badge>
+                    </div>
+                  </div>
+                )}
+                {fairnessStats.leastCooked && (
+                  <div className="rounded-lg border bg-accent/50 p-4">
+                    <div className="mb-2 flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                      <TrendingDown className="h-4 w-4" />
+                      Least Cooked
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <PersonBadge
+                        label={fairnessStats.leastCooked.label}
+                        color={fairnessStats.leastCooked.color}
+                        variant="default"
+                      />
+                      <Badge variant="secondary" className="text-lg font-bold">
+                        {fairnessStats.leastCooked.count}
+                      </Badge>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* All Counts with Visual Indicator */}
+              <div>
+                <div className="mb-3 text-sm font-medium text-muted-foreground">All Cooks</div>
+                <div className="space-y-3">
+                  {Array.from(fairnessStats.counts.entries())
+                    .sort((a, b) => b[1] - a[1]) // Sort by count descending
+                    .map(([label, count]) => {
+                      const color = fairnessStats.colors.get(label);
+                      const percentage = maxCount > 0 ? (count / maxCount) * 100 : 0;
+                      
+                      return (
+                        <div
+                          key={label}
+                          className="rounded-md border bg-card p-3"
+                        >
+                          <div className="mb-2 flex items-center justify-between gap-3">
+                            <PersonBadge label={label} color={color} variant="outline" size="sm" />
+                            <Badge variant="secondary">{count}</Badge>
+                          </div>
+                          {/* Visual indicator bar */}
+                          <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+                            <div
+                              className="h-full rounded-full bg-primary transition-all duration-300"
+                              style={{ width: `${percentage}%` }}
+                            />
+                          </div>
+                        </div>
+                      );
+                    })}
+                </div>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
         {weekDays.map((date) => {
           const assignment = getAssignmentForDay(date);
           const isToday = format(date, 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd');
           const canEdit = canEditAssignment(assignment);
+          const cookDisplay = getCookingAssignmentDisplay(assignment, profiles);
 
           return (
             <Card key={date.toISOString()} className={isToday ? 'border-primary' : ''}>
@@ -162,18 +290,19 @@ export function DinnerRota() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
-                {assignment?.cook ? (
+                {cookDisplay.label ? (
                   <div className="space-y-2">
                     <div className="flex items-center gap-2 rounded-md bg-accent p-3">
                       <ChefHat className="h-5 w-5 text-accent-foreground" />
-                      <div className="flex flex-1 items-center gap-1">
-                        <User className="h-4 w-4" />
-                        <span className="font-medium">{formatPrincipal(assignment.cook)}</span>
+                      <div className="flex flex-1 items-center gap-2">
+                        <PersonBadge label={cookDisplay.label} color={cookDisplay.color} variant="secondary" />
                       </div>
                     </div>
-                    <Badge variant="outline" className="text-xs">
-                      Assigned by: {formatPrincipal(assignment.assignedBy)}
-                    </Badge>
+                    {assignment && (
+                      <Badge variant="outline" className="text-xs">
+                        Assigned by: {formatPrincipal(assignment.assignedBy)}
+                      </Badge>
+                    )}
                   </div>
                 ) : (
                   <div className="rounded-md border border-dashed p-3 text-center text-sm text-muted-foreground">
@@ -182,7 +311,7 @@ export function DinnerRota() {
                 )}
                 {canEdit && (
                   <Button variant="outline" className="w-full" onClick={() => handleAssign(date)}>
-                    {assignment?.cook ? 'Change' : 'Assign'}
+                    {cookDisplay.label ? 'Change' : 'Assign'}
                   </Button>
                 )}
               </CardContent>
@@ -198,22 +327,23 @@ export function DinnerRota() {
             <DialogDescription>Who will be cooking on this day?</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
+            <PersonProfileSelect
+              value={cookPrincipal}
+              onChange={setCookPrincipal}
+              label="Cook"
+              placeholder="Select a person or enter Principal ID"
+              showMeButton={true}
+            />
             <div className="space-y-2">
-              <Label htmlFor="cook-principal">Cook (Principal ID)</Label>
-              <div className="flex gap-2">
-                <Input
-                  id="cook-principal"
-                  placeholder="Principal ID or leave empty"
-                  value={cookPrincipal}
-                  onChange={(e) => setCookPrincipal(e.target.value)}
-                  className="flex-1"
-                />
-                <Button type="button" variant="outline" onClick={assignToMe}>
-                  Me
-                </Button>
-              </div>
+              <Label htmlFor="cook-name">Cook name (optional)</Label>
+              <Input
+                id="cook-name"
+                placeholder="Enter cook's name (e.g., Mom, Dad)"
+                value={cookName}
+                onChange={(e) => setCookName(e.target.value)}
+              />
               <p className="text-xs text-muted-foreground">
-                Enter a family member's principal ID, click "Me" to assign yourself, or leave empty to clear
+                Optional: Enter a friendly name if not using a profile
               </p>
             </div>
           </div>

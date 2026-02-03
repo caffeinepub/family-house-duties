@@ -1,4 +1,5 @@
 import type { RecurringChore } from '../backend';
+import { Timeline } from '../backend';
 
 const WEEKDAY_LABELS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
@@ -6,6 +7,24 @@ export interface GroupedChore {
   weekday: bigint;
   weekdayLabel: string;
   chores: RecurringChore[];
+}
+
+/**
+ * Converts Timeline enum to user-friendly label
+ */
+export function getTimelineLabel(timeline: Timeline | undefined): string {
+  if (!timeline) return 'Weekly'; // Default for backward compatibility
+  
+  switch (timeline) {
+    case Timeline.weeklies:
+      return 'Weekly';
+    case Timeline.fortnightly:
+      return 'Fortnightly';
+    case Timeline.monthly:
+      return 'Monthly';
+    default:
+      return 'Weekly';
+  }
 }
 
 /**

@@ -23,12 +23,19 @@ export const UserRole = IDL.Variant({
 export const AssignCookingDayRequest = IDL.Record({
   'day' : IDL.Text,
   'cook' : IDL.Opt(IDL.Principal),
+  'cookName' : IDL.Opt(IDL.Text),
+});
+export const Timeline = IDL.Variant({
+  'fortnightly' : IDL.Null,
+  'weeklies' : IDL.Null,
+  'monthly' : IDL.Null,
 });
 export const CreateRecurringChoreRequest = IDL.Record({
   'weekday' : IDL.Nat,
   'assignedTo' : IDL.Opt(IDL.Principal),
   'name' : IDL.Text,
   'description' : IDL.Text,
+  'timeline' : Timeline,
 });
 export const RecurringChore = IDL.Record({
   'id' : IDL.Nat,
@@ -37,6 +44,13 @@ export const RecurringChore = IDL.Record({
   'name' : IDL.Text,
   'createdBy' : IDL.Principal,
   'description' : IDL.Text,
+  'paused' : IDL.Bool,
+  'timeline' : Timeline,
+});
+export const PersonProfile = IDL.Record({
+  'principal' : IDL.Principal,
+  'displayName' : IDL.Text,
+  'color' : IDL.Text,
 });
 export const Task = IDL.Record({
   'id' : IDL.Nat,
@@ -56,6 +70,7 @@ export const CookingAssignment = IDL.Record({
   'day' : IDL.Text,
   'assignedBy' : IDL.Principal,
   'cook' : IDL.Opt(IDL.Principal),
+  'cookName' : IDL.Opt(IDL.Text),
 });
 export const CalendarDay = IDL.Record({
   'tasks' : IDL.Vec(Task),
@@ -63,9 +78,12 @@ export const CalendarDay = IDL.Record({
   'cookingAssignment' : IDL.Opt(CookingAssignment),
 });
 export const GetCookingAssignment = IDL.Record({ 'day' : IDL.Text });
-export const GetTaskRequest = IDL.Record({ 'id' : IDL.Nat });
 export const FilterByAssigneeRequest = IDL.Record({
   'assignee' : IDL.Principal,
+});
+export const PauseResumeChoreRequest = IDL.Record({
+  'id' : IDL.Nat,
+  'pause' : IDL.Bool,
 });
 export const SortTasksByDueDateRequest = IDL.Record({
   'tasks' : IDL.Vec(Task),
@@ -73,6 +91,7 @@ export const SortTasksByDueDateRequest = IDL.Record({
 export const UpdateCookingDayRequest = IDL.Record({
   'day' : IDL.Text,
   'cook' : IDL.Opt(IDL.Principal),
+  'cookName' : IDL.Opt(IDL.Text),
 });
 export const UpdateRecurringChoreRequest = IDL.Record({
   'id' : IDL.Nat,
@@ -80,6 +99,7 @@ export const UpdateRecurringChoreRequest = IDL.Record({
   'assignedTo' : IDL.Opt(IDL.Principal),
   'name' : IDL.Text,
   'description' : IDL.Text,
+  'timeline' : Timeline,
 });
 
 export const idlService = IDL.Service({
@@ -93,8 +113,15 @@ export const idlService = IDL.Service({
       [IDL.Nat],
       [],
     ),
+  'deleteProfile' : IDL.Func([IDL.Principal], [], []),
   'deleteRecurringChore' : IDL.Func([IDL.Nat], [], []),
   'deleteTask' : IDL.Func([IDL.Nat], [], []),
+  'getActiveRecurringChores' : IDL.Func(
+      [],
+      [IDL.Vec(RecurringChore)],
+      ['query'],
+    ),
+  'getAllProfiles' : IDL.Func([], [IDL.Vec(PersonProfile)], ['query']),
   'getAllRecurringChores' : IDL.Func([], [IDL.Vec(RecurringChore)], ['query']),
   'getAllTasks' : IDL.Func([], [IDL.Vec(Task)], ['query']),
   'getCalendar' : IDL.Func(
@@ -115,8 +142,9 @@ export const idlService = IDL.Service({
       ['query'],
     ),
   'getPendingTasks' : IDL.Func([], [IDL.Vec(Task)], ['query']),
+  'getProfile' : IDL.Func([IDL.Principal], [PersonProfile], ['query']),
   'getRecurringChore' : IDL.Func([IDL.Nat], [RecurringChore], ['query']),
-  'getTask' : IDL.Func([GetTaskRequest], [Task], ['query']),
+  'getTask' : IDL.Func([IDL.Nat], [Task], ['query']),
   'getTasksByAssignee' : IDL.Func(
       [FilterByAssigneeRequest],
       [IDL.Vec(Task)],
@@ -124,6 +152,7 @@ export const idlService = IDL.Service({
     ),
   'getTasksByDate' : IDL.Func([Time], [IDL.Vec(Task)], ['query']),
   'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
+  'pauseResumeRecurringChore' : IDL.Func([PauseResumeChoreRequest], [], []),
   'sortTasksByDueDate' : IDL.Func(
       [SortTasksByDueDateRequest],
       [IDL.Vec(Task)],
@@ -137,6 +166,7 @@ export const idlService = IDL.Service({
       [],
       [],
     ),
+  'upsertProfile' : IDL.Func([PersonProfile], [], []),
 });
 
 export const idlInitArgs = [];
@@ -157,12 +187,19 @@ export const idlFactory = ({ IDL }) => {
   const AssignCookingDayRequest = IDL.Record({
     'day' : IDL.Text,
     'cook' : IDL.Opt(IDL.Principal),
+    'cookName' : IDL.Opt(IDL.Text),
+  });
+  const Timeline = IDL.Variant({
+    'fortnightly' : IDL.Null,
+    'weeklies' : IDL.Null,
+    'monthly' : IDL.Null,
   });
   const CreateRecurringChoreRequest = IDL.Record({
     'weekday' : IDL.Nat,
     'assignedTo' : IDL.Opt(IDL.Principal),
     'name' : IDL.Text,
     'description' : IDL.Text,
+    'timeline' : Timeline,
   });
   const RecurringChore = IDL.Record({
     'id' : IDL.Nat,
@@ -171,6 +208,13 @@ export const idlFactory = ({ IDL }) => {
     'name' : IDL.Text,
     'createdBy' : IDL.Principal,
     'description' : IDL.Text,
+    'paused' : IDL.Bool,
+    'timeline' : Timeline,
+  });
+  const PersonProfile = IDL.Record({
+    'principal' : IDL.Principal,
+    'displayName' : IDL.Text,
+    'color' : IDL.Text,
   });
   const Task = IDL.Record({
     'id' : IDL.Nat,
@@ -190,6 +234,7 @@ export const idlFactory = ({ IDL }) => {
     'day' : IDL.Text,
     'assignedBy' : IDL.Principal,
     'cook' : IDL.Opt(IDL.Principal),
+    'cookName' : IDL.Opt(IDL.Text),
   });
   const CalendarDay = IDL.Record({
     'tasks' : IDL.Vec(Task),
@@ -197,12 +242,16 @@ export const idlFactory = ({ IDL }) => {
     'cookingAssignment' : IDL.Opt(CookingAssignment),
   });
   const GetCookingAssignment = IDL.Record({ 'day' : IDL.Text });
-  const GetTaskRequest = IDL.Record({ 'id' : IDL.Nat });
   const FilterByAssigneeRequest = IDL.Record({ 'assignee' : IDL.Principal });
+  const PauseResumeChoreRequest = IDL.Record({
+    'id' : IDL.Nat,
+    'pause' : IDL.Bool,
+  });
   const SortTasksByDueDateRequest = IDL.Record({ 'tasks' : IDL.Vec(Task) });
   const UpdateCookingDayRequest = IDL.Record({
     'day' : IDL.Text,
     'cook' : IDL.Opt(IDL.Principal),
+    'cookName' : IDL.Opt(IDL.Text),
   });
   const UpdateRecurringChoreRequest = IDL.Record({
     'id' : IDL.Nat,
@@ -210,6 +259,7 @@ export const idlFactory = ({ IDL }) => {
     'assignedTo' : IDL.Opt(IDL.Principal),
     'name' : IDL.Text,
     'description' : IDL.Text,
+    'timeline' : Timeline,
   });
   
   return IDL.Service({
@@ -223,8 +273,15 @@ export const idlFactory = ({ IDL }) => {
         [IDL.Nat],
         [],
       ),
+    'deleteProfile' : IDL.Func([IDL.Principal], [], []),
     'deleteRecurringChore' : IDL.Func([IDL.Nat], [], []),
     'deleteTask' : IDL.Func([IDL.Nat], [], []),
+    'getActiveRecurringChores' : IDL.Func(
+        [],
+        [IDL.Vec(RecurringChore)],
+        ['query'],
+      ),
+    'getAllProfiles' : IDL.Func([], [IDL.Vec(PersonProfile)], ['query']),
     'getAllRecurringChores' : IDL.Func(
         [],
         [IDL.Vec(RecurringChore)],
@@ -249,8 +306,9 @@ export const idlFactory = ({ IDL }) => {
         ['query'],
       ),
     'getPendingTasks' : IDL.Func([], [IDL.Vec(Task)], ['query']),
+    'getProfile' : IDL.Func([IDL.Principal], [PersonProfile], ['query']),
     'getRecurringChore' : IDL.Func([IDL.Nat], [RecurringChore], ['query']),
-    'getTask' : IDL.Func([GetTaskRequest], [Task], ['query']),
+    'getTask' : IDL.Func([IDL.Nat], [Task], ['query']),
     'getTasksByAssignee' : IDL.Func(
         [FilterByAssigneeRequest],
         [IDL.Vec(Task)],
@@ -258,6 +316,7 @@ export const idlFactory = ({ IDL }) => {
       ),
     'getTasksByDate' : IDL.Func([Time], [IDL.Vec(Task)], ['query']),
     'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
+    'pauseResumeRecurringChore' : IDL.Func([PauseResumeChoreRequest], [], []),
     'sortTasksByDueDate' : IDL.Func(
         [SortTasksByDueDateRequest],
         [IDL.Vec(Task)],
@@ -271,6 +330,7 @@ export const idlFactory = ({ IDL }) => {
         [],
         [],
       ),
+    'upsertProfile' : IDL.Func([PersonProfile], [], []),
   });
 };
 

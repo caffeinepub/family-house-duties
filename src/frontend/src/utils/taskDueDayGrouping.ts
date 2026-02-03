@@ -1,5 +1,6 @@
 import type { Task } from '../backend';
 import { format, startOfDay } from 'date-fns';
+import { taskDueDateToDayKey } from './taskDayKey';
 
 export interface TaskDayGroup {
   dayKey: string;
@@ -16,16 +17,12 @@ export function groupTasksByDay(tasks: Task[]): TaskDayGroup[] {
   const groupMap = new Map<string, Task[]>();
   const noDueDateTasks: Task[] = [];
 
-  // Group tasks by day
+  // Group tasks by day using normalized day key
   tasks.forEach((task) => {
-    if (!task.dueDate) {
+    const dayKey = taskDueDateToDayKey(task.dueDate);
+    if (!dayKey) {
       noDueDateTasks.push(task);
     } else {
-      // Convert nanoseconds to milliseconds
-      const date = new Date(Number(task.dueDate) / 1000000);
-      const dayStart = startOfDay(date);
-      const dayKey = dayStart.toISOString();
-      
       if (!groupMap.has(dayKey)) {
         groupMap.set(dayKey, []);
       }
@@ -36,7 +33,7 @@ export function groupTasksByDay(tasks: Task[]): TaskDayGroup[] {
   // Convert to array and sort by date
   const dayGroups: TaskDayGroup[] = Array.from(groupMap.entries())
     .map(([dayKey, tasks]) => {
-      const date = new Date(dayKey);
+      const date = new Date(dayKey + 'T00:00:00');
       return {
         dayKey,
         displayDate: format(date, 'EEEE, MMMM d, yyyy'),

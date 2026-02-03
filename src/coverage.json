@@ -1,39 +1,52 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-03T18:53:04.262Z",
+  "generatedAt": "2026-02-03T23:13:04.189Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
-    "total": 2,
-    "implemented": 2,
+    "total": 3,
+    "implemented": 3,
     "items": [
       {
         "id": "REQ-1",
-        "summary": "Improve the discoverability and integration of the Recurring Chores feature within the main Tasks page by adding an inline, non-intrusive Recurring Chores section on the Task List view that surfaces a small preview of recurring chores (e.g., grouped by weekday and/or showing the next upcoming items) and provides a clear call-to-action to open the existing Recurring Chores management dialog.",
+        "summary": "Add a persistent \"Today Focus\" section rendered at the top of the authenticated app content (below the Header and above the tab navigation/content) so it remains visible regardless of which main view/tab is active (Tasks, Dinner Rota, Calendar, People).",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/components/RecurringChoresInlineSection.tsx",
-          "frontend/src/utils/recurringChoresPreview.ts",
-          "frontend/src/components/TaskList.tsx"
+          "frontend/src/components/TodayFocus.tsx",
+          "frontend/src/App.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/components/RecurringChoresInlineSection.tsx",
-          "frontend/src/utils/recurringChoresPreview.ts",
-          "frontend/src/components/TaskList.tsx"
+          "frontend/src/components/TodayFocus.tsx",
+          "frontend/src/App.tsx"
         ]
       },
       {
         "id": "REQ-2",
-        "summary": "Refactor the existing Tasks page header actions so that Recurring Chores is not only a secondary header button; instead, align the action placement with the new inline integration (e.g., demote/remove the header button or change it to a subtle 'Manage' action within the new inline section) while keeping all recurring chore functionality unchanged.",
+        "summary": "In the Today Focus section, display only tasks that are due today (based on local calendar day) and show today’s assigned cook for today’s day key; do not include tasks for other days or tasks without a due date.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/components/TaskList.tsx"
+          "frontend/src/components/TodayFocus.tsx",
+          "frontend/src/utils/taskDayKey.ts"
         ],
         "matchedFiles": [
-          "frontend/src/components/TaskList.tsx"
+          "frontend/src/components/TodayFocus.tsx",
+          "frontend/src/utils/taskDayKey.ts"
+        ]
+      },
+      {
+        "id": "REQ-3",
+        "summary": "Implement appropriate loading and empty states within the Today Focus section using existing data sources (React Query hooks) so the panel remains stable and informative while tasks/cooking assignments (and profiles if used for labels) are loading or absent.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/components/TodayFocus.tsx",
+          "frontend/src/utils/cookingAssignmentLabel.ts"
+        ],
+        "matchedFiles": [
+          "frontend/src/components/TodayFocus.tsx",
+          "frontend/src/utils/cookingAssignmentLabel.ts"
         ]
       }
     ]
@@ -43,9 +56,10 @@
     "feature_evidence.json",
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
-    "frontend/src/components/RecurringChoresInlineSection.tsx",
-    "frontend/src/components/TaskList.tsx",
-    "frontend/src/utils/recurringChoresPreview.ts",
+    "frontend/src/App.tsx",
+    "frontend/src/components/TodayFocus.tsx",
+    "frontend/src/utils/cookingAssignmentLabel.ts",
+    "frontend/src/utils/taskDayKey.ts",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",

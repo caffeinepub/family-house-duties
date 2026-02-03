@@ -1,55 +1,71 @@
 {
   "kind": "build_request",
-  "title": "Improve main-page placement and integration of Recurring Chores",
+  "title": "Add persistent Today Focus panel showing today's tasks and cook across all views",
   "priority": "normal",
   "requirements": [
     {
       "id": "REQ-1",
-      "text": "Improve the discoverability and integration of the Recurring Chores feature within the main Tasks page by adding an inline, non-intrusive Recurring Chores section on the Task List view that surfaces a small preview of recurring chores (e.g., grouped by weekday and/or showing the next upcoming items) and provides a clear call-to-action to open the existing Recurring Chores management dialog.",
+      "text": "Add a persistent \"Today Focus\" section rendered at the top of the authenticated app content (below the Header and above the tab navigation/content) so it remains visible regardless of which main view/tab is active (Tasks, Dinner Rota, Calendar, People).",
       "target": "frontend",
       "source": {
         "messageIds": [
           "msg-4"
         ],
         "quotes": [
-          "Can you find a better placement or integration for the recurring chores feature on the main page?"
+          "Can you add a Today focus section\nA small panel at the top showing only today’s tasks and today’s cook, regardless of which view you’re in."
         ]
       },
       "acceptanceCriteria": [
-        "On the Tasks tab, users can see an inline Recurring Chores section without needing to open a modal first.",
-        "The inline section includes a prominent action (button/link) that opens the existing RecurringChoresDialog.",
-        "The inline section remains compact and does not visually compete with the primary task list (i.e., does not significantly increase clutter on mobile).",
-        "If there are no recurring chores, the inline section shows an empty-state message and a single action to add/manage recurring chores (opening the existing dialog)."
+        "When signed in, the Today Focus panel appears on all tabs without navigating away from the current view.",
+        "The Today Focus panel is positioned above the TabsList/tab content within the main app layout.",
+        "User-facing text uses English."
       ]
     },
     {
       "id": "REQ-2",
-      "text": "Refactor the existing Tasks page header actions so that Recurring Chores is not only a secondary header button; instead, align the action placement with the new inline integration (e.g., demote/remove the header button or change it to a subtle 'Manage' action within the new inline section) while keeping all recurring chore functionality unchanged.",
+      "text": "In the Today Focus section, display only tasks that are due today (based on local calendar day) and show today’s assigned cook for today’s day key; do not include tasks for other days or tasks without a due date.",
       "target": "frontend",
       "source": {
         "messageIds": [
           "msg-4"
         ],
         "quotes": [
-          "better placement or integration for the recurring chores feature on the main page"
+          "showing only today’s tasks and today’s cook"
         ]
       },
       "acceptanceCriteria": [
-        "Recurring chores management remains accessible from the Tasks page via an obvious action in/near the inline Recurring Chores section.",
-        "No existing recurring chore capabilities regress (create/edit/assign/delete still work via the dialog).",
-        "The Tasks page header remains focused on primary task actions (e.g., Add Task), with reduced competition from secondary actions."
+        "Tasks shown in Today Focus are limited to those whose dueDate maps to today’s local day key (yyyy-MM-dd).",
+        "Tasks with no dueDate are not shown in Today Focus.",
+        "Today’s cook shown corresponds to the cooking assignment for today’s day key (yyyy-MM-dd)."
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "text": "Implement appropriate loading and empty states within the Today Focus section using existing data sources (React Query hooks) so the panel remains stable and informative while tasks/cooking assignments (and profiles if used for labels) are loading or absent.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-4"
+        ],
+        "quotes": [
+          "A small panel at the top showing only today’s tasks and today’s cook"
+        ]
+      },
+      "acceptanceCriteria": [
+        "While relevant queries are loading, the Today Focus panel shows a skeleton/placeholder state instead of disappearing.",
+        "If there are no tasks due today, the panel clearly indicates there are no tasks due today.",
+        "If there is no cooking assignment for today, the panel clearly indicates no cook is assigned for today.",
+        "If profiles are available, the cook label in the panel prefers profile display names (consistent with existing cook label logic)."
       ]
     }
   ],
   "constraints": [
-    "Do not modify any files under frontend/src/components/ui (read-only shadcn components).",
-    "Do not change backend schemas or Motoko logic for this request; this is a UI/UX placement/integration change only.",
-    "Keep the existing RecurringChoresDialog functionality and permissions behavior unchanged."
+    "Do not edit files in frontend/immutablePaths (e.g., frontend/src/hooks/useInternetIdentity.ts(x), frontend/src/hooks/useActor.ts, frontend/src/main.tsx, frontend/src/components/ui/*). Compose existing UI components instead.",
+    "Respect the existing React Query caching and invalidation patterns (reuse existing hooks where possible)."
   ],
   "nonGoals": [
-    "Do not add new recurring chore backend APIs or change recurring chore data models.",
-    "Do not redesign the RecurringChoresDialog UI layout beyond what is required for integration/triggering from the Tasks page.",
-    "Do not add new tabs/routes/navigation items for recurring chores."
+    "Do not add new backend endpoints or change backend schema solely for the Today Focus panel.",
+    "Do not change existing task/calendar/dinner rota behavior beyond adding the new persistent Today Focus display."
   ],
   "imageRequirements": {
     "required": [],

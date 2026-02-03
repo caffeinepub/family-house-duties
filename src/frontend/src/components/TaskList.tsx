@@ -7,20 +7,22 @@ import { AddTaskDialog } from './AddTaskDialog';
 import { EditTaskDialog } from './EditTaskDialog';
 import { RecurringChoresDialog } from './RecurringChoresDialog';
 import { RecurringChoresInlineSection } from './RecurringChoresInlineSection';
+import { PersonBadge } from './PersonBadge';
 import {
   useGetAllTasks,
   useToggleTaskCompletion,
   useDeleteTask,
   useClearCompletedTasks,
+  useGetAllProfiles,
 } from '../hooks/useQueries';
 import type { Task } from '../backend';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import { useInternetIdentity } from '../hooks/useInternetIdentity';
-import { Principal } from '@icp-sdk/core/principal';
 import { groupTasksByDay } from '../utils/taskDueDayGrouping';
 import { Separator } from '@/components/ui/separator';
+import { resolvePersonDisplay, formatPrincipal } from '../utils/personProfiles';
 
 export function TaskList() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
@@ -29,6 +31,7 @@ export function TaskList() {
 
   const { identity } = useInternetIdentity();
   const { data: tasks = [], isLoading } = useGetAllTasks();
+  const { data: profiles = [] } = useGetAllProfiles();
   const toggleCompletion = useToggleTaskCompletion();
   const deleteTask = useDeleteTask();
   const clearCompleted = useClearCompletedTasks();
@@ -121,6 +124,7 @@ export function TaskList() {
                       <TaskCard
                         key={task.id.toString()}
                         task={task}
+                        profiles={profiles}
                         onToggle={handleToggle}
                         onEdit={setEditingTask}
                         onDelete={handleDelete}
@@ -158,6 +162,7 @@ export function TaskList() {
                       <TaskCard
                         key={task.id.toString()}
                         task={task}
+                        profiles={profiles}
                         onToggle={handleToggle}
                         onEdit={setEditingTask}
                         onDelete={handleDelete}
@@ -181,21 +186,21 @@ export function TaskList() {
 
 function TaskCard({
   task,
+  profiles,
   onToggle,
   onEdit,
   onDelete,
   canEdit,
 }: {
   task: Task;
+  profiles: any[];
   onToggle: (id: bigint) => void;
   onEdit: (task: Task) => void;
   onDelete: (id: bigint) => void;
   canEdit: boolean;
 }) {
-  const formatPrincipal = (principal: Principal) => {
-    const str = principal.toString();
-    return str.slice(0, 5) + '...' + str.slice(-3);
-  };
+  const createdByDisplay = resolvePersonDisplay(task.createdBy, profiles);
+  const assignedToDisplay = task.assignedTo ? resolvePersonDisplay(task.assignedTo, profiles) : null;
 
   const isRecurringTask = task.recurringChoreId !== undefined && task.recurringChoreId !== null;
 
@@ -253,18 +258,25 @@ function TaskCard({
             </div>
             
             <div className="flex flex-wrap items-center gap-2 text-xs">
-              <Badge variant="secondary" className="font-normal">
-                <User className="mr-1.5 h-3 w-3" />
-                {formatPrincipal(task.createdBy)}
-              </Badge>
-              {task.assignedTo && (
-                <Badge variant="outline" className="font-normal">
-                  <User className="mr-1.5 h-3 w-3" />
-                  Assigned: {formatPrincipal(task.assignedTo)}
-                </Badge>
+              <PersonBadge 
+                label={createdByDisplay.label} 
+                color={createdByDisplay.color} 
+                variant="secondary"
+                size="sm"
+              />
+              {assignedToDisplay && (
+                <div className="flex items-center gap-1">
+                  <span className="text-muted-foreground">→</span>
+                  <PersonBadge 
+                    label={assignedToDisplay.label} 
+                    color={assignedToDisplay.color} 
+                    variant="outline"
+                    size="sm"
+                  />
+                </div>
               )}
               {task.dueDate && (
-                <Badge variant="outline" className="font-normal">
+                <Badge variant="outline" className="font-normal text-xs px-2 py-0.5">
                   <CalendarIcon className="mr-1.5 h-3 w-3" />
                   {format(new Date(Number(task.dueDate) / 1000000), 'MMM d, yyyy')}
                 </Badge>

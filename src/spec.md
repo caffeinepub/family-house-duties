@@ -1,11 +1,12 @@
 # Specification
 
 ## Summary
-**Goal:** Make Recurring Chores easier to find and use from the main Tasks page without adding clutter or changing existing recurring chore functionality.
+**Goal:** Add a persistent Today Focus panel that always shows today’s due tasks and today’s assigned cook across all authenticated views.
 
 **Planned changes:**
-- Add a compact, inline “Recurring Chores” section to the Tasks tab Task List view that previews upcoming/grouped recurring chores and includes a clear action to open the existing RecurringChoresDialog.
-- Add an empty state for when no recurring chores exist, with a single call-to-action that opens the existing dialog to add/manage chores.
-- Refactor Tasks page header actions so Recurring Chores is no longer a competing secondary header button, aligning management access with the new inline section while keeping primary task actions prominent.
+- Add a “Today Focus” panel to the authenticated app layout, positioned below the Header and above the tab navigation/content so it remains visible on all main tabs (Tasks, Dinner Rota, Calendar, People).
+- In the Today Focus panel, show only tasks due today (local day key `yyyy-MM-dd`), excluding tasks without a due date and excluding tasks due on other days.
+- In the Today Focus panel, show today’s cook based on the dinner rota assignment for today’s day key (`yyyy-MM-dd`), preferring profile display names when available.
+- Provide stable loading (skeleton/placeholder) and clear empty states for “no tasks due today” and “no cook assigned today,” using existing React Query data sources.
 
-**User-visible outcome:** On the Tasks tab, users can see a small Recurring Chores preview inline and can open the existing recurring chores management dialog from an obvious action there (including when no recurring chores exist).
+**User-visible outcome:** When signed in, users see a small Today Focus section at the top of the app on every tab, summarizing only today’s tasks and today’s cook with clear loading/empty messaging.

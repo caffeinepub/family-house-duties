@@ -17,7 +17,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { CalendarIcon } from 'lucide-react';
 import { format } from 'date-fns';
-import { useInternetIdentity } from '../hooks/useInternetIdentity';
+import { PersonProfileSelect } from './PersonProfileSelect';
 import { Principal } from '@icp-sdk/core/principal';
 
 interface EditTaskDialogProps {
@@ -34,7 +34,6 @@ export function EditTaskDialog({ task, open, onOpenChange }: EditTaskDialogProps
     task.dueDate ? new Date(Number(task.dueDate) / 1000000) : undefined
   );
 
-  const { identity } = useInternetIdentity();
   const updateTask = useUpdateTask();
 
   useEffect(() => {
@@ -56,10 +55,7 @@ export function EditTaskDialog({ task, open, onOpenChange }: EditTaskDialogProps
       try {
         assignee = Principal.fromText(assignedToPrincipal.trim());
       } catch (error) {
-        // If it's not a valid principal, try to use current user's principal
-        if (identity) {
-          assignee = identity.getPrincipal();
-        }
+        // Invalid principal, skip assignment
       }
     }
 
@@ -77,12 +73,6 @@ export function EditTaskDialog({ task, open, onOpenChange }: EditTaskDialogProps
         },
       }
     );
-  };
-
-  const assignToMe = () => {
-    if (identity) {
-      setAssignedToPrincipal(identity.getPrincipal().toString());
-    }
   };
 
   return (
@@ -114,24 +104,13 @@ export function EditTaskDialog({ task, open, onOpenChange }: EditTaskDialogProps
                 rows={3}
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="edit-assignedTo">Assigned To (Principal ID)</Label>
-              <div className="flex gap-2">
-                <Input
-                  id="edit-assignedTo"
-                  placeholder="Principal ID or leave empty"
-                  value={assignedToPrincipal}
-                  onChange={(e) => setAssignedToPrincipal(e.target.value)}
-                  className="flex-1"
-                />
-                <Button type="button" variant="outline" onClick={assignToMe}>
-                  Me
-                </Button>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Enter a family member's principal ID or click "Me" to assign to yourself
-              </p>
-            </div>
+            <PersonProfileSelect
+              value={assignedToPrincipal}
+              onChange={setAssignedToPrincipal}
+              label="Assigned To"
+              placeholder="Select a person or enter Principal ID"
+              showMeButton={true}
+            />
             <div className="space-y-2">
               <Label>Due Date</Label>
               <Popover>

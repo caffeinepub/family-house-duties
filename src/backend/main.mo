@@ -6,14 +6,14 @@ import List "mo:core/List";
 import Runtime "mo:core/Runtime";
 import Iter "mo:core/Iter";
 import Time "mo:core/Time";
-import Int "mo:core/Int";
 import Principal "mo:core/Principal";
 import Order "mo:core/Order";
 
 import MixinAuthorization "authorization/MixinAuthorization";
 import AccessControl "authorization/access-control";
 
-// RecurrentChores actor with migration
+
+// Apply migration to run before actor initialization.
 
 actor {
   type Task = {
@@ -30,6 +30,7 @@ actor {
   type CookingAssignment = {
     day : Text;
     cook : ?Principal;
+    cookName : ?Text;
     assignedBy : Principal;
   };
 
@@ -55,19 +56,28 @@ actor {
     assignedTo : ?Principal;
   };
 
+  type Timeline = {
+    #weeklies;
+    #fortnightly;
+    #monthly;
+  };
+
   type RecurringChore = {
     id : Nat;
     name : Text;
     description : Text;
     assignedTo : ?Principal;
+    timeline : Timeline;
     weekday : Nat;
     createdBy : Principal;
+    paused : Bool; // New field to track if the chore is paused
   };
 
   type CreateRecurringChoreRequest = {
     name : Text;
     description : Text;
     assignedTo : ?Principal;
+    timeline : Timeline;
     weekday : Nat;
   };
 
@@ -76,7 +86,19 @@ actor {
     name : Text;
     description : Text;
     assignedTo : ?Principal;
+    timeline : Timeline;
     weekday : Nat;
+  };
+
+  type PersonProfile = {
+    principal : Principal;
+    displayName : Text;
+    color : Text;
+  };
+
+  type PauseResumeChoreRequest = {
+    id : Nat;
+    pause : Bool;
   };
 
   let accessControlState = AccessControl.initState();
@@ -87,6 +109,48 @@ actor {
   let tasks = Map.empty<Nat, Task>();
   let cookingAssignments = Map.empty<Text, CookingAssignment>();
   let recurringChores = Map.empty<Nat, RecurringChore>();
+  let peopleProfiles = Map.empty<Principal, PersonProfile>();
+
+  // === People Profile APIs ===
+  public shared ({ caller }) func upsertProfile(profile : PersonProfile) : async () {
+    if (not AccessControl.hasPermission(accessControlState, caller, #user)) {
+      Runtime.trap("Unauthorized: Must be a registered user to manage profiles");
+    };
+    if (caller != profile.principal) {
+      Runtime.trap("Unauthorized: Can only manage your own profile");
+    };
+    peopleProfiles.add(profile.principal, profile);
+  };
+
+  public shared ({ caller }) func deleteProfile(principal : Principal) : async () {
+    if (not AccessControl.hasPermission(accessControlState, caller, #user)) {
+      Runtime.trap("Unauthorized: Must be a registered user to delete profiles");
+    };
+    if (caller != principal) {
+      Runtime.trap("Unauthorized: Can only delete your own profile");
+    };
+    switch (peopleProfiles.get(principal)) {
+      case (null) { Runtime.trap("Profile not found") };
+      case (?_profile) { peopleProfiles.remove(principal) };
+    };
+  };
+
+  public query ({ caller }) func getProfile(principal : Principal) : async PersonProfile {
+    if (not AccessControl.hasPermission(accessControlState, caller, #user)) {
+      Runtime.trap("Unauthorized: Must be a registered user to view profiles");
+    };
+    switch (peopleProfiles.get(principal)) {
+      case (null) { Runtime.trap("Profile not found for requested principal") };
+      case (?profile) { profile };
+    };
+  };
+
+  public query ({ caller }) func getAllProfiles() : async [PersonProfile] {
+    if (not AccessControl.hasPermission(accessControlState, caller, #user)) {
+      Runtime.trap("Unauthorized: Must be a registered user to view profiles");
+    };
+    peopleProfiles.values().toArray();
+  };
 
   public shared ({ caller }) func addTask(request : AddTaskRequest) : async Nat {
     if (not AccessControl.hasPermission(accessControlState, caller, #user)) {
@@ -107,10 +171,11 @@ actor {
     task.id;
   };
 
-  public type GetTaskRequest = { id : Nat };
+  public type _GetTaskRequest = { id : Nat };
   public type _AssignCookingDayRequest = {
     day : Text;
     cook : ?Principal;
+    cookName : ?Text;
   };
 
   public shared ({ caller }) func updateTask(id : Nat, name : Text, description : Text, dueDate : ?Time.Time, assignedTo : ?Principal) : async () {
@@ -193,10 +258,12 @@ actor {
   public type AssignCookingDayRequest = {
     day : Text;
     cook : ?Principal;
+    cookName : ?Text;
   };
   public type UpdateCookingDayRequest = {
     day : Text;
     cook : ?Principal;
+    cookName : ?Text;
   };
 
   public shared ({ caller }) func assignCookingDay(request : AssignCookingDayRequest) : async () {
@@ -206,6 +273,7 @@ actor {
     let assignment : CookingAssignment = {
       day = request.day;
       cook = request.cook;
+      cookName = request.cookName;
       assignedBy = caller;
     };
     cookingAssignments.add(request.day, assignment);
@@ -225,6 +293,7 @@ actor {
         let updatedAssignment : CookingAssignment = {
           day = request.day;
           cook = request.cook;
+          cookName = request.cookName;
           assignedBy = caller;
         };
         cookingAssignments.add(request.day, updatedAssignment);
@@ -244,8 +313,10 @@ actor {
       name = request.name;
       description = request.description;
       assignedTo = request.assignedTo;
+      timeline = request.timeline;
       weekday = request.weekday;
       createdBy = caller;
+      paused = false;
     };
     nextRecurringChoreId += 1;
     recurringChores.add(chore.id, chore);
@@ -270,8 +341,10 @@ actor {
           name = request.name;
           description = request.description;
           assignedTo = request.assignedTo;
+          timeline = request.timeline;
           weekday = request.weekday;
           createdBy = existingChore.createdBy;
+          paused = existingChore.paused;
         };
         recurringChores.add(request.id, updatedChore);
       };
@@ -293,11 +366,49 @@ actor {
     };
   };
 
+  public shared ({ caller }) func pauseResumeRecurringChore(request : PauseResumeChoreRequest) : async () {
+    if (not AccessControl.hasPermission(accessControlState, caller, #user)) {
+      Runtime.trap("Unauthorized: Must be a registered user to pause or resume recurring chores");
+    };
+    switch (recurringChores.get(request.id)) {
+      case (null) { Runtime.trap("Recurring chore not found") };
+      case (?existingChore) {
+        if (existingChore.createdBy != caller) {
+          Runtime.trap("Cannot pause/resume chore you did not create");
+        };
+        let updatedChore : RecurringChore = {
+          id = existingChore.id;
+          name = existingChore.name;
+          description = existingChore.description;
+          assignedTo = existingChore.assignedTo;
+          timeline = existingChore.timeline;
+          weekday = existingChore.weekday;
+          createdBy = existingChore.createdBy;
+          paused = request.pause;
+        };
+        recurringChores.add(request.id, updatedChore);
+      };
+    };
+  };
+
   public query ({ caller }) func getAllRecurringChores() : async [RecurringChore] {
     if (not AccessControl.hasPermission(accessControlState, caller, #user)) {
       Runtime.trap("Unauthorized: Must be a registered user to view recurring chores");
     };
     recurringChores.values().toArray();
+  };
+
+  public query ({ caller }) func getActiveRecurringChores() : async [RecurringChore] {
+    if (not AccessControl.hasPermission(accessControlState, caller, #user)) {
+      Runtime.trap("Unauthorized: Must be a registered user to view recurring chores");
+    };
+    let activeChores = List.empty<RecurringChore>();
+    for (chore in recurringChores.values()) {
+      if (not chore.paused) {
+        activeChores.add(chore);
+      };
+    };
+    activeChores.toArray();
   };
 
   public query ({ caller }) func getRecurringChore(id : Nat) : async RecurringChore {
@@ -368,11 +479,11 @@ actor {
     calendarDays.toArray();
   };
 
-  public query ({ caller }) func getTask(request : GetTaskRequest) : async Task {
+  public query ({ caller }) func getTask(id : Nat) : async Task {
     if (not AccessControl.hasPermission(accessControlState, caller, #user)) {
       Runtime.trap("Unauthorized: Must be a registered user to view tasks");
     };
-    switch (tasks.get(request.id)) {
+    switch (tasks.get(id)) {
       case (null) { Runtime.trap("Task not found") };
       case (?task) { task };
     };

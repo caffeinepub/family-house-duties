@@ -94,6 +94,7 @@ export interface CreateRecurringChoreRequest {
     assignedTo?: Principal;
     name: string;
     description: string;
+    timeline: Timeline;
 }
 export interface GetCookingAssignment {
     day: string;
@@ -106,6 +107,8 @@ export interface RecurringChore {
     name: string;
     createdBy: Principal;
     description: string;
+    paused: boolean;
+    timeline: Timeline;
 }
 export interface GetCalendarRequest {
     endDate: Time;
@@ -128,6 +131,7 @@ export interface CookingAssignment {
     day: string;
     assignedBy: Principal;
     cook?: Principal;
+    cookName?: string;
 }
 export interface CalendarDay {
     tasks: Array<Task>;
@@ -137,10 +141,16 @@ export interface CalendarDay {
 export interface UpdateCookingDayRequest {
     day: string;
     cook?: Principal;
+    cookName?: string;
+}
+export interface PauseResumeChoreRequest {
+    id: bigint;
+    pause: boolean;
 }
 export interface AssignCookingDayRequest {
     day: string;
     cook?: Principal;
+    cookName?: string;
 }
 export interface FilterByAssigneeRequest {
     assignee: Principal;
@@ -151,15 +161,23 @@ export interface AddTaskRequest {
     dueDate?: Time;
     description: string;
 }
-export interface GetTaskRequest {
-    id: bigint;
-}
 export interface UpdateRecurringChoreRequest {
     id: bigint;
     weekday: bigint;
     assignedTo?: Principal;
     name: string;
     description: string;
+    timeline: Timeline;
+}
+export interface PersonProfile {
+    principal: Principal;
+    displayName: string;
+    color: string;
+}
+export enum Timeline {
+    fortnightly = "fortnightly",
+    weeklies = "weeklies",
+    monthly = "monthly"
 }
 export enum UserRole {
     admin = "admin",
@@ -173,8 +191,11 @@ export interface backendInterface {
     assignCookingDay(request: AssignCookingDayRequest): Promise<void>;
     clearCompletedTasks(): Promise<void>;
     createRecurringChore(request: CreateRecurringChoreRequest): Promise<bigint>;
+    deleteProfile(principal: Principal): Promise<void>;
     deleteRecurringChore(id: bigint): Promise<void>;
     deleteTask(id: bigint): Promise<void>;
+    getActiveRecurringChores(): Promise<Array<RecurringChore>>;
+    getAllProfiles(): Promise<Array<PersonProfile>>;
     getAllRecurringChores(): Promise<Array<RecurringChore>>;
     getAllTasks(): Promise<Array<Task>>;
     getCalendar(request: GetCalendarRequest): Promise<Array<CalendarDay>>;
@@ -183,18 +204,21 @@ export interface backendInterface {
     getCookingAssignment(request: GetCookingAssignment): Promise<CookingAssignment>;
     getCookingAssignments(): Promise<Array<CookingAssignment>>;
     getPendingTasks(): Promise<Array<Task>>;
+    getProfile(principal: Principal): Promise<PersonProfile>;
     getRecurringChore(id: bigint): Promise<RecurringChore>;
-    getTask(request: GetTaskRequest): Promise<Task>;
+    getTask(id: bigint): Promise<Task>;
     getTasksByAssignee(request: FilterByAssigneeRequest): Promise<Array<Task>>;
     getTasksByDate(date: Time): Promise<Array<Task>>;
     isCallerAdmin(): Promise<boolean>;
+    pauseResumeRecurringChore(request: PauseResumeChoreRequest): Promise<void>;
     sortTasksByDueDate(request: SortTasksByDueDateRequest): Promise<Array<Task>>;
     toggleTaskCompletion(id: bigint): Promise<void>;
     updateCookingDay(request: UpdateCookingDayRequest): Promise<void>;
     updateRecurringChore(request: UpdateRecurringChoreRequest): Promise<void>;
     updateTask(id: bigint, name: string, description: string, dueDate: Time | null, assignedTo: Principal | null): Promise<void>;
+    upsertProfile(profile: PersonProfile): Promise<void>;
 }
-import type { AddTaskRequest as _AddTaskRequest, AssignCookingDayRequest as _AssignCookingDayRequest, CalendarDay as _CalendarDay, CookingAssignment as _CookingAssignment, CreateRecurringChoreRequest as _CreateRecurringChoreRequest, RecurringChore as _RecurringChore, SortTasksByDueDateRequest as _SortTasksByDueDateRequest, Task as _Task, Time as _Time, UpdateCookingDayRequest as _UpdateCookingDayRequest, UpdateRecurringChoreRequest as _UpdateRecurringChoreRequest, UserRole as _UserRole } from "./declarations/backend.did.d.ts";
+import type { AddTaskRequest as _AddTaskRequest, AssignCookingDayRequest as _AssignCookingDayRequest, CalendarDay as _CalendarDay, CookingAssignment as _CookingAssignment, CreateRecurringChoreRequest as _CreateRecurringChoreRequest, RecurringChore as _RecurringChore, SortTasksByDueDateRequest as _SortTasksByDueDateRequest, Task as _Task, Time as _Time, Timeline as _Timeline, UpdateCookingDayRequest as _UpdateCookingDayRequest, UpdateRecurringChoreRequest as _UpdateRecurringChoreRequest, UserRole as _UserRole } from "./declarations/backend.did.d.ts";
 export class Backend implements backendInterface {
     constructor(private actor: ActorSubclass<_SERVICE>, private _uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, private _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, private processError?: (error: unknown) => never){}
     async _initializeAccessControlWithSecret(arg0: string): Promise<void> {
@@ -281,6 +305,20 @@ export class Backend implements backendInterface {
             return result;
         }
     }
+    async deleteProfile(arg0: Principal): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.deleteProfile(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.deleteProfile(arg0);
+            return result;
+        }
+    }
     async deleteRecurringChore(arg0: bigint): Promise<void> {
         if (this.processError) {
             try {
@@ -309,172 +347,214 @@ export class Backend implements backendInterface {
             return result;
         }
     }
+    async getActiveRecurringChores(): Promise<Array<RecurringChore>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getActiveRecurringChores();
+                return from_candid_vec_n11(this._uploadFile, this._downloadFile, result);
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getActiveRecurringChores();
+            return from_candid_vec_n11(this._uploadFile, this._downloadFile, result);
+        }
+    }
+    async getAllProfiles(): Promise<Array<PersonProfile>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getAllProfiles();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getAllProfiles();
+            return result;
+        }
+    }
     async getAllRecurringChores(): Promise<Array<RecurringChore>> {
         if (this.processError) {
             try {
                 const result = await this.actor.getAllRecurringChores();
-                return from_candid_vec_n9(this._uploadFile, this._downloadFile, result);
+                return from_candid_vec_n11(this._uploadFile, this._downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
             const result = await this.actor.getAllRecurringChores();
-            return from_candid_vec_n9(this._uploadFile, this._downloadFile, result);
+            return from_candid_vec_n11(this._uploadFile, this._downloadFile, result);
         }
     }
     async getAllTasks(): Promise<Array<Task>> {
         if (this.processError) {
             try {
                 const result = await this.actor.getAllTasks();
-                return from_candid_vec_n13(this._uploadFile, this._downloadFile, result);
+                return from_candid_vec_n17(this._uploadFile, this._downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
             const result = await this.actor.getAllTasks();
-            return from_candid_vec_n13(this._uploadFile, this._downloadFile, result);
+            return from_candid_vec_n17(this._uploadFile, this._downloadFile, result);
         }
     }
     async getCalendar(arg0: GetCalendarRequest): Promise<Array<CalendarDay>> {
         if (this.processError) {
             try {
                 const result = await this.actor.getCalendar(arg0);
-                return from_candid_vec_n18(this._uploadFile, this._downloadFile, result);
+                return from_candid_vec_n22(this._uploadFile, this._downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
             const result = await this.actor.getCalendar(arg0);
-            return from_candid_vec_n18(this._uploadFile, this._downloadFile, result);
+            return from_candid_vec_n22(this._uploadFile, this._downloadFile, result);
         }
     }
     async getCallerUserRole(): Promise<UserRole> {
         if (this.processError) {
             try {
                 const result = await this.actor.getCallerUserRole();
-                return from_candid_UserRole_n24(this._uploadFile, this._downloadFile, result);
+                return from_candid_UserRole_n29(this._uploadFile, this._downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
             const result = await this.actor.getCallerUserRole();
-            return from_candid_UserRole_n24(this._uploadFile, this._downloadFile, result);
+            return from_candid_UserRole_n29(this._uploadFile, this._downloadFile, result);
         }
     }
     async getCompletedTasks(): Promise<Array<Task>> {
         if (this.processError) {
             try {
                 const result = await this.actor.getCompletedTasks();
-                return from_candid_vec_n13(this._uploadFile, this._downloadFile, result);
+                return from_candid_vec_n17(this._uploadFile, this._downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
             const result = await this.actor.getCompletedTasks();
-            return from_candid_vec_n13(this._uploadFile, this._downloadFile, result);
+            return from_candid_vec_n17(this._uploadFile, this._downloadFile, result);
         }
     }
     async getCookingAssignment(arg0: GetCookingAssignment): Promise<CookingAssignment> {
         if (this.processError) {
             try {
                 const result = await this.actor.getCookingAssignment(arg0);
-                return from_candid_CookingAssignment_n22(this._uploadFile, this._downloadFile, result);
+                return from_candid_CookingAssignment_n26(this._uploadFile, this._downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
             const result = await this.actor.getCookingAssignment(arg0);
-            return from_candid_CookingAssignment_n22(this._uploadFile, this._downloadFile, result);
+            return from_candid_CookingAssignment_n26(this._uploadFile, this._downloadFile, result);
         }
     }
     async getCookingAssignments(): Promise<Array<CookingAssignment>> {
         if (this.processError) {
             try {
                 const result = await this.actor.getCookingAssignments();
-                return from_candid_vec_n26(this._uploadFile, this._downloadFile, result);
+                return from_candid_vec_n31(this._uploadFile, this._downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
             const result = await this.actor.getCookingAssignments();
-            return from_candid_vec_n26(this._uploadFile, this._downloadFile, result);
+            return from_candid_vec_n31(this._uploadFile, this._downloadFile, result);
         }
     }
     async getPendingTasks(): Promise<Array<Task>> {
         if (this.processError) {
             try {
                 const result = await this.actor.getPendingTasks();
-                return from_candid_vec_n13(this._uploadFile, this._downloadFile, result);
+                return from_candid_vec_n17(this._uploadFile, this._downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
             const result = await this.actor.getPendingTasks();
-            return from_candid_vec_n13(this._uploadFile, this._downloadFile, result);
+            return from_candid_vec_n17(this._uploadFile, this._downloadFile, result);
+        }
+    }
+    async getProfile(arg0: Principal): Promise<PersonProfile> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getProfile(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getProfile(arg0);
+            return result;
         }
     }
     async getRecurringChore(arg0: bigint): Promise<RecurringChore> {
         if (this.processError) {
             try {
                 const result = await this.actor.getRecurringChore(arg0);
-                return from_candid_RecurringChore_n10(this._uploadFile, this._downloadFile, result);
+                return from_candid_RecurringChore_n12(this._uploadFile, this._downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
             const result = await this.actor.getRecurringChore(arg0);
-            return from_candid_RecurringChore_n10(this._uploadFile, this._downloadFile, result);
+            return from_candid_RecurringChore_n12(this._uploadFile, this._downloadFile, result);
         }
     }
-    async getTask(arg0: GetTaskRequest): Promise<Task> {
+    async getTask(arg0: bigint): Promise<Task> {
         if (this.processError) {
             try {
                 const result = await this.actor.getTask(arg0);
-                return from_candid_Task_n14(this._uploadFile, this._downloadFile, result);
+                return from_candid_Task_n18(this._uploadFile, this._downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
             const result = await this.actor.getTask(arg0);
-            return from_candid_Task_n14(this._uploadFile, this._downloadFile, result);
+            return from_candid_Task_n18(this._uploadFile, this._downloadFile, result);
         }
     }
     async getTasksByAssignee(arg0: FilterByAssigneeRequest): Promise<Array<Task>> {
         if (this.processError) {
             try {
                 const result = await this.actor.getTasksByAssignee(arg0);
-                return from_candid_vec_n13(this._uploadFile, this._downloadFile, result);
+                return from_candid_vec_n17(this._uploadFile, this._downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
             const result = await this.actor.getTasksByAssignee(arg0);
-            return from_candid_vec_n13(this._uploadFile, this._downloadFile, result);
+            return from_candid_vec_n17(this._uploadFile, this._downloadFile, result);
         }
     }
     async getTasksByDate(arg0: Time): Promise<Array<Task>> {
         if (this.processError) {
             try {
                 const result = await this.actor.getTasksByDate(arg0);
-                return from_candid_vec_n13(this._uploadFile, this._downloadFile, result);
+                return from_candid_vec_n17(this._uploadFile, this._downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
             const result = await this.actor.getTasksByDate(arg0);
-            return from_candid_vec_n13(this._uploadFile, this._downloadFile, result);
+            return from_candid_vec_n17(this._uploadFile, this._downloadFile, result);
         }
     }
     async isCallerAdmin(): Promise<boolean> {
@@ -491,18 +571,32 @@ export class Backend implements backendInterface {
             return result;
         }
     }
-    async sortTasksByDueDate(arg0: SortTasksByDueDateRequest): Promise<Array<Task>> {
+    async pauseResumeRecurringChore(arg0: PauseResumeChoreRequest): Promise<void> {
         if (this.processError) {
             try {
-                const result = await this.actor.sortTasksByDueDate(to_candid_SortTasksByDueDateRequest_n27(this._uploadFile, this._downloadFile, arg0));
-                return from_candid_vec_n13(this._uploadFile, this._downloadFile, result);
+                const result = await this.actor.pauseResumeRecurringChore(arg0);
+                return result;
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor.sortTasksByDueDate(to_candid_SortTasksByDueDateRequest_n27(this._uploadFile, this._downloadFile, arg0));
-            return from_candid_vec_n13(this._uploadFile, this._downloadFile, result);
+            const result = await this.actor.pauseResumeRecurringChore(arg0);
+            return result;
+        }
+    }
+    async sortTasksByDueDate(arg0: SortTasksByDueDateRequest): Promise<Array<Task>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.sortTasksByDueDate(to_candid_SortTasksByDueDateRequest_n32(this._uploadFile, this._downloadFile, arg0));
+                return from_candid_vec_n17(this._uploadFile, this._downloadFile, result);
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.sortTasksByDueDate(to_candid_SortTasksByDueDateRequest_n32(this._uploadFile, this._downloadFile, arg0));
+            return from_candid_vec_n17(this._uploadFile, this._downloadFile, result);
         }
     }
     async toggleTaskCompletion(arg0: bigint): Promise<void> {
@@ -522,80 +616,102 @@ export class Backend implements backendInterface {
     async updateCookingDay(arg0: UpdateCookingDayRequest): Promise<void> {
         if (this.processError) {
             try {
-                const result = await this.actor.updateCookingDay(to_candid_UpdateCookingDayRequest_n32(this._uploadFile, this._downloadFile, arg0));
+                const result = await this.actor.updateCookingDay(to_candid_UpdateCookingDayRequest_n37(this._uploadFile, this._downloadFile, arg0));
                 return result;
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor.updateCookingDay(to_candid_UpdateCookingDayRequest_n32(this._uploadFile, this._downloadFile, arg0));
+            const result = await this.actor.updateCookingDay(to_candid_UpdateCookingDayRequest_n37(this._uploadFile, this._downloadFile, arg0));
             return result;
         }
     }
     async updateRecurringChore(arg0: UpdateRecurringChoreRequest): Promise<void> {
         if (this.processError) {
             try {
-                const result = await this.actor.updateRecurringChore(to_candid_UpdateRecurringChoreRequest_n33(this._uploadFile, this._downloadFile, arg0));
+                const result = await this.actor.updateRecurringChore(to_candid_UpdateRecurringChoreRequest_n38(this._uploadFile, this._downloadFile, arg0));
                 return result;
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor.updateRecurringChore(to_candid_UpdateRecurringChoreRequest_n33(this._uploadFile, this._downloadFile, arg0));
+            const result = await this.actor.updateRecurringChore(to_candid_UpdateRecurringChoreRequest_n38(this._uploadFile, this._downloadFile, arg0));
             return result;
         }
     }
     async updateTask(arg0: bigint, arg1: string, arg2: string, arg3: Time | null, arg4: Principal | null): Promise<void> {
         if (this.processError) {
             try {
-                const result = await this.actor.updateTask(arg0, arg1, arg2, to_candid_opt_n35(this._uploadFile, this._downloadFile, arg3), to_candid_opt_n36(this._uploadFile, this._downloadFile, arg4));
+                const result = await this.actor.updateTask(arg0, arg1, arg2, to_candid_opt_n40(this._uploadFile, this._downloadFile, arg3), to_candid_opt_n41(this._uploadFile, this._downloadFile, arg4));
                 return result;
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor.updateTask(arg0, arg1, arg2, to_candid_opt_n35(this._uploadFile, this._downloadFile, arg3), to_candid_opt_n36(this._uploadFile, this._downloadFile, arg4));
+            const result = await this.actor.updateTask(arg0, arg1, arg2, to_candid_opt_n40(this._uploadFile, this._downloadFile, arg3), to_candid_opt_n41(this._uploadFile, this._downloadFile, arg4));
+            return result;
+        }
+    }
+    async upsertProfile(arg0: PersonProfile): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.upsertProfile(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.upsertProfile(arg0);
             return result;
         }
     }
 }
-function from_candid_CalendarDay_n19(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _CalendarDay): CalendarDay {
-    return from_candid_record_n20(_uploadFile, _downloadFile, value);
+function from_candid_CalendarDay_n23(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _CalendarDay): CalendarDay {
+    return from_candid_record_n24(_uploadFile, _downloadFile, value);
 }
-function from_candid_CookingAssignment_n22(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _CookingAssignment): CookingAssignment {
-    return from_candid_record_n23(_uploadFile, _downloadFile, value);
+function from_candid_CookingAssignment_n26(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _CookingAssignment): CookingAssignment {
+    return from_candid_record_n27(_uploadFile, _downloadFile, value);
 }
-function from_candid_RecurringChore_n10(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _RecurringChore): RecurringChore {
-    return from_candid_record_n11(_uploadFile, _downloadFile, value);
+function from_candid_RecurringChore_n12(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _RecurringChore): RecurringChore {
+    return from_candid_record_n13(_uploadFile, _downloadFile, value);
 }
-function from_candid_Task_n14(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _Task): Task {
-    return from_candid_record_n15(_uploadFile, _downloadFile, value);
+function from_candid_Task_n18(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _Task): Task {
+    return from_candid_record_n19(_uploadFile, _downloadFile, value);
 }
-function from_candid_UserRole_n24(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _UserRole): UserRole {
-    return from_candid_variant_n25(_uploadFile, _downloadFile, value);
+function from_candid_Timeline_n15(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _Timeline): Timeline {
+    return from_candid_variant_n16(_uploadFile, _downloadFile, value);
 }
-function from_candid_opt_n12(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [Principal]): Principal | null {
+function from_candid_UserRole_n29(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _UserRole): UserRole {
+    return from_candid_variant_n30(_uploadFile, _downloadFile, value);
+}
+function from_candid_opt_n14(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [Principal]): Principal | null {
     return value.length === 0 ? null : value[0];
 }
-function from_candid_opt_n16(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_Time]): Time | null {
+function from_candid_opt_n20(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_Time]): Time | null {
     return value.length === 0 ? null : value[0];
 }
-function from_candid_opt_n17(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [bigint]): bigint | null {
+function from_candid_opt_n21(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [bigint]): bigint | null {
     return value.length === 0 ? null : value[0];
 }
-function from_candid_opt_n21(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_CookingAssignment]): CookingAssignment | null {
-    return value.length === 0 ? null : from_candid_CookingAssignment_n22(_uploadFile, _downloadFile, value[0]);
+function from_candid_opt_n25(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_CookingAssignment]): CookingAssignment | null {
+    return value.length === 0 ? null : from_candid_CookingAssignment_n26(_uploadFile, _downloadFile, value[0]);
 }
-function from_candid_record_n11(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+function from_candid_opt_n28(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [string]): string | null {
+    return value.length === 0 ? null : value[0];
+}
+function from_candid_record_n13(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
     id: bigint;
     weekday: bigint;
     assignedTo: [] | [Principal];
     name: string;
     createdBy: Principal;
     description: string;
+    paused: boolean;
+    timeline: _Timeline;
 }): {
     id: bigint;
     weekday: bigint;
@@ -603,17 +719,21 @@ function from_candid_record_n11(_uploadFile: (file: ExternalBlob) => Promise<Uin
     name: string;
     createdBy: Principal;
     description: string;
+    paused: boolean;
+    timeline: Timeline;
 } {
     return {
         id: value.id,
         weekday: value.weekday,
-        assignedTo: record_opt_to_undefined(from_candid_opt_n12(_uploadFile, _downloadFile, value.assignedTo)),
+        assignedTo: record_opt_to_undefined(from_candid_opt_n14(_uploadFile, _downloadFile, value.assignedTo)),
         name: value.name,
         createdBy: value.createdBy,
-        description: value.description
+        description: value.description,
+        paused: value.paused,
+        timeline: from_candid_Timeline_n15(_uploadFile, _downloadFile, value.timeline)
     };
 }
-function from_candid_record_n15(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+function from_candid_record_n19(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
     id: bigint;
     assignedTo: [] | [Principal];
     name: string;
@@ -634,16 +754,16 @@ function from_candid_record_n15(_uploadFile: (file: ExternalBlob) => Promise<Uin
 } {
     return {
         id: value.id,
-        assignedTo: record_opt_to_undefined(from_candid_opt_n12(_uploadFile, _downloadFile, value.assignedTo)),
+        assignedTo: record_opt_to_undefined(from_candid_opt_n14(_uploadFile, _downloadFile, value.assignedTo)),
         name: value.name,
         createdBy: value.createdBy,
         completed: value.completed,
-        dueDate: record_opt_to_undefined(from_candid_opt_n16(_uploadFile, _downloadFile, value.dueDate)),
+        dueDate: record_opt_to_undefined(from_candid_opt_n20(_uploadFile, _downloadFile, value.dueDate)),
         description: value.description,
-        recurringChoreId: record_opt_to_undefined(from_candid_opt_n17(_uploadFile, _downloadFile, value.recurringChoreId))
+        recurringChoreId: record_opt_to_undefined(from_candid_opt_n21(_uploadFile, _downloadFile, value.recurringChoreId))
     };
 }
-function from_candid_record_n20(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+function from_candid_record_n24(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
     tasks: Array<_Task>;
     date: _Time;
     cookingAssignment: [] | [_CookingAssignment];
@@ -653,27 +773,39 @@ function from_candid_record_n20(_uploadFile: (file: ExternalBlob) => Promise<Uin
     cookingAssignment?: CookingAssignment;
 } {
     return {
-        tasks: from_candid_vec_n13(_uploadFile, _downloadFile, value.tasks),
+        tasks: from_candid_vec_n17(_uploadFile, _downloadFile, value.tasks),
         date: value.date,
-        cookingAssignment: record_opt_to_undefined(from_candid_opt_n21(_uploadFile, _downloadFile, value.cookingAssignment))
+        cookingAssignment: record_opt_to_undefined(from_candid_opt_n25(_uploadFile, _downloadFile, value.cookingAssignment))
     };
 }
-function from_candid_record_n23(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+function from_candid_record_n27(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
     day: string;
     assignedBy: Principal;
     cook: [] | [Principal];
+    cookName: [] | [string];
 }): {
     day: string;
     assignedBy: Principal;
     cook?: Principal;
+    cookName?: string;
 } {
     return {
         day: value.day,
         assignedBy: value.assignedBy,
-        cook: record_opt_to_undefined(from_candid_opt_n12(_uploadFile, _downloadFile, value.cook))
+        cook: record_opt_to_undefined(from_candid_opt_n14(_uploadFile, _downloadFile, value.cook)),
+        cookName: record_opt_to_undefined(from_candid_opt_n28(_uploadFile, _downloadFile, value.cookName))
     };
 }
-function from_candid_variant_n25(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+function from_candid_variant_n16(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+    fortnightly: null;
+} | {
+    weeklies: null;
+} | {
+    monthly: null;
+}): Timeline {
+    return "fortnightly" in value ? Timeline.fortnightly : "weeklies" in value ? Timeline.weeklies : "monthly" in value ? Timeline.monthly : value;
+}
+function from_candid_variant_n30(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
     admin: null;
 } | {
     user: null;
@@ -682,17 +814,17 @@ function from_candid_variant_n25(_uploadFile: (file: ExternalBlob) => Promise<Ui
 }): UserRole {
     return "admin" in value ? UserRole.admin : "user" in value ? UserRole.user : "guest" in value ? UserRole.guest : value;
 }
-function from_candid_vec_n13(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Array<_Task>): Array<Task> {
-    return value.map((x)=>from_candid_Task_n14(_uploadFile, _downloadFile, x));
+function from_candid_vec_n11(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Array<_RecurringChore>): Array<RecurringChore> {
+    return value.map((x)=>from_candid_RecurringChore_n12(_uploadFile, _downloadFile, x));
 }
-function from_candid_vec_n18(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Array<_CalendarDay>): Array<CalendarDay> {
-    return value.map((x)=>from_candid_CalendarDay_n19(_uploadFile, _downloadFile, x));
+function from_candid_vec_n17(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Array<_Task>): Array<Task> {
+    return value.map((x)=>from_candid_Task_n18(_uploadFile, _downloadFile, x));
 }
-function from_candid_vec_n26(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Array<_CookingAssignment>): Array<CookingAssignment> {
-    return value.map((x)=>from_candid_CookingAssignment_n22(_uploadFile, _downloadFile, x));
+function from_candid_vec_n22(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Array<_CalendarDay>): Array<CalendarDay> {
+    return value.map((x)=>from_candid_CalendarDay_n23(_uploadFile, _downloadFile, x));
 }
-function from_candid_vec_n9(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Array<_RecurringChore>): Array<RecurringChore> {
-    return value.map((x)=>from_candid_RecurringChore_n10(_uploadFile, _downloadFile, x));
+function from_candid_vec_n31(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Array<_CookingAssignment>): Array<CookingAssignment> {
+    return value.map((x)=>from_candid_CookingAssignment_n26(_uploadFile, _downloadFile, x));
 }
 function to_candid_AddTaskRequest_n1(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: AddTaskRequest): _AddTaskRequest {
     return to_candid_record_n2(_uploadFile, _downloadFile, value);
@@ -703,25 +835,28 @@ function to_candid_AssignCookingDayRequest_n5(_uploadFile: (file: ExternalBlob) 
 function to_candid_CreateRecurringChoreRequest_n7(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: CreateRecurringChoreRequest): _CreateRecurringChoreRequest {
     return to_candid_record_n8(_uploadFile, _downloadFile, value);
 }
-function to_candid_SortTasksByDueDateRequest_n27(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: SortTasksByDueDateRequest): _SortTasksByDueDateRequest {
-    return to_candid_record_n28(_uploadFile, _downloadFile, value);
+function to_candid_SortTasksByDueDateRequest_n32(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: SortTasksByDueDateRequest): _SortTasksByDueDateRequest {
+    return to_candid_record_n33(_uploadFile, _downloadFile, value);
 }
-function to_candid_Task_n30(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Task): _Task {
-    return to_candid_record_n31(_uploadFile, _downloadFile, value);
+function to_candid_Task_n35(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Task): _Task {
+    return to_candid_record_n36(_uploadFile, _downloadFile, value);
 }
-function to_candid_UpdateCookingDayRequest_n32(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: UpdateCookingDayRequest): _UpdateCookingDayRequest {
+function to_candid_Timeline_n9(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Timeline): _Timeline {
+    return to_candid_variant_n10(_uploadFile, _downloadFile, value);
+}
+function to_candid_UpdateCookingDayRequest_n37(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: UpdateCookingDayRequest): _UpdateCookingDayRequest {
     return to_candid_record_n6(_uploadFile, _downloadFile, value);
 }
-function to_candid_UpdateRecurringChoreRequest_n33(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: UpdateRecurringChoreRequest): _UpdateRecurringChoreRequest {
-    return to_candid_record_n34(_uploadFile, _downloadFile, value);
+function to_candid_UpdateRecurringChoreRequest_n38(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: UpdateRecurringChoreRequest): _UpdateRecurringChoreRequest {
+    return to_candid_record_n39(_uploadFile, _downloadFile, value);
 }
 function to_candid_UserRole_n3(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: UserRole): _UserRole {
     return to_candid_variant_n4(_uploadFile, _downloadFile, value);
 }
-function to_candid_opt_n35(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Time | null): [] | [_Time] {
+function to_candid_opt_n40(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Time | null): [] | [_Time] {
     return value === null ? candid_none() : candid_some(value);
 }
-function to_candid_opt_n36(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Principal | null): [] | [Principal] {
+function to_candid_opt_n41(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Principal | null): [] | [Principal] {
     return value === null ? candid_none() : candid_some(value);
 }
 function to_candid_record_n2(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
@@ -742,16 +877,16 @@ function to_candid_record_n2(_uploadFile: (file: ExternalBlob) => Promise<Uint8A
         description: value.description
     };
 }
-function to_candid_record_n28(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+function to_candid_record_n33(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
     tasks: Array<Task>;
 }): {
     tasks: Array<_Task>;
 } {
     return {
-        tasks: to_candid_vec_n29(_uploadFile, _downloadFile, value.tasks)
+        tasks: to_candid_vec_n34(_uploadFile, _downloadFile, value.tasks)
     };
 }
-function to_candid_record_n31(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+function to_candid_record_n36(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
     id: bigint;
     assignedTo?: Principal;
     name: string;
@@ -781,37 +916,43 @@ function to_candid_record_n31(_uploadFile: (file: ExternalBlob) => Promise<Uint8
         recurringChoreId: value.recurringChoreId ? candid_some(value.recurringChoreId) : candid_none()
     };
 }
-function to_candid_record_n34(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+function to_candid_record_n39(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
     id: bigint;
     weekday: bigint;
     assignedTo?: Principal;
     name: string;
     description: string;
+    timeline: Timeline;
 }): {
     id: bigint;
     weekday: bigint;
     assignedTo: [] | [Principal];
     name: string;
     description: string;
+    timeline: _Timeline;
 } {
     return {
         id: value.id,
         weekday: value.weekday,
         assignedTo: value.assignedTo ? candid_some(value.assignedTo) : candid_none(),
         name: value.name,
-        description: value.description
+        description: value.description,
+        timeline: to_candid_Timeline_n9(_uploadFile, _downloadFile, value.timeline)
     };
 }
 function to_candid_record_n6(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
     day: string;
     cook?: Principal;
+    cookName?: string;
 }): {
     day: string;
     cook: [] | [Principal];
+    cookName: [] | [string];
 } {
     return {
         day: value.day,
-        cook: value.cook ? candid_some(value.cook) : candid_none()
+        cook: value.cook ? candid_some(value.cook) : candid_none(),
+        cookName: value.cookName ? candid_some(value.cookName) : candid_none()
     };
 }
 function to_candid_record_n8(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
@@ -819,18 +960,36 @@ function to_candid_record_n8(_uploadFile: (file: ExternalBlob) => Promise<Uint8A
     assignedTo?: Principal;
     name: string;
     description: string;
+    timeline: Timeline;
 }): {
     weekday: bigint;
     assignedTo: [] | [Principal];
     name: string;
     description: string;
+    timeline: _Timeline;
 } {
     return {
         weekday: value.weekday,
         assignedTo: value.assignedTo ? candid_some(value.assignedTo) : candid_none(),
         name: value.name,
-        description: value.description
+        description: value.description,
+        timeline: to_candid_Timeline_n9(_uploadFile, _downloadFile, value.timeline)
     };
+}
+function to_candid_variant_n10(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Timeline): {
+    fortnightly: null;
+} | {
+    weeklies: null;
+} | {
+    monthly: null;
+} {
+    return value == Timeline.fortnightly ? {
+        fortnightly: null
+    } : value == Timeline.weeklies ? {
+        weeklies: null
+    } : value == Timeline.monthly ? {
+        monthly: null
+    } : value;
 }
 function to_candid_variant_n4(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: UserRole): {
     admin: null;
@@ -847,8 +1006,8 @@ function to_candid_variant_n4(_uploadFile: (file: ExternalBlob) => Promise<Uint8
         guest: null
     } : value;
 }
-function to_candid_vec_n29(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Array<Task>): Array<_Task> {
-    return value.map((x)=>to_candid_Task_n30(_uploadFile, _downloadFile, x));
+function to_candid_vec_n34(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Array<Task>): Array<_Task> {
+    return value.map((x)=>to_candid_Task_n35(_uploadFile, _downloadFile, x));
 }
 export interface CreateActorOptions {
     agent?: Agent;

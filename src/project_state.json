@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
-  "projectStateVersion": 15,
-  "summary": "Family House Duties is an Internet Computer (ICP) dapp for shared household management. Authenticated family members (via Internet Identity) can create and manage household tasks (with optional assignee and due date), mark tasks complete, and clear their own completed tasks. The app also provides a weekly “Dinner Rota” for assigning who cooks on each day, plus a monthly calendar overview combining tasks and cooking assignments. A Motoko canister implements task/rota storage and role-based access control, including an admin bootstrap mechanism via a secret token.",
+  "projectStateVersion": 76,
+  "summary": "Family House Duties is an Internet Computer (ICP) dapp for shared household management. Authenticated family members (via Internet Identity) can create and manage household tasks (with optional assignee and due date), mark tasks complete, and clear their own completed tasks. The app also provides a weekly “Dinner Rota” for assigning who cooks on each day, plus calendar views combining tasks and cooking assignments. A Motoko canister implements storage and role-based access control, including an admin bootstrap mechanism via a secret token. The app now also supports household member “People” profiles to provide friendly names/labels in place of raw principal IDs and to improve person selection across the UI.",
   "existing_features": [
     {
       "id": "IF-1",
@@ -187,18 +187,73 @@
       "version": 1
     },
     {
-      "id": "feature-improve-the-discoverability-and-integration-of-the-recurring-chores-feature-within-the-main-tasks-page-by-adding-an-inline-non-intrusive-recurring-chores-section-on-the-task-list-view-that-surfaces-a-small-preview-of-recurring-chores-e-g-grouped-by-weekday-and-or-showing-the-next-upcoming-items-and-provides-a-clear-call-to-action-to-open-the-existing-recurring-chores-management-dialog",
-      "title": "Improve the discoverability and integration of the Recurring Chores feature within the main Tasks page by adding an inline, non-intrusive Recurring Chores section on the Task List view that surfaces a small preview of recurring chores (e.g., grouped by weekday and/or showing the next upcoming items) and provides a clear call-to-action to open the existing Recurring Chores management dialog.",
+      "id": "IF-18",
+      "title": "Recurring chores inline section with previews",
+      "synonyms": [
+        "RecurringChoresInlineSection",
+        "recurring chores preview"
+      ],
+      "description": "Adds an inline recurring-chores section in the Tasks UI, including utilities to generate human-readable previews of recurrence patterns and integrate them alongside one-off task workflows.",
+      "reqIds": [],
+      "version": 1
+    },
+    {
+      "id": "IF-19",
+      "title": "People profiles (household member directory)",
+      "synonyms": [
+        "People page",
+        "member profiles",
+        "person profiles"
+      ],
+      "description": "Adds a People area and supporting data layer for managing household member profiles (used to represent principals with friendly names/labels) and to power person-selection controls across the app.",
+      "reqIds": [],
+      "version": 1
+    },
+    {
+      "id": "IF-20",
+      "title": "Person/profile-aware UI labels and selectors",
+      "synonyms": [
+        "PersonBadge",
+        "PersonProfileSelect",
+        "friendly principal display"
+      ],
+      "description": "Updates task, dinner rota, and related UI surfaces to display and select people using profile-backed labels/badges instead of only shortened principal IDs, improving readability and assignment workflows.",
+      "reqIds": [],
+      "version": 1
+    },
+    {
+      "id": "IF-21",
+      "title": "Calendar planning subviews (day/week planners and lightweight month overview)",
+      "synonyms": [
+        "CalendarDayPlanner",
+        "CalendarWeekPlanner",
+        "LightweightMonthOverview"
+      ],
+      "description": "Extends the calendar experience with dedicated day and week planning components and a lightweight month overview to better browse and plan tasks and cooking assignments.",
+      "reqIds": [],
+      "version": 1
+    },
+    {
+      "id": "feature-add-a-persistent-today-focus-section-rendered-at-the-top-of-the-authenticated-app-content-below-the-header-and-above-the-tab-navigation-content-so-it-remains-visible-regardless-of-which-main-view-tab-is-active-tasks-dinner-rota-calendar-people",
+      "title": "Add a persistent \"Today Focus\" section rendered at the top of the authenticated app content (below the Header and above the tab navigation/content) so it remains visible regardless of which main view/tab is active (Tasks, Dinner Rota, Calendar, People).",
       "reqIds": [
         "REQ-1"
       ],
       "version": 1
     },
     {
-      "id": "feature-refactor-the-existing-tasks-page-header-actions-so-that-recurring-chores-is-not-only-a-secondary-header-button-instead-align-the-action-placement-with-the-new-inline-integration-e-g-demote-remove-the-header-button-or-change-it-to-a-subtle-manage-action-within-the-new-inline-section-while-keeping-all-recurring-chore-functionality-unchanged",
-      "title": "Refactor the existing Tasks page header actions so that Recurring Chores is not only a secondary header button; instead, align the action placement with the new inline integration (e.g., demote/remove the header button or change it to a subtle 'Manage' action within the new inline section) while keeping all recurring chore functionality unchanged.",
+      "id": "feature-in-the-today-focus-section-display-only-tasks-that-are-due-today-based-on-local-calendar-day-and-show-today-s-assigned-cook-for-today-s-day-key-do-not-include-tasks-for-other-days-or-tasks-without-a-due-date",
+      "title": "In the Today Focus section, display only tasks that are due today (based on local calendar day) and show today’s assigned cook for today’s day key; do not include tasks for other days or tasks without a due date.",
       "reqIds": [
         "REQ-2"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-implement-appropriate-loading-and-empty-states-within-the-today-focus-section-using-existing-data-sources-react-query-hooks-so-the-panel-remains-stable-and-informative-while-tasks-cooking-assignments-and-profiles-if-used-for-labels-are-loading-or-absent",
+      "title": "Implement appropriate loading and empty states within the Today Focus section using existing data sources (React Query hooks) so the panel remains stable and informative while tasks/cooking assignments (and profiles if used for labels) are loading or absent.",
+      "reqIds": [
+        "REQ-3"
       ],
       "version": 1
     }
@@ -206,12 +261,12 @@
   "new_feature_requests": [
     {
       "id": "AR-1",
-      "summary": "Improve placement/integration of the Recurring Chores feature on the main page (better UX discoverability without clutter).",
+      "summary": "Add a persistent “Today focus” panel at the top showing only today’s tasks and today’s assigned cook across all views.",
       "reqIds": [],
       "status": "pending"
     }
   ],
-  "architecturalNotes": [
+  "architectural_notes": [
     "Frontend is a React SPA using @tanstack/react-query for data fetching, caching, mutations, and cache invalidation patterns (invalidateQueries on mutation success).",
     "Authentication is handled through an InternetIdentityProvider (AuthClient) context that persists identities across reloads and exposes login/logout status flags.",
     "Backend integration uses an ICP actor pattern: a custom useActor hook creates an anonymous or authenticated actor and keeps it cached per principal (staleTime: Infinity).",
@@ -220,21 +275,20 @@
     "Sensitive token handling on the frontend uses hash-fragment secrets stored in sessionStorage and removed from the URL after extraction (getSecretParameter/getSecretFromHash).",
     "UI is built with TailwindCSS (OKLCH-based design tokens) and shadcn-style components (cards, dialogs, tabs, dropdowns), plus next-themes for dark mode.",
     "Motoko canister uses Map-based in-memory collections and includes a migration module to transform older schemas (Text principals) into new Principal-based records.",
-    "Repository now includes a reusable build-template (React + ICP) with deployment scripts and canister configuration to standardize builds/deploys across environments."
+    "Repository now includes a reusable build-template (React + ICP) with deployment scripts and canister configuration to standardize builds/deploys across environments.",
+    "Frontend introduces a StorageClient utility to centralize browser storage access (e.g., session/local storage) for app-specific persistence needs.",
+    "Frontend adds date/day-level grouping utilities (e.g., taskDueDayGrouping) to normalize due dates for calendar/task aggregation and reduce timestamp-equality pitfalls in UI rendering.",
+    "Build-template expanded into a full reusable starter (React + ICP) including extensive shadcn/ui component set, custom ESLint rules (e.g., no BigInt in React Query keys; require InternetIdentityProvider usage), and helper scripts for image resizing/pruning to standardize scaffolding across projects.",
+    "Introduces a People Profiles data model and query layer (e.g., usePeopleProfilesQueries + personProfiles utilities) to map principals to human-friendly profile metadata, reused by person-selection components and badges across tasks/rota/calendar.",
+    "Authorization layer updated (MixinAuthorization + AccessControl) to component:authorization v4.0.0; core infrastructure updated to v1.0.2, reflected across backend integration and build-template scaffolding."
   ],
-  "knownIssues": [
-    "Backend getCalendar() appears incorrect: it looks up cookingAssignments using cookingAssignments.get(task.name) instead of using the date key/day string (e.g., yyyy-MM-dd), so cooking assignments will not match calendar days as intended.",
-    "Backend getCalendar() currently creates one CalendarDay per task (not per date) and does not aggregate multiple tasks that share the same due date into a single day entry; it also omits days that have cooking assignments but no tasks in the range.",
+  "known_issues": [
     "Backend getTasksByDate() compares dueDate == date using exact timestamps; if the UI treats due dates as day-level values, this strict equality may not behave as expected unless callers normalize timestamps.",
-    "Access control requires CAFFEINE_ADMIN_TOKEN to be set; _initializeAccessControlWithSecret traps if missing, preventing role initialization for authenticated users.",
-    "AccessControl.getUserRole traps for unregistered users; any direct canister calls that skip _initializeAccessControlWithSecret will fail (frontend mitigates by calling initialize during actor creation).",
     "There are two different CSS files shown (frontend/src/index.css and frontend/index.css) with conflicting token sets; if both are used or accidentally referenced, styling may be inconsistent or confusing to maintain."
   ],
   "isFixRequest": false,
   "gameProjectType": "none",
   "projectName": "Family House Duties",
   "clarification_mode": "instant",
-  "clarification_rounds": 0,
-  "requiresBackendChanges": false,
-  "requiresFrontendChanges": true
+  "clarification_rounds": 0
 }

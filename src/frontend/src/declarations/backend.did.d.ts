@@ -19,6 +19,7 @@ export interface AddTaskRequest {
 export interface AssignCookingDayRequest {
   'day' : string,
   'cook' : [] | [Principal],
+  'cookName' : [] | [string],
 }
 export interface CalendarDay {
   'tasks' : Array<Task>,
@@ -29,17 +30,24 @@ export interface CookingAssignment {
   'day' : string,
   'assignedBy' : Principal,
   'cook' : [] | [Principal],
+  'cookName' : [] | [string],
 }
 export interface CreateRecurringChoreRequest {
   'weekday' : bigint,
   'assignedTo' : [] | [Principal],
   'name' : string,
   'description' : string,
+  'timeline' : Timeline,
 }
 export interface FilterByAssigneeRequest { 'assignee' : Principal }
 export interface GetCalendarRequest { 'endDate' : Time, 'startDate' : Time }
 export interface GetCookingAssignment { 'day' : string }
-export interface GetTaskRequest { 'id' : bigint }
+export interface PauseResumeChoreRequest { 'id' : bigint, 'pause' : boolean }
+export interface PersonProfile {
+  'principal' : Principal,
+  'displayName' : string,
+  'color' : string,
+}
 export interface RecurringChore {
   'id' : bigint,
   'weekday' : bigint,
@@ -47,6 +55,8 @@ export interface RecurringChore {
   'name' : string,
   'createdBy' : Principal,
   'description' : string,
+  'paused' : boolean,
+  'timeline' : Timeline,
 }
 export interface SortTasksByDueDateRequest { 'tasks' : Array<Task> }
 export interface Task {
@@ -60,9 +70,13 @@ export interface Task {
   'recurringChoreId' : [] | [bigint],
 }
 export type Time = bigint;
+export type Timeline = { 'fortnightly' : null } |
+  { 'weeklies' : null } |
+  { 'monthly' : null };
 export interface UpdateCookingDayRequest {
   'day' : string,
   'cook' : [] | [Principal],
+  'cookName' : [] | [string],
 }
 export interface UpdateRecurringChoreRequest {
   'id' : bigint,
@@ -70,6 +84,7 @@ export interface UpdateRecurringChoreRequest {
   'assignedTo' : [] | [Principal],
   'name' : string,
   'description' : string,
+  'timeline' : Timeline,
 }
 export type UserRole = { 'admin' : null } |
   { 'user' : null } |
@@ -81,8 +96,11 @@ export interface _SERVICE {
   'assignCookingDay' : ActorMethod<[AssignCookingDayRequest], undefined>,
   'clearCompletedTasks' : ActorMethod<[], undefined>,
   'createRecurringChore' : ActorMethod<[CreateRecurringChoreRequest], bigint>,
+  'deleteProfile' : ActorMethod<[Principal], undefined>,
   'deleteRecurringChore' : ActorMethod<[bigint], undefined>,
   'deleteTask' : ActorMethod<[bigint], undefined>,
+  'getActiveRecurringChores' : ActorMethod<[], Array<RecurringChore>>,
+  'getAllProfiles' : ActorMethod<[], Array<PersonProfile>>,
   'getAllRecurringChores' : ActorMethod<[], Array<RecurringChore>>,
   'getAllTasks' : ActorMethod<[], Array<Task>>,
   'getCalendar' : ActorMethod<[GetCalendarRequest], Array<CalendarDay>>,
@@ -94,11 +112,16 @@ export interface _SERVICE {
   >,
   'getCookingAssignments' : ActorMethod<[], Array<CookingAssignment>>,
   'getPendingTasks' : ActorMethod<[], Array<Task>>,
+  'getProfile' : ActorMethod<[Principal], PersonProfile>,
   'getRecurringChore' : ActorMethod<[bigint], RecurringChore>,
-  'getTask' : ActorMethod<[GetTaskRequest], Task>,
+  'getTask' : ActorMethod<[bigint], Task>,
   'getTasksByAssignee' : ActorMethod<[FilterByAssigneeRequest], Array<Task>>,
   'getTasksByDate' : ActorMethod<[Time], Array<Task>>,
   'isCallerAdmin' : ActorMethod<[], boolean>,
+  'pauseResumeRecurringChore' : ActorMethod<
+    [PauseResumeChoreRequest],
+    undefined
+  >,
   'sortTasksByDueDate' : ActorMethod<[SortTasksByDueDateRequest], Array<Task>>,
   'toggleTaskCompletion' : ActorMethod<[bigint], undefined>,
   'updateCookingDay' : ActorMethod<[UpdateCookingDayRequest], undefined>,
@@ -110,6 +133,7 @@ export interface _SERVICE {
     [bigint, string, string, [] | [Time], [] | [Principal]],
     undefined
   >,
+  'upsertProfile' : ActorMethod<[PersonProfile], undefined>,
 }
 export declare const idlService: IDL.ServiceClass;
 export declare const idlInitArgs: IDL.Type[];

@@ -1,48 +1,69 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Inline Recurring Chores preview on Tasks page",
+  "title": "Persistent Today Focus panel across authenticated tabs",
   "requirements": [
     {
       "id": "REQ-1",
-      "summary": "Add a compact inline Recurring Chores preview section within the Tasks page that surfaces upcoming/grouped chores and provides a clear CTA to open the existing RecurringChoresDialog.",
+      "summary": "Render a persistent Today Focus panel in the authenticated app layout below the Header and above the tab navigation/content so it stays visible across all tabs.",
       "acceptanceCriteria": [
-        "On the Tasks tab, users can see an inline Recurring Chores section without needing to open a modal first.",
-        "The inline section includes a prominent action (button/link) that opens the existing RecurringChoresDialog.",
-        "The inline section remains compact and does not visually compete with the primary task list (i.e., does not significantly increase clutter on mobile).",
-        "If there are no recurring chores, the inline section shows an empty-state message and a single action to add/manage recurring chores (opening the existing dialog)."
+        "When signed in, the Today Focus panel appears on all tabs without navigating away from the current view.",
+        "The Today Focus panel is positioned above the TabsList/tab content within the main app layout.",
+        "User-facing text uses English."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/components/RecurringChoresInlineSection.tsx",
+          "path": "frontend/src/components/TodayFocus.tsx",
           "operation": "create",
-          "description": "Create an inline, compact Recurring Chores section component that uses existing recurring chores query data to render a small preview (e.g., grouped by weekday and/or next-up ordering) and exposes a single obvious CTA to open the existing RecurringChoresDialog. Use shadcn-ui primitives (e.g., Card, Button, Badge, Separator) for consistent styling; verify the component's usage instructions before implementing."
+          "description": "Create a TodayFocus component that renders a compact, persistent panel UI using composed shadcn-ui primitives (e.g., Card/Separator/Skeleton as available) for consistent styling. Verify the component's usage instructions before implementing."
         },
         {
-          "path": "frontend/src/utils/recurringChoresPreview.ts",
-          "operation": "create",
-          "description": "Add a small utility to support the inline preview formatting (weekday labels, ordering by next upcoming day relative to today, and limiting/grouping logic) to keep the Tasks view component lean."
-        },
-        {
-          "path": "frontend/src/components/TaskList.tsx",
+          "path": "frontend/src/App.tsx",
           "operation": "modify",
-          "description": "Integrate the new inline RecurringChoresInlineSection into the Tasks page layout so it appears directly on the Task List view (without requiring a modal first). Wire the section’s CTA to open the existing RecurringChoresDialog using the current isRecurringChoresOpen state. Use shadcn-ui layout components already in use for a compact presentation; verify the component's usage instructions before implementing."
+          "description": "Wire the TodayFocus component into the authenticated layout so it renders inside <main> directly below the Header and above the TabsList/tab content, ensuring it remains visible while switching tabs. Verify the component's usage instructions before implementing."
         }
       ]
     },
     {
       "id": "REQ-2",
-      "summary": "Refactor Tasks page header actions to reduce competition from Recurring Chores by demoting/removing the header button and aligning management access with the new inline section while keeping dialog functionality unchanged.",
+      "summary": "In Today Focus, show only tasks due today (local day key yyyy-MM-dd) and show today’s cook from the cooking assignment for the same day key, excluding other-day and no-due-date tasks.",
       "acceptanceCriteria": [
-        "Recurring chores management remains accessible from the Tasks page via an obvious action in/near the inline Recurring Chores section.",
-        "No existing recurring chore capabilities regress (create/edit/assign/delete still work via the dialog).",
-        "The Tasks page header remains focused on primary task actions (e.g., Add Task), with reduced competition from secondary actions."
+        "Tasks shown in Today Focus are limited to those whose dueDate maps to today’s local day key (yyyy-MM-dd).",
+        "Tasks with no dueDate are not shown in Today Focus.",
+        "Today’s cook shown corresponds to the cooking assignment for today’s day key (yyyy-MM-dd)."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/components/TaskList.tsx",
+          "path": "frontend/src/components/TodayFocus.tsx",
           "operation": "modify",
-          "description": "Update the header action area to remove/demote the prominent 'Recurring Chores' header button and keep the header focused on primary task actions (e.g., Add Task). Ensure the remaining Recurring Chores access is clearly provided via the inline section’s 'Manage' / 'Add' CTA that opens the existing RecurringChoresDialog, without changing any dialog logic or permissions behavior. Use shadcn-ui Button variants appropriately for visual hierarchy; verify the component's usage instructions before implementing."
+          "description": "Implement Today Focus data selection using existing React Query hooks (reuse useGetAllTasks and useGetCookingAssignments). Compute today's local day key (yyyy-MM-dd) and filter tasks using the existing taskDayKey utilities so only tasks whose dueDate maps to today are shown, excluding tasks without dueDate. Resolve today's cooking assignment by matching assignment.day to today's day key. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/utils/taskDayKey.ts",
+          "operation": "modify",
+          "description": "Add (or expose) a small helper that returns today's local day key (yyyy-MM-dd) to centralize the day-key logic used by Today Focus and reduce duplication (must remain local-time based)."
+        }
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "summary": "Add stable loading and empty states to Today Focus using existing queries and label logic, including profile-aware cook display names when available.",
+      "acceptanceCriteria": [
+        "While relevant queries are loading, the Today Focus panel shows a skeleton/placeholder state instead of disappearing.",
+        "If there are no tasks due today, the panel clearly indicates there are no tasks due today.",
+        "If there is no cooking assignment for today, the panel clearly indicates no cook is assigned for today.",
+        "If profiles are available, the cook label in the panel prefers profile display names (consistent with existing cook label logic)."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/TodayFocus.tsx",
+          "operation": "modify",
+          "description": "Implement panel-stable loading states (Skeleton placeholders) while tasks/cooking assignments (and profiles if used) are loading, and clear empty states when there are no tasks due today and/or no cook assigned for today. Use existing people profile query hook re-exports (useGetAllProfiles) and the existing cookingAssignmentLabel utility to prefer profile displayName for the cook label when profiles are available. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/utils/cookingAssignmentLabel.ts",
+          "operation": "modify",
+          "description": "Ensure the existing cooking assignment label helper(s) cleanly support Today Focus rendering (e.g., well-defined behavior for undefined assignment / missing cook) so the component can display a consistent 'no cook assigned' state without brittle string handling."
         }
       ]
     }
