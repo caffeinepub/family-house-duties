@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -58,6 +58,7 @@ export function RecurringChoresDialog({ open, onOpenChange }: RecurringChoresDia
   const currentUserPrincipal = identity?.getPrincipal().toString();
 
   const resetForm = () => {
+    console.log('[RecurringChoresDialog] Resetting form state');
     setName('');
     setDescription('');
     setWeekday(0n);
@@ -69,12 +70,25 @@ export function RecurringChoresDialog({ open, onOpenChange }: RecurringChoresDia
     setEditingChore(null);
   };
 
+  // Reset form when dialog closes
+  useEffect(() => {
+    if (!open) {
+      console.log('[RecurringChoresDialog] Dialog closed, resetting form');
+      resetForm();
+    }
+  }, [open]);
+
   const handleStartCreate = () => {
+    console.log('[RecurringChoresDialog] User initiated create');
     resetForm();
     setIsCreating(true);
   };
 
   const handleStartEdit = (chore: RecurringChore) => {
+    console.log('[RecurringChoresDialog] User initiated edit:', {
+      id: chore.id.toString(),
+      name: chore.name,
+    });
     setName(chore.name);
     setDescription(chore.description);
     setWeekday(chore.weekday);
@@ -103,6 +117,20 @@ export function RecurringChoresDialog({ open, onOpenChange }: RecurringChoresDia
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Prevent double submission
+    if (createChore.isPending || updateChore.isPending) {
+      console.log('[RecurringChoresDialog] Submit ignored: mutation already in flight');
+      return;
+    }
+    
+    console.log('[RecurringChoresDialog] User submitted form:', {
+      operation: editingChore ? 'update' : 'create',
+      name: name.trim(),
+      weekday: weekday.toString(),
+      timeline: frequency,
+      assignedTo: assignedToPrincipal || '(unassigned)',
+    });
+    
     if (!name.trim()) {
       setNameError('Chore name is required');
       return;
@@ -111,7 +139,7 @@ export function RecurringChoresDialog({ open, onOpenChange }: RecurringChoresDia
     const parseResult = safeParsePrincipal(assignedToPrincipal);
     
     if (!parseResult.success && parseResult.errorCode === 'INVALID_FORMAT') {
-      console.error('[RecurringChore] Principal parsing failed:', {
+      console.error('[RecurringChoresDialog] Principal parsing failed:', {
         input: assignedToPrincipal,
         error: parseResult.error,
         errorCode: parseResult.errorCode,
@@ -125,13 +153,7 @@ export function RecurringChoresDialog({ open, onOpenChange }: RecurringChoresDia
 
     try {
       if (editingChore) {
-        console.log('[RecurringChore] Updating chore:', {
-          id: editingChore.id.toString(),
-          name: name.trim(),
-          weekday: weekday.toString(),
-          timeline: frequency,
-          hasAssignee: !!parseResult.principal,
-        });
+        console.log('[RecurringChoresDialog] Calling update mutation');
         
         await updateChore.mutateAsync({
           id: editingChore.id,
@@ -142,12 +164,7 @@ export function RecurringChoresDialog({ open, onOpenChange }: RecurringChoresDia
           timeline: frequency,
         });
       } else {
-        console.log('[RecurringChore] Creating chore:', {
-          name: name.trim(),
-          weekday: weekday.toString(),
-          timeline: frequency,
-          hasAssignee: !!parseResult.principal,
-        });
+        console.log('[RecurringChoresDialog] Calling create mutation');
         
         await createChore.mutateAsync({
           name: name.trim(),
@@ -158,24 +175,41 @@ export function RecurringChoresDialog({ open, onOpenChange }: RecurringChoresDia
         });
       }
 
+      console.log('[RecurringChoresDialog] Mutation succeeded, resetting form');
       resetForm();
     } catch (error: any) {
-      console.error('[RecurringChore] Mutation failed:', {
+      // Error is already handled by the mutation's onError with toast and diagnostics
+      console.error('[RecurringChoresDialog] Mutation failed (caught in component):', {
         operation: editingChore ? 'update' : 'create',
         error: error.message || error,
-        stack: error.stack,
       });
+      // Keep form state so user can correct and retry
     }
   };
 
   const handleDelete = async (id: bigint) => {
     if (confirm('Are you sure you want to delete this recurring chore?')) {
-      await deleteChore.mutateAsync(id);
+      console.log('[RecurringChoresDialog] User initiated delete:', { id: id.toString() });
+      try {
+        await deleteChore.mutateAsync(id);
+      } catch (error: any) {
+        // Error is already handled by the mutation's onError with toast
+        console.error('[RecurringChoresDialog] Delete failed (caught in component):', error);
+      }
     }
   };
 
   const handlePauseResume = async (id: bigint, currentlyPaused: boolean) => {
-    await pauseResumeChore.mutateAsync({ id, pause: !currentlyPaused });
+    console.log('[RecurringChoresDialog] User initiated pause/resume:', {
+      id: id.toString(),
+      action: currentlyPaused ? 'resume' : 'pause',
+    });
+    try {
+      await pauseResumeChore.mutateAsync({ id, pause: !currentlyPaused });
+    } catch (error: any) {
+      // Error is already handled by the mutation's onError with toast
+      console.error('[RecurringChoresDialog] Pause/Resume failed (caught in component):', error);
+    }
   };
 
   const handleAssignToMe = () => {
@@ -201,12 +235,14 @@ export function RecurringChoresDialog({ open, onOpenChange }: RecurringChoresDia
   const isNameValid = name.trim().length > 0;
   const parseResult = safeParsePrincipal(assignedToPrincipal);
   const isPrincipalValid = parseResult.success || parseResult.errorCode === 'EMPTY';
-  const canSave = isNameValid && isPrincipalValid;
+  const canSave = isNameValid && isPrincipalValid && !createChore.isPending && !updateChore.isPending;
+
+  const showFormFooter = isCreating || editingChore;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl w-[95vw] sm:w-full h-[90vh] sm:h-auto sm:max-h-[85vh] p-0 flex flex-col">
-        <DialogHeader className="px-4 sm:px-6 pt-4 sm:pt-6 pb-3 sm:pb-4 border-b">
+      <DialogContent className="max-w-4xl w-[95vw] sm:w-full max-h-[90dvh] p-0 flex flex-col gap-0">
+        <DialogHeader className="px-4 sm:px-6 pt-4 sm:pt-6 pb-3 sm:pb-4 border-b shrink-0">
           <DialogTitle className="flex items-center gap-2 text-lg sm:text-xl">
             <Repeat className="h-5 w-5 sm:h-6 sm:w-6" />
             Recurring Chores
@@ -216,12 +252,12 @@ export function RecurringChoresDialog({ open, onOpenChange }: RecurringChoresDia
           </DialogDescription>
         </DialogHeader>
 
-        <ScrollArea className="flex-1 px-4 sm:px-6">
-          <div className="py-4 sm:py-6 space-y-6">
+        <ScrollArea className="flex-1 min-h-0">
+          <div className="px-4 sm:px-6 py-4 sm:py-6 space-y-6">
             {(isCreating || editingChore) && (
               <Card className="border-2">
                 <CardContent className="p-4 sm:p-6">
-                  <form onSubmit={handleSubmit} className="space-y-5">
+                  <form id="recurring-chore-form" onSubmit={handleSubmit} className="space-y-5">
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
                       <div className="space-y-2">
                         <Label htmlFor="chore-name" className="text-sm font-medium">
@@ -396,28 +432,6 @@ export function RecurringChoresDialog({ open, onOpenChange }: RecurringChoresDia
                         </div>
                       </CardContent>
                     </Card>
-
-                    <div className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-3 pt-2">
-                      <Button 
-                        type="button" 
-                        variant="outline" 
-                        onClick={resetForm}
-                        className="h-10 sm:h-11 flex-1 sm:flex-initial sm:min-w-[100px]"
-                      >
-                        Cancel
-                      </Button>
-                      <Button 
-                        type="submit" 
-                        disabled={createChore.isPending || updateChore.isPending}
-                        className="h-10 sm:h-11 flex-1 sm:flex-initial sm:min-w-[140px]"
-                      >
-                        {createChore.isPending || updateChore.isPending
-                          ? 'Saving...'
-                          : editingChore
-                          ? 'Update Chore'
-                          : 'Create Chore'}
-                      </Button>
-                    </div>
                   </form>
                 </CardContent>
               </Card>
@@ -542,6 +556,33 @@ export function RecurringChoresDialog({ open, onOpenChange }: RecurringChoresDia
             </div>
           </div>
         </ScrollArea>
+
+        {showFormFooter && (
+          <div className="px-4 sm:px-6 py-3 sm:py-4 border-t bg-background shrink-0">
+            <div className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-3">
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={resetForm}
+                className="h-10 sm:h-11 flex-1 sm:flex-initial sm:min-w-[100px]"
+              >
+                Cancel
+              </Button>
+              <Button 
+                type="submit"
+                form="recurring-chore-form"
+                disabled={!canSave}
+                className="h-10 sm:h-11 flex-1 sm:flex-initial sm:min-w-[140px]"
+              >
+                {createChore.isPending || updateChore.isPending
+                  ? 'Saving...'
+                  : editingChore
+                  ? 'Update Chore'
+                  : 'Create Chore'}
+              </Button>
+            </div>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );

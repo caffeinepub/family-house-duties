@@ -2,11 +2,12 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-add-a-persistent-today-focus-section-rendered-at-the-top-of-the-authenticated-app-content-below-the-header-and-above-the-tab-navigation-content-so-it-remains-visible-regardless-of-which-main-view-tab-is-active-tasks-dinner-rota-calendar-people",
-      "featureTitle": "Add a persistent \"Today Focus\" section rendered at the top of the authenticated app content (below the Header and above the tab navigation/content) so it remains visible regardless of which main view/tab is active (Tasks, Dinner Rota, Calendar, People).",
+      "featureId": "feature-diagnose-and-fix-the-recurring-chores-create-update-flow-so-that-pressing-create-chore-update-chore-reliably-writes-the-record-to-the-backend-and-the-ui-immediately-reflects-the-saved-state-including-after-closing-and-reopening-the-dialog",
+      "featureTitle": "Diagnose and fix the recurring chores create/update flow so that pressing “Create Chore” / “Update Chore” reliably writes the record to the backend and the UI immediately reflects the saved state (including after closing and reopening the dialog).",
       "files": [
-        "frontend/src/App.tsx",
-        "frontend/src/components/TodayFocus.tsx"
+        "frontend/src/components/RecurringChoresDialog.tsx",
+        "frontend/src/hooks/useQueries.ts",
+        "frontend/src/utils/recurringChoreMutationErrors.ts"
       ],
       "components": [
         "core-infrastructure@1.0.2",
@@ -22,31 +23,13 @@
       "confidence": "high"
     },
     {
-      "featureId": "feature-in-the-today-focus-section-display-only-tasks-that-are-due-today-based-on-local-calendar-day-and-show-today-s-assigned-cook-for-today-s-day-key-do-not-include-tasks-for-other-days-or-tasks-without-a-due-date",
-      "featureTitle": "In the Today Focus section, display only tasks that are due today (based on local calendar day) and show today’s assigned cook for today’s day key; do not include tasks for other days or tasks without a due date.",
+      "featureId": "feature-improve-recurring-chore-save-reliability-diagnostics-add-structured-console-logging-frontend-backend-around-create-update-pause-delete-showing-key-fields-id-weekday-timeline-assignedto-presence-and-backend-traps-so-failures-can-be-pinpointed-quickly-without-changing-user-facing-behavior",
+      "featureTitle": "Improve recurring chore save reliability diagnostics: add structured console logging (frontend + backend) around create/update/pause/delete showing key fields (id, weekday, timeline, assignedTo presence) and backend traps, so failures can be pinpointed quickly without changing user-facing behavior.",
       "files": [
-        "frontend/src/components/TodayFocus.tsx",
-        "frontend/src/utils/taskDayKey.ts"
-      ],
-      "components": [
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "authorization@4.0.0",
-        "github-export-icp-cli@1.0.0"
-      ],
-      "testIds": [
-        "REQ-2"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-implement-appropriate-loading-and-empty-states-within-the-today-focus-section-using-existing-data-sources-react-query-hooks-so-the-panel-remains-stable-and-informative-while-tasks-cooking-assignments-and-profiles-if-used-for-labels-are-loading-or-absent",
-      "featureTitle": "Implement appropriate loading and empty states within the Today Focus section using existing data sources (React Query hooks) so the panel remains stable and informative while tasks/cooking assignments (and profiles if used for labels) are loading or absent.",
-      "files": [
-        "frontend/src/components/TodayFocus.tsx",
-        "frontend/src/utils/cookingAssignmentLabel.ts"
+        "frontend/src/components/RecurringChoresDialog.tsx",
+        "frontend/src/hooks/useQueries.ts",
+        "frontend/src/utils/recurringChoreDiagnostics.ts",
+        "frontend/src/utils/recurringChoreMutationErrors.ts"
       ],
       "components": [
         "core-infrastructure@1.0.2",
@@ -58,6 +41,26 @@
       ],
       "testIds": [
         "REQ-3"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-ensure-the-recurring-chores-dialog-form-submit-cannot-silently-fail-due-to-ui-state-the-save-button-must-always-submit-the-correct-form-remain-enabled-only-when-inputs-are-valid-and-show-a-clear-pending-state-while-the-mutation-is-in-flight",
+      "featureTitle": "Ensure the Recurring Chores dialog form submit cannot silently fail due to UI state: the Save button must always submit the correct form, remain enabled only when inputs are valid, and show a clear pending state while the mutation is in-flight.",
+      "files": [
+        "frontend/src/components/RecurringChoresDialog.tsx",
+        "frontend/src/hooks/useQueries.ts"
+      ],
+      "components": [
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "authorization@4.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-4"
       ],
       "confidence": "high"
     }

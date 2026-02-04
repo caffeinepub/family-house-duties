@@ -3,6 +3,8 @@ import { useActor } from './useActor';
 import type { Task, CookingAssignment, AddTaskRequest, AssignCookingDayRequest, UpdateCookingDayRequest, RecurringChore, CreateRecurringChoreRequest, UpdateRecurringChoreRequest, Timeline, PauseResumeChoreRequest } from '../backend';
 import { toast } from 'sonner';
 import { Principal } from '@icp-sdk/core/principal';
+import { normalizeRecurringChoreError } from '../utils/recurringChoreMutationErrors';
+import { logRecurringChoreMutationStart, logRecurringChoreMutationOutcome } from '../utils/recurringChoreDiagnostics';
 
 export function useGetAllTasks() {
   const { actor, isFetching } = useActor();
@@ -235,23 +237,61 @@ export function useCreateRecurringChore() {
       timeline: Timeline;
     }) => {
       if (!actor) throw new Error('Actor not initialized');
+      
+      // Log mutation start with payload details
+      logRecurringChoreMutationStart({
+        operation: 'create',
+        name: params.name,
+        weekday: params.weekday,
+        timeline: params.timeline,
+        assignedTo: params.assignedTo?.toString() || '(unassigned)',
+      });
+      
+      // Build request with explicit optional field handling
       const request: CreateRecurringChoreRequest = {
         name: params.name,
         description: params.description,
         weekday: params.weekday,
-        assignedTo: params.assignedTo,
         timeline: params.timeline,
+        assignedTo: params.assignedTo,
       };
-      return actor.createRecurringChore(request);
+      
+      const newId = await actor.createRecurringChore(request);
+      
+      // Fetch the newly created chore to get the full object
+      const newChore = await actor.getRecurringChore(newId);
+      
+      // Immediately update the cache with the new chore
+      queryClient.setQueryData<RecurringChore[]>(['recurring-chores'], (old = []) => {
+        return [...old, newChore];
+      });
+      
+      return newId;
     },
-    onSuccess: () => {
+    onSuccess: (newId) => {
+      // Invalidate to ensure consistency
       queryClient.invalidateQueries({ queryKey: ['recurring-chores'] });
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
       queryClient.invalidateQueries({ queryKey: ['calendar'] });
+      
+      logRecurringChoreMutationOutcome('create', {
+        success: true,
+        id: newId,
+      });
+      
       toast.success('Recurring chore created successfully');
     },
-    onError: (error: any) => {
-      toast.error(error.message || 'Failed to create recurring chore');
+    onError: (error: unknown) => {
+      const normalized = normalizeRecurringChoreError('create', error);
+      
+      logRecurringChoreMutationOutcome('create', {
+        success: false,
+        normalizedError: normalized.userMessage,
+        rawError: error,
+      });
+      
+      console.error(normalized.diagnosticDetails);
+      toast.error(normalized.userMessage);
     },
   });
 }
@@ -270,24 +310,65 @@ export function useUpdateRecurringChore() {
       timeline: Timeline;
     }) => {
       if (!actor) throw new Error('Actor not initialized');
+      
+      // Log mutation start with payload details
+      logRecurringChoreMutationStart({
+        operation: 'update',
+        id: params.id,
+        name: params.name,
+        weekday: params.weekday,
+        timeline: params.timeline,
+        assignedTo: params.assignedTo?.toString() || '(unassigned)',
+      });
+      
+      // Build request with explicit optional field handling
       const request: UpdateRecurringChoreRequest = {
         id: params.id,
         name: params.name,
         description: params.description,
         weekday: params.weekday,
-        assignedTo: params.assignedTo,
         timeline: params.timeline,
+        assignedTo: params.assignedTo,
       };
-      return actor.updateRecurringChore(request);
+      
+      await actor.updateRecurringChore(request);
+      
+      // Fetch the updated chore to get the full object
+      const updatedChore = await actor.getRecurringChore(params.id);
+      
+      // Immediately update the cache with the updated chore
+      queryClient.setQueryData<RecurringChore[]>(['recurring-chores'], (old = []) => {
+        return old.map(chore => 
+          chore.id === params.id ? updatedChore : chore
+        );
+      });
+      
+      return params.id;
     },
-    onSuccess: () => {
+    onSuccess: (id) => {
+      // Invalidate to ensure consistency
       queryClient.invalidateQueries({ queryKey: ['recurring-chores'] });
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
       queryClient.invalidateQueries({ queryKey: ['calendar'] });
+      
+      logRecurringChoreMutationOutcome('update', {
+        success: true,
+        id,
+      });
+      
       toast.success('Recurring chore updated successfully');
     },
-    onError: (error: any) => {
-      toast.error(error.message || 'Failed to update recurring chore');
+    onError: (error: unknown) => {
+      const normalized = normalizeRecurringChoreError('update', error);
+      
+      logRecurringChoreMutationOutcome('update', {
+        success: false,
+        normalizedError: normalized.userMessage,
+        rawError: error,
+      });
+      
+      console.error(normalized.diagnosticDetails);
+      toast.error(normalized.userMessage);
     },
   });
 }
@@ -299,16 +380,37 @@ export function useDeleteRecurringChore() {
   return useMutation({
     mutationFn: async (id: bigint) => {
       if (!actor) throw new Error('Actor not initialized');
+      
+      logRecurringChoreMutationStart({
+        operation: 'delete',
+        id,
+      });
+      
       return actor.deleteRecurringChore(id);
     },
-    onSuccess: () => {
+    onSuccess: (_data, id) => {
       queryClient.invalidateQueries({ queryKey: ['recurring-chores'] });
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
       queryClient.invalidateQueries({ queryKey: ['calendar'] });
+      
+      logRecurringChoreMutationOutcome('delete', {
+        success: true,
+        id,
+      });
+      
       toast.success('Recurring chore deleted successfully');
     },
-    onError: (error: any) => {
-      toast.error(error.message || 'Failed to delete recurring chore');
+    onError: (error: unknown) => {
+      const normalized = normalizeRecurringChoreError('delete', error);
+      
+      logRecurringChoreMutationOutcome('delete', {
+        success: false,
+        normalizedError: normalized.userMessage,
+        rawError: error,
+      });
+      
+      console.error(normalized.diagnosticDetails);
+      toast.error(normalized.userMessage);
     },
   });
 }
@@ -320,6 +422,13 @@ export function usePauseResumeRecurringChore() {
   return useMutation({
     mutationFn: async (params: { id: bigint; pause: boolean }) => {
       if (!actor) throw new Error('Actor not initialized');
+      
+      logRecurringChoreMutationStart({
+        operation: 'pause-resume',
+        id: params.id,
+        pause: params.pause,
+      });
+      
       const request: PauseResumeChoreRequest = {
         id: params.id,
         pause: params.pause,
@@ -330,10 +439,25 @@ export function usePauseResumeRecurringChore() {
       queryClient.invalidateQueries({ queryKey: ['recurring-chores'] });
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
       queryClient.invalidateQueries({ queryKey: ['calendar'] });
+      
+      logRecurringChoreMutationOutcome('pause-resume', {
+        success: true,
+        id: variables.id,
+      });
+      
       toast.success(variables.pause ? 'Recurring chore paused' : 'Recurring chore resumed');
     },
-    onError: (error: any) => {
-      toast.error(error.message || 'Failed to update recurring chore');
+    onError: (error: unknown) => {
+      const normalized = normalizeRecurringChoreError('pause-resume', error);
+      
+      logRecurringChoreMutationOutcome('pause-resume', {
+        success: false,
+        normalizedError: normalized.userMessage,
+        rawError: error,
+      });
+      
+      console.error(normalized.diagnosticDetails);
+      toast.error(normalized.userMessage);
     },
   });
 }

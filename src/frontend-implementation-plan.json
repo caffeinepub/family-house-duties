@@ -1,69 +1,82 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Persistent Today Focus panel across authenticated tabs",
+  "title": "Recurring chores save flow reliability and diagnostics (frontend-only)",
   "requirements": [
     {
       "id": "REQ-1",
-      "summary": "Render a persistent Today Focus panel in the authenticated app layout below the Header and above the tab navigation/content so it stays visible across all tabs.",
+      "summary": "Fix recurring chore create/update UI flow so saves reliably reflect immediately in the list and dialog state resets correctly across close/reopen.",
       "acceptanceCriteria": [
-        "When signed in, the Today Focus panel appears on all tabs without navigating away from the current view.",
-        "The Today Focus panel is positioned above the TabsList/tab content within the main app layout.",
-        "User-facing text uses English."
+        "Creating a recurring chore from the Recurring Chores dialog results in a new item appearing in the “Existing Recurring Chores” list without requiring a full page refresh.",
+        "Editing an existing recurring chore updates the item shown in the list immediately after the save completes.",
+        "If the backend rejects the mutation, the dialog remains open and the user sees an English error message explaining the failure."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/components/TodayFocus.tsx",
-          "operation": "create",
-          "description": "Create a TodayFocus component that renders a compact, persistent panel UI using composed shadcn-ui primitives (e.g., Card/Separator/Skeleton as available) for consistent styling. Verify the component's usage instructions before implementing."
+          "path": "frontend/src/hooks/useQueries.ts",
+          "operation": "modify",
+          "description": "Update recurring chore create/update mutations to return the fully-hydrated saved RecurringChore (e.g., by fetching the saved record after the mutation), then update the React Query cache for ['recurring-chores'] immediately (create: append; update: replace by id) before/alongside invalidations, so the dialog list reflects saved state as soon as the save completes. Keep existing invalidations for tasks/calendar. Leverage the core-infrastructure actor access pattern (useActor) already in place; verify the component's usage instructions before implementing."
         },
         {
-          "path": "frontend/src/App.tsx",
+          "path": "frontend/src/components/RecurringChoresDialog.tsx",
           "operation": "modify",
-          "description": "Wire the TodayFocus component into the authenticated layout so it renders inside <main> directly below the Header and above the TabsList/tab content, ensuring it remains visible while switching tabs. Verify the component's usage instructions before implementing."
-        }
-      ]
-    },
-    {
-      "id": "REQ-2",
-      "summary": "In Today Focus, show only tasks due today (local day key yyyy-MM-dd) and show today’s cook from the cooking assignment for the same day key, excluding other-day and no-due-date tasks.",
-      "acceptanceCriteria": [
-        "Tasks shown in Today Focus are limited to those whose dueDate maps to today’s local day key (yyyy-MM-dd).",
-        "Tasks with no dueDate are not shown in Today Focus.",
-        "Today’s cook shown corresponds to the cooking assignment for today’s day key (yyyy-MM-dd)."
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/components/TodayFocus.tsx",
-          "operation": "modify",
-          "description": "Implement Today Focus data selection using existing React Query hooks (reuse useGetAllTasks and useGetCookingAssignments). Compute today's local day key (yyyy-MM-dd) and filter tasks using the existing taskDayKey utilities so only tasks whose dueDate maps to today are shown, excluding tasks without dueDate. Resolve today's cooking assignment by matching assignment.day to today's day key. Verify the component's usage instructions before implementing."
+          "description": "Ensure dialog/form state is consistent across close/reopen: reset form state when the dialog closes (e.g., when open transitions to false) so reopening never shows stale edit/create state. Also ensure the list view uses the updated query cache after save (no extra refresh UX). Continue to use shadcn-ui Dialog/Button form wiring patterns (form attribute + submit) and verify the component's usage instructions before implementing."
         },
         {
-          "path": "frontend/src/utils/taskDayKey.ts",
+          "path": "frontend/src/utils/recurringChoreMutationErrors.ts",
           "operation": "modify",
-          "description": "Add (or expose) a small helper that returns today's local day key (yyyy-MM-dd) to centralize the day-key logic used by Today Focus and reduce duplication (must remain local-time based)."
+          "description": "Harden error normalization to reliably produce clear English user messages for common agent/backend failure shapes (including non-Error objects and nested fields), while preserving raw diagnostic details for the console."
         }
       ]
     },
     {
       "id": "REQ-3",
-      "summary": "Add stable loading and empty states to Today Focus using existing queries and label logic, including profile-aware cook display names when available.",
+      "summary": "Add structured frontend console diagnostics around recurring chore mutations to pinpoint failures quickly without changing user-facing behavior.",
       "acceptanceCriteria": [
-        "While relevant queries are loading, the Today Focus panel shows a skeleton/placeholder state instead of disappearing.",
-        "If there are no tasks due today, the panel clearly indicates there are no tasks due today.",
-        "If there is no cooking assignment for today, the panel clearly indicates no cook is assigned for today.",
-        "If profiles are available, the cook label in the panel prefers profile display names (consistent with existing cook label logic)."
+        "On each recurring chore mutation attempt, the frontend logs the outgoing payload fields and the mutation outcome (success/failure).",
+        "On backend trap, the frontend toast shows a clear English message and the console includes detailed diagnostic info (operation + raw trap/agent message)."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/components/TodayFocus.tsx",
-          "operation": "modify",
-          "description": "Implement panel-stable loading states (Skeleton placeholders) while tasks/cooking assignments (and profiles if used) are loading, and clear empty states when there are no tasks due today and/or no cook assigned for today. Use existing people profile query hook re-exports (useGetAllProfiles) and the existing cookingAssignmentLabel utility to prefer profile displayName for the cook label when profiles are available. Verify the component's usage instructions before implementing."
+          "path": "frontend/src/utils/recurringChoreDiagnostics.ts",
+          "operation": "create",
+          "description": "Add a small structured logging helper for recurring chore mutations (create/update/pause/delete) that logs: operation name, id (when present), weekday, timeline, assignedTo presence, and a concise outcome record (success with id; failure with normalized + raw details)."
         },
         {
-          "path": "frontend/src/utils/cookingAssignmentLabel.ts",
+          "path": "frontend/src/hooks/useQueries.ts",
           "operation": "modify",
-          "description": "Ensure the existing cooking assignment label helper(s) cleanly support Today Focus rendering (e.g., well-defined behavior for undefined assignment / missing cook) so the component can display a consistent 'no cook assigned' state without brittle string handling."
+          "description": "Integrate structured diagnostics for recurring chore mutations: log outgoing payload fields at mutation start and log success/failure outcome in onSuccess/onError for create/update/pause-resume/delete. On errors, include both normalized diagnosticDetails and the raw error object in the console while keeping the current toast behavior."
+        },
+        {
+          "path": "frontend/src/components/RecurringChoresDialog.tsx",
+          "operation": "modify",
+          "description": "Add/standardize component-level structured logs around user-initiated mutation attempts (submit/pause/delete) so console output clearly ties UI actions to hook mutation calls, without changing visible UI behavior. Continue using shadcn-ui controls and verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/utils/recurringChoreMutationErrors.ts",
+          "operation": "modify",
+          "description": "Enhance diagnosticDetails formatting to consistently include operation name and a safely-stringified representation of raw agent/trap error shapes (without throwing during stringify), so console logs remain actionable."
+        }
+      ]
+    },
+    {
+      "id": "REQ-4",
+      "summary": "Prevent silent form submit failures: ensure Save submits exactly once, is enabled only when valid, and shows a clear in-flight pending state.",
+      "acceptanceCriteria": [
+        "When the Save button is clicked, the corresponding create/update mutation is fired exactly once.",
+        "While saving, the Save button shows “Saving...” and is disabled until completion.",
+        "After a successful save, the form resets and the user can see the saved item in the list."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/RecurringChoresDialog.tsx",
+          "operation": "modify",
+          "description": "Add an explicit in-flight guard in handleSubmit to prevent double-submission (ignore submit while create/update is pending). Keep Save wired to the correct form via the form attribute and type='submit'. Ensure Save remains disabled unless inputs are valid and mutation is not pending, and ensure the pending label 'Saving...' is shown during in-flight. After success, reset form state (as today) and rely on immediate cache update from hooks so the saved item is visible right away. Continue using shadcn-ui Button/Dialog patterns and verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/hooks/useQueries.ts",
+          "operation": "modify",
+          "description": "Ensure the recurring chore create/update mutations expose a reliable pending state and return completion only after any follow-up read needed for immediate UI consistency (e.g., returning the hydrated saved chore), so the dialog can safely reset only when the save is truly complete."
         }
       ]
     }

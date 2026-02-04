@@ -12,9 +12,6 @@ import Order "mo:core/Order";
 import MixinAuthorization "authorization/MixinAuthorization";
 import AccessControl "authorization/access-control";
 
-
-// Apply migration to run before actor initialization.
-
 actor {
   type Task = {
     id : Nat;
@@ -70,7 +67,7 @@ actor {
     timeline : Timeline;
     weekday : Nat;
     createdBy : Principal;
-    paused : Bool; // New field to track if the chore is paused
+    paused : Bool;
   };
 
   type CreateRecurringChoreRequest = {
@@ -111,7 +108,6 @@ actor {
   let recurringChores = Map.empty<Nat, RecurringChore>();
   let peopleProfiles = Map.empty<Principal, PersonProfile>();
 
-  // === People Profile APIs ===
   public shared ({ caller }) func upsertProfile(profile : PersonProfile) : async () {
     if (not AccessControl.hasPermission(accessControlState, caller, #user)) {
       Runtime.trap("Unauthorized: Must be a registered user to manage profiles");
@@ -308,6 +304,9 @@ actor {
     if (request.weekday > 6) {
       Runtime.trap("Invalid weekday: must be 0-6");
     };
+
+    // Removed the check requiring the assignedTo principal to exist in peopleProfiles
+
     let chore : RecurringChore = {
       id = nextRecurringChoreId;
       name = request.name;
@@ -318,6 +317,7 @@ actor {
       createdBy = caller;
       paused = false;
     };
+
     nextRecurringChoreId += 1;
     recurringChores.add(chore.id, chore);
     chore.id;
