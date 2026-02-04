@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import {
   Dialog,
   DialogContent,
@@ -33,6 +34,7 @@ export function DinnerRota() {
   const [editingDay, setEditingDay] = useState<string | null>(null);
   const [cookPrincipal, setCookPrincipal] = useState('');
   const [cookName, setCookName] = useState('');
+  const [mealDescription, setMealDescription] = useState('');
   const [fairnessRange, setFairnessRange] = useState<FairnessRange>('last30days');
 
   const { identity } = useInternetIdentity();
@@ -61,6 +63,7 @@ export function DinnerRota() {
     const assignment = getAssignmentForDay(date);
     setCookPrincipal(assignment?.cook?.toString() || '');
     setCookName(assignment?.cookName || '');
+    setMealDescription(assignment?.description || '');
     setEditingDay(dayKey);
   };
 
@@ -90,12 +93,14 @@ export function DinnerRota() {
           day: editingDay,
           cook,
           cookName: cookName.trim() || undefined,
+          description: mealDescription.trim(),
         },
         {
           onSuccess: () => {
             setEditingDay(null);
             setCookPrincipal('');
             setCookName('');
+            setMealDescription('');
           },
         }
       );
@@ -106,16 +111,25 @@ export function DinnerRota() {
           day: editingDay,
           cook,
           cookName: cookName.trim() || undefined,
+          description: mealDescription.trim(),
         },
         {
           onSuccess: () => {
             setEditingDay(null);
             setCookPrincipal('');
             setCookName('');
+            setMealDescription('');
           },
         }
       );
     }
+  };
+
+  const handleDialogClose = () => {
+    setEditingDay(null);
+    setCookPrincipal('');
+    setCookName('');
+    setMealDescription('');
   };
 
   // Compute fairness stats
@@ -298,6 +312,11 @@ export function DinnerRota() {
                         <PersonBadge label={cookDisplay.label} color={cookDisplay.color} variant="secondary" />
                       </div>
                     </div>
+                    {assignment?.description && (
+                      <div className="rounded-md bg-muted/50 p-3 text-sm">
+                        <p className="text-foreground">{assignment.description}</p>
+                      </div>
+                    )}
                     {assignment && (
                       <Badge variant="outline" className="text-xs">
                         Assigned by: {formatPrincipal(assignment.assignedBy)}
@@ -320,7 +339,7 @@ export function DinnerRota() {
         })}
       </div>
 
-      <Dialog open={!!editingDay} onOpenChange={() => setEditingDay(null)}>
+      <Dialog open={!!editingDay} onOpenChange={handleDialogClose}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Assign Cook</DialogTitle>
@@ -346,9 +365,22 @@ export function DinnerRota() {
                 Optional: Enter a friendly name if not using a profile
               </p>
             </div>
+            <div className="space-y-2">
+              <Label htmlFor="meal-description">What are you cooking?</Label>
+              <Textarea
+                id="meal-description"
+                placeholder="e.g., Spaghetti Bolognese, Chicken Curry, Pizza Night..."
+                value={mealDescription}
+                onChange={(e) => setMealDescription(e.target.value)}
+                rows={3}
+              />
+              <p className="text-xs text-muted-foreground">
+                Optional: Describe the meal or add notes about what you're planning to cook
+              </p>
+            </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setEditingDay(null)}>
+            <Button variant="outline" onClick={handleDialogClose}>
               Cancel
             </Button>
             <Button onClick={handleSave} disabled={assignCooking.isPending || updateCooking.isPending}>

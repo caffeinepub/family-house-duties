@@ -1,8 +1,10 @@
 import { useState, useMemo } from 'react';
-import { ChevronLeft, ChevronRight, ChefHat, Calendar as CalendarIcon } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ChefHat, Calendar as CalendarIcon, ListTodo } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 import { useGetAllTasks, useGetCookingAssignments, useGetAllRecurringChores, useGetAllProfiles } from '../hooks/useQueries';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
@@ -22,11 +24,17 @@ import { CalendarWeekPlanner } from './CalendarWeekPlanner';
 import { CalendarDayPlanner } from './CalendarDayPlanner';
 import { LightweightMonthOverview } from './LightweightMonthOverview';
 import { getCookingAssignmentDisplay } from '../utils/cookingAssignmentLabel';
+import { getChoresForDate } from '../utils/recurringChoresSchedule';
+import { useSessionStorageState } from '../hooks/useSessionStorageState';
 
 export function CalendarView() {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [viewMode, setViewMode] = useState<'month' | 'week' | 'day'>('month');
   const [selectedDate, setSelectedDate] = useState(new Date());
+  const [showRecurringChores, setShowRecurringChores] = useSessionStorageState(
+    'calendar.showRecurringChores',
+    true
+  );
 
   const { data: allTasks = [], isLoading: tasksLoading } = useGetAllTasks();
   const { data: assignments = [], isLoading: assignmentsLoading } = useGetCookingAssignments();
@@ -73,6 +81,11 @@ export function CalendarView() {
     return assignmentsMap.get(dateKey);
   };
 
+  const getChoresForDay = (date: Date) => {
+    if (!showRecurringChores) return [];
+    return getChoresForDate(recurringChores, date);
+  };
+
   const previousMonth = () => setCurrentMonth(subMonths(currentMonth, 1));
   const nextMonth = () => setCurrentMonth(addMonths(currentMonth, 1));
 
@@ -96,6 +109,16 @@ export function CalendarView() {
           <h2 className="text-2xl font-bold">Calendar View</h2>
           <p className="text-muted-foreground">Plan your tasks and meals</p>
         </div>
+        <div className="flex items-center gap-2">
+          <Switch
+            id="show-recurring-chores"
+            checked={showRecurringChores}
+            onCheckedChange={setShowRecurringChores}
+          />
+          <Label htmlFor="show-recurring-chores" className="cursor-pointer text-sm font-medium">
+            Show recurring chores
+          </Label>
+        </div>
       </div>
 
       <Tabs value={viewMode} onValueChange={(value) => setViewMode(value as 'month' | 'week' | 'day')}>
@@ -112,8 +135,10 @@ export function CalendarView() {
             selectedDate={selectedDate}
             allTasks={allTasks}
             assignments={assignments}
+            recurringChores={recurringChores}
             onMonthChange={setCurrentMonth}
             onDateSelect={handleDateSelect}
+            showRecurringChores={showRecurringChores}
           />
 
           {/* Full Month Grid */}
@@ -141,6 +166,7 @@ export function CalendarView() {
                 {calendarDays.map((day) => {
                   const dayTasks = getTasksForDay(day);
                   const assignment = getAssignmentForDay(day);
+                  const dayChores = getChoresForDay(day);
                   const cookDisplay = getCookingAssignmentDisplay(assignment, profiles);
                   const isCurrentMonth = isSameMonth(day, currentMonth);
                   const isToday = isSameDay(day, new Date());
@@ -165,6 +191,18 @@ export function CalendarView() {
                             )}
                             <span className="truncate">{cookDisplay.label}</span>
                           </div>
+                        )}
+                        {dayChores.slice(0, 1).map((chore) => (
+                          <div
+                            key={chore.id.toString()}
+                            className="flex items-center gap-1 truncate rounded bg-secondary/50 px-1.5 py-0.5 text-xs text-secondary-foreground"
+                          >
+                            <ListTodo className="h-3 w-3 flex-shrink-0" />
+                            <span className="truncate">{chore.name}</span>
+                          </div>
+                        ))}
+                        {dayChores.length > 1 && (
+                          <div className="text-xs text-muted-foreground">+{dayChores.length - 1} chore{dayChores.length > 2 ? 's' : ''}</div>
                         )}
                         {dayTasks.slice(0, 2).map((task) => (
                           <div
@@ -200,17 +238,31 @@ export function CalendarView() {
                   <ChefHat className="h-3 w-3" />
                   <span className="text-sm text-muted-foreground">Cooking Assignment</span>
                 </div>
+                {showRecurringChores && (
+                  <div className="flex items-center gap-2">
+                    <ListTodo className="h-3 w-3" />
+                    <span className="text-sm text-muted-foreground">Recurring Chore</span>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
         </TabsContent>
 
         <TabsContent value="week" className="mt-6">
-          <CalendarWeekPlanner selectedDate={selectedDate} onDateChange={handleDateSelect} />
+          <CalendarWeekPlanner
+            selectedDate={selectedDate}
+            onDateChange={handleDateSelect}
+            showRecurringChores={showRecurringChores}
+          />
         </TabsContent>
 
         <TabsContent value="day" className="mt-6">
-          <CalendarDayPlanner selectedDate={selectedDate} onDateChange={handleDateSelect} />
+          <CalendarDayPlanner
+            selectedDate={selectedDate}
+            onDateChange={handleDateSelect}
+            showRecurringChores={showRecurringChores}
+          />
         </TabsContent>
       </Tabs>
     </div>

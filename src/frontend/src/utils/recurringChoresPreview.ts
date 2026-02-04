@@ -16,6 +16,8 @@ export function getTimelineLabel(timeline: Timeline | undefined): string {
   if (!timeline) return 'Weekly'; // Default for backward compatibility
   
   switch (timeline) {
+    case Timeline.daily:
+      return 'Daily';
     case Timeline.weeklies:
       return 'Weekly';
     case Timeline.fortnightly:

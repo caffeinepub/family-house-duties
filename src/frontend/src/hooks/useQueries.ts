@@ -153,12 +153,13 @@ export function useAssignCookingDay() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (params: { day: string; cook: Principal | undefined; cookName?: string }) => {
+    mutationFn: async (params: { day: string; cook: Principal | undefined; cookName?: string; description: string }) => {
       if (!actor) throw new Error('Actor not initialized');
       const request: AssignCookingDayRequest = {
         day: params.day,
         cook: params.cook,
         cookName: params.cookName,
+        description: params.description,
       };
       return actor.assignCookingDay(request);
     },
@@ -178,12 +179,13 @@ export function useUpdateCookingDay() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (params: { day: string; cook: Principal | undefined; cookName?: string }) => {
+    mutationFn: async (params: { day: string; cook: Principal | undefined; cookName?: string; description: string }) => {
       if (!actor) throw new Error('Actor not initialized');
       const request: UpdateCookingDayRequest = {
         day: params.day,
         cook: params.cook,
         cookName: params.cookName,
+        description: params.description,
       };
       return actor.updateCookingDay(request);
     },

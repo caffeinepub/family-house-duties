@@ -14,16 +14,19 @@ import {
   startOfWeek,
   endOfWeek,
 } from 'date-fns';
-import type { Task, CookingAssignment } from '../backend';
+import type { Task, CookingAssignment, RecurringChore } from '../backend';
 import { dateToDayKey, taskDueDateToDayKey } from '../utils/taskDayKey';
+import { getChoresForDate } from '../utils/recurringChoresSchedule';
 
 interface LightweightMonthOverviewProps {
   currentMonth: Date;
   selectedDate: Date;
   allTasks: Task[];
   assignments: CookingAssignment[];
+  recurringChores: RecurringChore[];
   onMonthChange: (date: Date) => void;
   onDateSelect: (date: Date) => void;
+  showRecurringChores: boolean;
 }
 
 export function LightweightMonthOverview({
@@ -31,8 +34,10 @@ export function LightweightMonthOverview({
   selectedDate,
   allTasks,
   assignments,
+  recurringChores,
   onMonthChange,
   onDateSelect,
+  showRecurringChores,
 }: LightweightMonthOverviewProps) {
   const monthStart = startOfMonth(currentMonth);
   const monthEnd = endOfMonth(currentMonth);
@@ -76,6 +81,12 @@ export function LightweightMonthOverview({
     return assignmentsByDay.has(dayKey);
   };
 
+  const hasRecurringChores = (date: Date) => {
+    if (!showRecurringChores) return false;
+    const chores = getChoresForDate(recurringChores, date);
+    return chores.length > 0;
+  };
+
   const previousMonth = () => onMonthChange(subMonths(currentMonth, 1));
   const nextMonth = () => onMonthChange(addMonths(currentMonth, 1));
   const goToToday = () => {
@@ -117,6 +128,7 @@ export function LightweightMonthOverview({
             const isSelected = isSameDay(day, selectedDate);
             const dayHasTasks = hasTasks(day);
             const dayHasCooking = hasCookingAssignment(day);
+            const dayHasChores = hasRecurringChores(day);
 
             return (
               <button
@@ -134,7 +146,7 @@ export function LightweightMonthOverview({
                   {format(day, 'd')}
                 </span>
                 {/* Indicators */}
-                {isCurrentMonth && (dayHasTasks || dayHasCooking) && (
+                {isCurrentMonth && (dayHasTasks || dayHasCooking || dayHasChores) && (
                   <div className="absolute bottom-0.5 left-1/2 flex -translate-x-1/2 gap-0.5">
                     {dayHasTasks && (
                       <div
@@ -147,6 +159,13 @@ export function LightweightMonthOverview({
                       <div
                         className={`h-1 w-1 rounded-full ${
                           isSelected ? 'bg-primary-foreground' : 'bg-accent-foreground'
+                        }`}
+                      />
+                    )}
+                    {dayHasChores && (
+                      <div
+                        className={`h-1 w-1 rounded-full ${
+                          isSelected ? 'bg-primary-foreground' : 'bg-secondary-foreground'
                         }`}
                       />
                     )}
@@ -167,6 +186,12 @@ export function LightweightMonthOverview({
             <div className="h-1.5 w-1.5 rounded-full bg-accent-foreground" />
             <span>Cooking</span>
           </div>
+          {showRecurringChores && (
+            <div className="flex items-center gap-1.5">
+              <div className="h-1.5 w-1.5 rounded-full bg-secondary-foreground" />
+              <span>Chores</span>
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>

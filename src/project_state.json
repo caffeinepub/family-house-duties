@@ -1,338 +1,398 @@
 {
   "schemaVersion": "1.0.0",
   "projectStateVersion": 3,
-  "summary": "Family House Duties is an Internet Computer (ICP) dapp for shared household coordination. Authenticated users (via Internet Identity) can manage one-off household tasks (create/edit/delete, optional assignee and due date, mark complete, clear own completed tasks), maintain a weekly dinner rota (assign/update daily cook with ownership rules), and plan via calendar views (month/week/day) plus a “Today’s Focus” dashboard. The app also supports recurring chores with weekly/fortnightly/monthly schedules, including pause/resume, and a People directory to map principals to friendly names and colors used throughout the UI. The backend is a Motoko canister enforcing role-based access control and per-record ownership rules, with the first admin bootstrapped via an environment token.",
+  "summary": "Family House Duties is a full-stack Internet Computer (ICP) dapp (React + TypeScript frontend, Motoko backend canister) for coordinating household responsibilities among authenticated family members. After signing in with Internet Identity, users can manage one-off tasks (optional due date and assignee), maintain a weekly dinner rota (per-day cooking assignments with optional cook principal and/or friendly name plus a free-text meal/notes description), define recurring chores (daily/weekly/fortnightly/monthly) that appear in calendar views via deterministic client-side scheduling rules and can be paused/resumed, and manage a People directory mapping ICP principals to display names and colors used throughout the UI. The frontend uses TanStack React Query for typed canister calls, caching, invalidation, and toast-based UX feedback, with extra structured diagnostics and normalized error messaging for recurring chore mutations.",
   "existing_features": [
     {
       "id": "IF-1",
-      "title": "Internet Identity authentication",
+      "title": "Internet Identity authentication and session restoration",
       "synonyms": [
         "II login",
-        "AuthClient provider"
+        "AuthClient",
+        "InternetIdentityProvider"
       ],
-      "description": "Provides login/logout via Internet Identity, restores prior sessions on app load, and exposes identity + status flags via a React context hook (useInternetIdentity).",
+      "description": "Provides Internet Identity sign-in and logout, restores an existing authenticated identity on app load, and exposes identity + login status flags (initializing/logging-in/success/error) through a React context hook.",
       "reqIds": [],
       "version": 1
     },
     {
       "id": "IF-2",
-      "title": "Identity-bound ICP actor creation and lifecycle",
+      "title": "Identity-bound canister actor creation with RBAC initialization",
       "synonyms": [
         "useActor",
-        "actor factory"
+        "actor factory",
+        "_initializeAccessControlWithSecret"
       ],
-      "description": "Creates an anonymous actor when unauthenticated and an identity-bound actor when authenticated; recreates actor on identity change and invalidates/refetches dependent React Query caches.",
+      "description": "Creates an anonymous actor when unauthenticated and an identity-bound actor when authenticated; on authenticated creation it calls the canister RBAC initializer using a secret token sourced from the URL hash/session; changing identity recreates the actor and refreshes dependent queries.",
       "reqIds": [],
       "version": 1
     },
     {
       "id": "IF-3",
-      "title": "Admin bootstrap via secret token",
+      "title": "Secure URL-hash secret parameter extraction with session persistence",
       "synonyms": [
-        "CAFFEINE_ADMIN_TOKEN bootstrap",
-        "access-control init"
+        "getSecretParameter",
+        "getSecretFromHash",
+        "sessionStorage secret"
       ],
-      "description": "On actor initialization, the frontend sends a secret token; the canister compares it to an environment token to assign the first admin, otherwise registering users as normal users.",
+      "description": "Extracts sensitive parameters from the URL hash fragment, stores them in sessionStorage, and removes them from the address bar to reduce leakage via history/referrers.",
       "reqIds": [],
       "version": 1
     },
     {
       "id": "IF-4",
-      "title": "Role-based access control APIs",
+      "title": "Backend RBAC with admin bootstrap and role assignment",
       "synonyms": [
-        "authorization mixin",
-        "AccessControl roles"
+        "AccessControl",
+        "MixinAuthorization",
+        "UserRole"
       ],
-      "description": "Canister enforces roles (#admin/#user/#guest) and exposes methods to get caller role, check admin status, and assign roles (admin-only).",
+      "description": "Motoko RBAC assigns principals to roles (#admin/#user/#guest). A bootstrap method registers callers (first matching secret becomes admin; others become users). Includes APIs to get caller role, check admin, and assign roles (admin-only).",
       "reqIds": [],
       "version": 1
     },
     {
       "id": "IF-5",
-      "title": "Task creation with optional due date and assignee",
+      "title": "People profiles CRUD with self-only permissions",
       "synonyms": [
-        "addTask",
-        "create task"
+        "People directory",
+        "PersonProfile",
+        "Profiles"
       ],
-      "description": "Users can create tasks with name/description and optional due date (Time) and assignee (Principal). Backend stores createdBy and assigns incrementing IDs.",
+      "description": "Users can create/update, delete, and list profiles mapping principal → displayName + color. Backend enforces that only registered users can access profiles and callers can only manage their own profile (caller == profile.principal).",
       "reqIds": [],
       "version": 1
     },
     {
       "id": "IF-6",
-      "title": "Task editing with ownership enforcement",
+      "title": "Profile-aware person label/color resolution and badges",
       "synonyms": [
-        "updateTask"
+        "resolvePersonDisplay",
+        "resolvePersonLabel",
+        "PersonBadge"
       ],
-      "description": "Tasks can be updated (name/description/dueDate/assignedTo) only by the creator; UI hides edit controls when the current user is not the task creator.",
+      "description": "Utilities resolve principals to displayName/color via People Profiles with a shortened-principal fallback. PersonBadge renders a consistent badge with optional color dot across the app.",
       "reqIds": [],
       "version": 1
     },
     {
       "id": "IF-7",
-      "title": "Task deletion with ownership enforcement",
+      "title": "Person selection control with profile dropdown and manual principal entry",
       "synonyms": [
-        "deleteTask"
+        "PersonProfileSelect",
+        "assignee selector",
+        "Me button"
       ],
-      "description": "Creators can delete their tasks with confirmation; backend prevents deletion by non-creators.",
+      "description": "Reusable form control that lets users choose from known profiles or switch to manual Principal ID entry, with an optional one-click 'Me' fill using the current Internet Identity principal.",
       "reqIds": [],
       "version": 1
     },
     {
       "id": "IF-8",
-      "title": "Task completion toggling",
+      "title": "Tasks CRUD (create/list/update/delete) with optional due date and assignee",
       "synonyms": [
-        "mark complete",
-        "toggleTaskCompletion"
+        "addTask",
+        "getAllTasks",
+        "updateTask",
+        "deleteTask"
       ],
-      "description": "Tasks can be toggled completed/pending; UI visually distinguishes completed items and separates pending vs completed lists.",
+      "description": "Canister supports creating tasks with name/description, optional dueDate, optional assignedTo, and createdBy; frontend provides add/edit dialogs and list views powered by React Query.",
       "reqIds": [],
       "version": 1
     },
     {
       "id": "IF-9",
-      "title": "Clear my completed tasks",
+      "title": "Task completion toggle and clearing completed tasks",
       "synonyms": [
-        "clearCompletedTasks",
-        "bulk clear"
+        "toggleTaskCompletion",
+        "clearCompletedTasks"
       ],
-      "description": "Users can remove all tasks they created that are marked completed; UI offers a confirmation-based action in the completed section.",
+      "description": "Users can toggle a task’s completed flag and clear their own completed tasks. Frontend invalidates tasks/calendar queries and shows toasts for key outcomes.",
       "reqIds": [],
       "version": 1
     },
     {
       "id": "IF-10",
-      "title": "Task list UI grouped by due day",
+      "title": "Task list UI grouped by day with pending/completed sections",
       "synonyms": [
+        "TaskList",
         "groupTasksByDay",
-        "task day grouping"
+        "day grouping"
       ],
-      "description": "Frontend groups tasks by normalized local day key (yyyy-MM-dd) and displays day headers, plus a dedicated \"No due date\" group.",
+      "description": "Renders tasks split into Pending vs Completed and grouped by normalized day keys, including a trailing 'No due date' group. Task cards show creator and assignee badges, due-date chips, and a 'Recurring' marker when the task originates from a recurring chore (recurringChoreId).",
       "reqIds": [],
       "version": 1
     },
     {
       "id": "IF-11",
-      "title": "Dinner rota: cooking assignment CRUD (create/update)",
+      "title": "Dinner rota: cooking assignments per day (principal and/or friendly name)",
       "synonyms": [
+        "DinnerRota",
         "assignCookingDay",
-        "updateCookingDay"
+        "updateCookingDay",
+        "getCookingAssignments"
       ],
-      "description": "Users can assign cooks to day keys (yyyy-MM-dd) with optional cookName and optional cook principal; existing assignments can only be edited by the original assigner (assignedBy).",
+      "description": "Stores cooking assignments keyed by day (yyyy-MM-dd) with optional cook principal, optional cookName, and assignedBy. UI renders the current week and allows assigning or changing cooks subject to assignedBy edit gating.",
       "reqIds": [],
       "version": 1
     },
     {
       "id": "IF-12",
-      "title": "Dinner rota fairness indicator",
+      "title": "Dinner rota meal/notes description field",
       "synonyms": [
-        "cooking fairness stats",
-        "most/least cooked"
+        "meal description",
+        "cooking assignment notes",
+        "per-day description"
       ],
-      "description": "Computes per-person cooking counts over selectable ranges (e.g., last 30 days, all time) and displays most/least highlights plus a proportional bar list.",
+      "description": "Cooking assignments include a free-text description field (e.g., what is being cooked). The Assign Cook dialog lets users enter/edit it, and the weekly rota cards display it when present.",
       "reqIds": [],
       "version": 1
     },
     {
       "id": "IF-13",
-      "title": "Calendar views (month/week/day) combining tasks, cooking, and chores",
+      "title": "Cooking fairness statistics over selectable time ranges",
       "synonyms": [
-        "CalendarView",
-        "planning views"
+        "Fairness Indicator",
+        "computeFairnessStats"
       ],
-      "description": "Provides a calendar module with month grid, week planner, and day planner views; uses day keys to match tasks (by due date) and cooking assignments and overlays recurring chores per date.",
+      "description": "Computes per-cook counts for cooking assignments over ranges (e.g., last 30 days, all time) and displays most/least cooked plus proportional bars, resolving labels/colors via People Profiles where applicable.",
       "reqIds": [],
       "version": 1
     },
     {
       "id": "IF-14",
-      "title": "Lightweight month overview with indicators",
+      "title": "Recurring chores backend CRUD with pause/resume and creator-only permissions",
       "synonyms": [
-        "mini month calendar",
-        "Month Overview"
+        "createRecurringChore",
+        "updateRecurringChore",
+        "deleteRecurringChore",
+        "pauseResumeRecurringChore"
       ],
-      "description": "Compact month component with month navigation and date selection, showing dot indicators for days with tasks and/or cooking assignments.",
+      "description": "Canister supports creating, updating, deleting, and pausing/resuming recurring chores with name/description, weekday (0–6), timeline (daily/weekly/fortnightly/monthly), optional assignedTo, createdBy, and paused state; backend enforces creator-only modifications and validates weekday range.",
       "reqIds": [],
       "version": 1
     },
     {
       "id": "IF-15",
-      "title": "Today’s Focus dashboard card",
+      "title": "Recurring chore scheduling engine (daily/weekly/fortnightly/monthly)",
       "synonyms": [
-        "daily snapshot",
-        "today panel"
+        "shouldChoreAppearOnDate",
+        "getChoresForDate"
       ],
-      "description": "Shows tasks due today and today’s cooking assignment using profile-aware labels, with skeleton loading and empty states.",
+      "description": "Frontend computes whether a recurring chore should appear on a given date: daily appears every day; weekly appears on matching weekday; fortnightly uses even/odd weeks relative to a fixed reference date; monthly appears on the first occurrence of the weekday in a month; paused chores are excluded.",
       "reqIds": [],
       "version": 1
     },
     {
       "id": "IF-16",
-      "title": "Recurring chores: create/update/delete",
+      "title": "Recurring chores management dialog with validation, preview, and pause/resume controls",
       "synonyms": [
-        "recurring tasks",
-        "recurrence management"
+        "RecurringChoresDialog",
+        "safeParsePrincipal",
+        "inline validation"
       ],
-      "description": "Users can manage recurring chores with name/description, weekday, frequency (weekly/fortnightly/monthly), and optional assignee principal; backend enforces creator-only edits and validation of weekday (0–6).",
+      "description": "Dialog UI supports creating/editing chores with required-name validation and safe principal parsing, shows a live preview (weekday + frequency + assignment), prevents double-submit while mutations are pending, and allows creator-only edit/delete plus pause/resume actions.",
       "reqIds": [],
       "version": 1
     },
     {
       "id": "IF-17",
-      "title": "Recurring chores: pause/resume",
+      "title": "Recurring chores inline preview grouped by weekday with expand/collapse",
       "synonyms": [
-        "pause recurring chore",
-        "resume recurring chore"
+        "RecurringChoresInlineSection",
+        "groupRecurringChoresByWeekday"
       ],
-      "description": "Creators can pause or resume recurring chores; paused chores are excluded from date appearance logic in calendar planners and marked as paused in the UI.",
+      "description": "Displays a compact recurring-chore summary grouped by weekday and ordered starting from today, with timeline labels and paused indicator; supports expand/collapse and a single Manage/Add entry point.",
       "reqIds": [],
       "version": 1
     },
     {
       "id": "IF-18",
-      "title": "Recurring chores scheduling rules (weekly/fortnightly/monthly)",
+      "title": "Calendar views (month/week/day) combining tasks, cooking assignments, and recurring chores",
       "synonyms": [
-        "shouldChoreAppearOnDate",
-        "recurrence engine"
+        "CalendarView",
+        "CalendarWeekPlanner",
+        "CalendarDayPlanner"
       ],
-      "description": "Client-side scheduling determines if a chore appears on a given date: weekly matches weekday; fortnightly uses a fixed reference date for even/odd weeks; monthly appears on the first weekday occurrence (day 1–7), excluding paused chores.",
+      "description": "Provides month/week/day calendar planners that merge tasks and cooking assignments by day key and include recurring chores filtered per-date via the scheduling engine. Week/day views support toggling task completion inline.",
       "reqIds": [],
       "version": 1
     },
     {
       "id": "IF-19",
-      "title": "Inline recurring chores preview section with expand/collapse",
+      "title": "Lightweight month overview with dot indicators and legend",
       "synonyms": [
-        "RecurringChoresInlineSection",
-        "recurring preview list"
+        "LightweightMonthOverview",
+        "month mini-map"
       ],
-      "description": "Shows recurring chores grouped by weekday (sorted starting from today), includes frequency labels and paused badges, provides a smooth scan-friendly layout, and offers an in-place Show more/Show less control to reveal additional weekday groups without navigation.",
+      "description": "Compact month grid supports month navigation and date selection and shows dot indicators for days containing tasks, cooking assignments, and optionally recurring chores, plus a legend.",
       "reqIds": [],
       "version": 1
     },
     {
       "id": "IF-20",
-      "title": "People profiles (principal → display name + color) CRUD",
+      "title": "Recurring chore visibility toggle persisted in sessionStorage",
       "synonyms": [
-        "People tab",
-        "PersonProfile directory"
+        "Show recurring chores switch",
+        "useSessionStorageState"
       ],
-      "description": "Users can create/update/delete and list person profiles containing principal, display name, and color; backend restricts profile management to the profile owner (caller must equal profile.principal).",
+      "description": "Calendar UI includes a switch to show/hide recurring chores across views; preference is persisted via a reusable sessionStorage-backed state hook.",
       "reqIds": [],
       "version": 1
     },
     {
       "id": "IF-21",
-      "title": "Profile-aware labels, badges, and selectors",
+      "title": "Today’s Focus panel (tasks due today + today’s cook)",
       "synonyms": [
-        "PersonBadge",
-        "PersonProfileSelect"
+        "TodayFocus",
+        "daily summary"
       ],
-      "description": "Provides reusable UI for displaying people with color dots and selecting assignees/cooks via profiles or manual principal entry, including a “Me” shortcut; used across tasks, dinner rota, and planners.",
+      "description": "Dashboard panel shows tasks due today (based on normalized day keys) and today's cooking assignment label (profile-aware), including loading skeletons and empty states.",
       "reqIds": [],
       "version": 1
     },
     {
       "id": "IF-22",
-      "title": "React Query API hooks for all canister operations",
+      "title": "Sample data seeding for demos with confirmation when data exists",
       "synonyms": [
-        "useQueries",
-        "mutation/query layer"
+        "useSeedSampleData",
+        "Populate sample data"
       ],
-      "description": "Typed hooks for tasks, cooking assignments, recurring chores, and profiles; includes consistent cache invalidation, toast notifications, and improved recurring chore error normalization.",
+      "description": "Provides a UI action to populate demo content: ensures a profile for the current principal, creates a variety of tasks (including a completed one), creates recurring chores across all timelines, and seeds the current week’s dinner rota (cookName + description). Prompts for confirmation if any existing data is detected.",
       "reqIds": [],
       "version": 1
     },
     {
       "id": "IF-23",
-      "title": "Principal parsing and validation utilities",
+      "title": "Typed React Query API layer with cache invalidation and toast feedback",
       "synonyms": [
-        "safeParsePrincipal",
-        "principal input validation"
+        "useQueries",
+        "usePeopleProfilesQueries"
       ],
-      "description": "Provides safe, non-throwing principal parsing for form validation and clearer user feedback when principal IDs are invalid.",
+      "description": "Centralizes queries/mutations for tasks, cooking assignments, recurring chores, calendar data, and people profiles. Mutations invalidate relevant query keys and show Sonner toast notifications on success/error; recurring chore create/update also patches query cache immediately after fetching the saved object.",
       "reqIds": [],
       "version": 1
     },
     {
       "id": "IF-24",
-      "title": "Deployment/initialization diagnostic logging utilities",
+      "title": "Recurring chore mutation diagnostics and normalized error handling",
       "synonyms": [
-        "withDiagnostics",
-        "deploymentDiagnostics"
+        "logRecurringChoreMutationStart",
+        "logRecurringChoreMutationOutcome",
+        "normalizeRecurringChoreError"
       ],
-      "description": "Structured console logging helpers to time and classify failures across config load, actor creation, access-control init, query, and mutation execution steps with actionable guidance.",
+      "description": "Recurring chore mutations emit structured logs for payload/outcome and normalize common authorization/validation/serialization failures into user-friendly messages with developer-oriented diagnostic detail.",
       "reqIds": [],
       "version": 1
     },
     {
       "id": "IF-25",
-      "title": "App shell with theming, navigation, and logout cache reset",
+      "title": "Deployment/initialization diagnostics utilities",
       "synonyms": [
-        "tabs layout",
-        "dark mode"
+        "deploymentDiagnostics",
+        "withDiagnostics"
       ],
-      "description": "Tab-based navigation (Tasks, Dinner Rota, Calendar, People), global header/footer, system/light/dark theme support, and logout that clears identity and react-query caches.",
+      "description": "Provides structured console logging for key initialization steps with duration tracking and actionable guidance for common failure points (config load, actor creation, access-control init, query/mutation execution).",
       "reqIds": [],
       "version": 1
     },
     {
-      "id": "feature-diagnose-and-fix-the-recurring-chores-create-update-flow-so-that-pressing-create-chore-update-chore-reliably-writes-the-record-to-the-backend-and-the-ui-immediately-reflects-the-saved-state-including-after-closing-and-reopening-the-dialog",
-      "title": "Diagnose and fix the recurring chores create/update flow so that pressing “Create Chore” / “Update Chore” reliably writes the record to the backend and the UI immediately reflects the saved state (including after closing and reopening the dialog).",
+      "id": "IF-26",
+      "title": "Application shell with authenticated tabs, theming, and logout cache clearing",
+      "synonyms": [
+        "App shell",
+        "ThemeProvider",
+        "tab navigation"
+      ],
+      "description": "Authenticated users see a tabbed app (Task List, Dinner Rota, Calendar, People) with shared Header/Footer and system/light/dark theme support. Logout clears identity and React Query cache.",
+      "reqIds": [],
+      "version": 1
+    },
+    {
+      "id": "IF-27",
+      "title": "Backend schema migration for cooking assignment description field",
+      "synonyms": [
+        "migration.mo",
+        "upgrade migration"
+      ],
+      "description": "Canister includes a migration function that transforms pre-existing cooking assignments into the new schema by adding a default empty description field during upgrade.",
+      "reqIds": [],
+      "version": 1
+    },
+    {
+      "id": "feature-add-per-task-edit-and-delete-ui-controls-to-the-calendar-day-view-frontend-src-components-calendardayplanner-tsx-for-tasks-scheduled-on-the-selected-day-edit-must-open-the-existing-edittaskdialog-for-that-task-and-delete-must-prompt-for-confirmation-before-calling-the-existing-delete-task-mutation-only-show-edit-delete-controls-when-the-current-user-is-the-task-creator-task-createdby-matches-the-authenticated-principal",
+      "title": "Add per-task Edit and Delete UI controls to the calendar day view (frontend/src/components/CalendarDayPlanner.tsx) for tasks scheduled on the selected day. Edit must open the existing EditTaskDialog for that task, and Delete must prompt for confirmation before calling the existing delete task mutation. Only show Edit/Delete controls when the current user is the task creator (task.createdBy matches the authenticated principal).",
       "reqIds": [
         "REQ-1"
       ],
       "version": 1
     },
     {
-      "id": "feature-improve-recurring-chore-save-reliability-diagnostics-add-structured-console-logging-frontend-backend-around-create-update-pause-delete-showing-key-fields-id-weekday-timeline-assignedto-presence-and-backend-traps-so-failures-can-be-pinpointed-quickly-without-changing-user-facing-behavior",
-      "title": "Improve recurring chore save reliability diagnostics: add structured console logging (frontend + backend) around create/update/pause/delete showing key fields (id, weekday, timeline, assignedTo presence) and backend traps, so failures can be pinpointed quickly without changing user-facing behavior.",
+      "id": "feature-add-per-task-edit-and-delete-ui-controls-to-the-calendar-week-view-frontend-src-components-calendarweekplanner-tsx-for-tasks-on-each-day-edit-must-open-the-existing-edittaskdialog-and-delete-must-prompt-for-confirmation-before-calling-the-existing-delete-task-mutation-only-show-edit-delete-controls-when-the-current-user-is-the-task-creator",
+      "title": "Add per-task Edit and Delete UI controls to the calendar week view (frontend/src/components/CalendarWeekPlanner.tsx) for tasks on each day. Edit must open the existing EditTaskDialog, and Delete must prompt for confirmation before calling the existing delete task mutation. Only show Edit/Delete controls when the current user is the task creator.",
       "reqIds": [
-        "REQ-3"
+        "REQ-2"
       ],
       "version": 1
     },
     {
-      "id": "feature-ensure-the-recurring-chores-dialog-form-submit-cannot-silently-fail-due-to-ui-state-the-save-button-must-always-submit-the-correct-form-remain-enabled-only-when-inputs-are-valid-and-show-a-clear-pending-state-while-the-mutation-is-in-flight",
-      "title": "Ensure the Recurring Chores dialog form submit cannot silently fail due to UI state: the Save button must always submit the correct form, remain enabled only when inputs are valid, and show a clear pending state while the mutation is in-flight.",
+      "id": "feature-add-edit-delete-access-for-recurring-chores-from-calendar-views-by-enabling-a-user-to-initiate-editing-or-deletion-of-a-recurring-chore-shown-in-calendardayplanner-and-calendarweekplanner-editing-must-route-through-the-existing-recurring-chore-update-flow-and-deletion-must-prompt-for-confirmation-before-calling-the-existing-recurring-chore-delete-mutation-only-allow-these-actions-when-the-current-user-is-the-recurring-chore-creator-chore-createdby-matches-the-authenticated-principal",
+      "title": "Add edit/delete access for recurring chores from calendar views by enabling a user to initiate editing or deletion of a recurring chore shown in CalendarDayPlanner and CalendarWeekPlanner. Editing must route through the existing recurring chore update flow and deletion must prompt for confirmation before calling the existing recurring chore delete mutation. Only allow these actions when the current user is the recurring chore creator (chore.createdBy matches the authenticated principal).",
       "reqIds": [
-        "REQ-4"
+        "REQ-3"
       ],
       "version": 1
     }
   ],
   "new_feature_requests": [
     {
+      "id": "AR-1",
+      "summary": "Add UI controls to edit and delete each one-off task (in task list/calendar)",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
       "id": "AR-2",
-      "summary": "Add backend persistence for recurring chores across canister upgrades by storing recurring chores and the recurring chore ID counter in stable state using preupgrade/postupgrade hooks (Motoko). Ensure existing behavior (ownership enforcement, validation, pause/resume, list/get APIs) remains unchanged.",
-      "reqIds": [
-        "REQ-2"
-      ],
+      "summary": "Add UI controls to edit and delete each recurring chore (manage dialog/list)",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-3",
+      "summary": "Implement stable persistence so tasks/chores/profiles survive redeploys/upgrades (stable memory + migrations)",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-4",
+      "summary": "Add visual header images/styles to improve app appeal",
+      "reqIds": [],
       "status": "pending"
     }
   ],
   "architectural_notes": [
-    "Frontend is a React SPA using @tanstack/react-query for all canister I/O (queries + mutations), with cache invalidation on mutation success and toast notifications for feedback.",
-    "Authentication uses Internet Identity via AuthClient inside a React context (InternetIdentityProvider) that restores persisted sessions and exposes login status flags.",
-    "Backend integration follows an ICP “actor” pattern: useActor creates an anonymous or identity-bound actor; on identity change it invalidates/refetches all non-actor queries.",
-    "Role-based access control is implemented on-canister (AccessControl) and composed into the main actor via a Motoko mixin (MixinAuthorization).",
-    "Admin bootstrap is token-based: the canister reads CAFFEINE_ADMIN_TOKEN (env var) and compares it to a user-provided secret passed from the frontend; first matching caller becomes admin, otherwise callers become users.",
-    "Sensitive bootstrap tokens are handled on the frontend via URL hash extraction + sessionStorage persistence, and immediately removed from the URL to reduce leakage.",
-    "UI is built with TailwindCSS + shadcn/ui primitives (Card, Dialog, Tabs, etc.) and next-themes for system/light/dark mode.",
-    "Date handling is normalized in the frontend using yyyy-MM-dd day keys for grouping tasks and matching cooking assignments, reducing timestamp equality issues.",
-    "Recurring chore scheduling is implemented client-side for calendar/day/week planners via deterministic rules (weekly/fortnightly anchored reference date/monthly first-week rule) and excludes paused chores.",
-    "Input robustness utilities exist for principal parsing (safeParsePrincipal) and for more diagnosable initialization failures (deploymentDiagnostics)."
+    "ICP dapp split: React SPA frontend calling a Motoko canister via generated Candid/IDL TypeScript bindings.",
+    "Authentication uses Internet Identity (AuthClient) wrapped in a React context provider that restores sessions and exposes login/logout/status flags.",
+    "Backend authorization is RBAC (#admin/#user/#guest) mixed into the main actor via a Motoko mixin; users are registered on first authenticated actor creation.",
+    "Frontend data-access layer is centralized in @tanstack/react-query hooks; writes invalidate related query keys (tasks/calendar/assignments/chores/profiles).",
+    "Date normalization strategy: day keys are yyyy-MM-dd strings (local time) on the frontend; task due dates are stored/transmitted as nanosecond timestamps (bigint/Time.Time).",
+    "Recurring chore appearance is computed client-side (not server-generated) with deterministic rules per timeline and a fixed reference date for fortnightly scheduling.",
+    "UI stack: TailwindCSS + shadcn/ui (Radix primitives) + lucide-react icons; theme switching via next-themes.",
+    "User feedback: Sonner toast notifications for mutations; recurring chore flows add structured logging + error normalization utilities for troubleshooting.",
+    "Canister includes a migration module (schema upgrade path) to add the cooking-assignment description field during upgrades.",
+    "Need stable storage strategy (stable vars / stable memory) with upgrade-safe migrations so user data persists across deployments/upgrades."
   ],
   "known_issues": [
-    "Backend getCalendar() appears incorrect: it looks up cooking assignments using cookingAssignments.get(task.name) instead of the day key, and it emits one CalendarDay per task rather than aggregating by date; it also omits days with cooking-only items or no tasks.",
-    "Backend getTasksByDate(date) matches dueDate using exact timestamp equality; the UI treats due dates at day granularity, so this can easily return no matches unless the exact nanosecond value is provided.",
-    "Backend state is held in in-memory vars/Maps (e.g., tasks, cookingAssignments, recurringChores, peopleProfiles, nextTaskId) with no stable persistence shown; canister upgrades/redeployments will likely reset data unless stable storage hooks exist elsewhere.",
-    "frontend/src/components/ProfileSetup.tsx is an empty placeholder file, but other project documentation implies a profile setup flow exists; if referenced in routing/UX elsewhere, it will be missing.",
-    "Duplicate global CSS token files exist (frontend/index.css and frontend/src/index.css) with different theme variables; depending on bundling/imports, this can cause confusing or inconsistent styling.",
-    "Recurring chore error normalization includes messaging about missing person profiles (\"Person profile does not exist\"), but the backend explicitly removed the check requiring assigned principals to have a profile; some user-facing errors may be misleading.",
-    "Recurring chores UX/save flow still not working reliably: users report they still cannot save or the flow is incorrect even after adding a scrollable pop-up; likely form/scroll/modal behavior or mutation not firing/persisting consistently."
+    "Backend getCalendar() is incorrect: it looks up cookingAssignments using task.name instead of the day key/date, emits one CalendarDay per task (no aggregation), and omits days that only contain cooking assignments.",
+    "Backend getTasksByDate(date) compares dueDate by exact timestamp equality, which is not aligned with day-level expectations and will miss tasks on the same calendar day with different times.",
+    "assignCookingDay() overwrites any existing assignment for the same day without enforcing assignedBy permissions; callers can bypass updateCookingDay’s edit gating by calling assignCookingDay directly.",
+    "Access-control bootstrap traps if CAFFEINE_ADMIN_TOKEN is not set in the canister environment, preventing registration/role initialization.",
+    "Daily recurring chores still require selecting a weekday in the UI, but weekday is ignored by the scheduling logic for daily frequency; this can be misleading.",
+    "Two Tailwind theme variable files exist (frontend/index.css vs frontend/src/index.css), which can cause inconsistent styling depending on bundling/imports.",
+    "useActor invalidates and then immediately refetches all non-actor queries when the actor changes, which can cause bursty duplicate fetches during login/logout.",
+    "Backend state uses in-memory vars/Maps; persistence across upgrades depends on the migration/stable-memory approach in use, but the code shown does not clearly declare stable storage for these collections."
   ],
-  "isFixRequest": true,
+  "isFixRequest": false,
   "gameProjectType": "none",
   "projectName": "Family House Duties",
   "clarification_mode": "instant",

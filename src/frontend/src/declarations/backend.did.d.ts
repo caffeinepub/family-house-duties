@@ -20,6 +20,7 @@ export interface AssignCookingDayRequest {
   'day' : string,
   'cook' : [] | [Principal],
   'cookName' : [] | [string],
+  'description' : string,
 }
 export interface CalendarDay {
   'tasks' : Array<Task>,
@@ -31,6 +32,7 @@ export interface CookingAssignment {
   'assignedBy' : Principal,
   'cook' : [] | [Principal],
   'cookName' : [] | [string],
+  'description' : string,
 }
 export interface CreateRecurringChoreRequest {
   'weekday' : bigint,
@@ -72,11 +74,13 @@ export interface Task {
 export type Time = bigint;
 export type Timeline = { 'fortnightly' : null } |
   { 'weeklies' : null } |
-  { 'monthly' : null };
+  { 'monthly' : null } |
+  { 'daily' : null };
 export interface UpdateCookingDayRequest {
   'day' : string,
   'cook' : [] | [Principal],
   'cookName' : [] | [string],
+  'description' : string,
 }
 export interface UpdateRecurringChoreRequest {
   'id' : bigint,

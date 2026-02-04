@@ -18,16 +18,21 @@ export function shouldChoreAppearOnDate(chore: RecurringChore, date: Date): bool
     return false;
   }
 
+  // Get timeline, default to weeklies if missing (for backward compatibility)
+  const timeline = chore.timeline || Timeline.weeklies;
+
+  // Daily chores appear every day (regardless of weekday)
+  if (timeline === Timeline.daily) {
+    return true;
+  }
+
   const choreWeekday = Number(chore.weekday);
   const dateWeekday = date.getDay();
 
-  // First check: weekday must match
+  // For non-daily chores: weekday must match
   if (choreWeekday !== dateWeekday) {
     return false;
   }
-
-  // Get timeline, default to weeklies if missing (for backward compatibility)
-  const timeline = chore.timeline || Timeline.weeklies;
 
   switch (timeline) {
     case Timeline.weeklies:

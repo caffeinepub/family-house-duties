@@ -1,88 +1,74 @@
 {
   "kind": "build_request",
-  "title": "Fix recurring chores save flow and persistence",
-  "priority": "high",
+  "title": "Add edit/delete controls for tasks and recurring chores in calendar views",
+  "priority": "normal",
   "requirements": [
     {
       "id": "REQ-1",
-      "text": "Diagnose and fix the recurring chores create/update flow so that pressing “Create Chore” / “Update Chore” reliably writes the record to the backend and the UI immediately reflects the saved state (including after closing and reopening the dialog).",
-      "target": "both",
+      "text": "Add per-task Edit and Delete UI controls to the calendar day view (frontend/src/components/CalendarDayPlanner.tsx) for tasks scheduled on the selected day. Edit must open the existing EditTaskDialog for that task, and Delete must prompt for confirmation before calling the existing delete task mutation. Only show Edit/Delete controls when the current user is the task creator (task.createdBy matches the authenticated principal).",
+      "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-1"
+          "msg-4"
         ],
         "quotes": [
-          "Recurring chores flow still not working or saving correctly"
+          "Add the ability to delete and edit each task and recurring chore"
         ]
       },
       "acceptanceCriteria": [
-        "Creating a recurring chore from the Recurring Chores dialog results in a new item appearing in the “Existing Recurring Chores” list without requiring a full page refresh.",
-        "Editing an existing recurring chore updates the item shown in the list immediately after the save completes.",
-        "If the backend rejects the mutation, the dialog remains open and the user sees an English error message explaining the failure."
+        "In the day planner task list, each task created by the current user shows Edit and Delete controls.",
+        "Clicking Edit opens the existing task edit dialog pre-filled with that task’s fields and successfully saves via the existing update path.",
+        "Clicking Delete shows a confirmation prompt and, on confirmation, deletes the task via the existing mutation and refreshes the calendar/task data (React Query invalidation).",
+        "Tasks not created by the current user do not show Edit/Delete controls."
       ]
     },
     {
       "id": "REQ-2",
-      "text": "Add backend persistence for recurring chores across canister upgrades by storing recurring chores and the recurring chore ID counter in stable state using preupgrade/postupgrade hooks (Motoko). Ensure existing behavior (ownership enforcement, validation, pause/resume, list/get APIs) remains unchanged.",
-      "target": "backend",
+      "text": "Add per-task Edit and Delete UI controls to the calendar week view (frontend/src/components/CalendarWeekPlanner.tsx) for tasks on each day. Edit must open the existing EditTaskDialog, and Delete must prompt for confirmation before calling the existing delete task mutation. Only show Edit/Delete controls when the current user is the task creator.",
+      "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-1"
+          "msg-4"
         ],
         "quotes": [
-          "Recurring chores flow still not working or saving correctly"
+          "Add the ability to delete and edit each task and recurring chore"
         ]
       },
       "acceptanceCriteria": [
-        "After creating recurring chores, performing a canister upgrade does not delete them.",
-        "After a canister upgrade, creating a new recurring chore uses a non-colliding ID (the counter resumes correctly).",
-        "getAllRecurringChores returns the same set of chores before and after upgrade (except for intentional changes like delete)."
+        "In the week planner, tasks created by the current user show Edit/Delete controls on their task row/card.",
+        "Edit opens EditTaskDialog and successfully updates the task.",
+        "Delete confirms and successfully removes the task, with UI reflecting the change without a full page reload.",
+        "Tasks not created by the current user do not show Edit/Delete controls."
       ]
     },
     {
       "id": "REQ-3",
-      "text": "Improve recurring chore save reliability diagnostics: add structured console logging (frontend + backend) around create/update/pause/delete showing key fields (id, weekday, timeline, assignedTo presence) and backend traps, so failures can be pinpointed quickly without changing user-facing behavior.",
-      "target": "both",
-      "source": {
-        "messageIds": [
-          "msg-1"
-        ],
-        "quotes": [
-          "Recurring chores flow still not working or saving correctly"
-        ]
-      },
-      "acceptanceCriteria": [
-        "On each recurring chore mutation attempt, the frontend logs the outgoing payload fields and the mutation outcome (success/failure).",
-        "On backend trap, the frontend toast shows a clear English message and the console includes detailed diagnostic info (operation + raw trap/agent message)."
-      ]
-    },
-    {
-      "id": "REQ-4",
-      "text": "Ensure the Recurring Chores dialog form submit cannot silently fail due to UI state: the Save button must always submit the correct form, remain enabled only when inputs are valid, and show a clear pending state while the mutation is in-flight.",
+      "text": "Add edit/delete access for recurring chores from calendar views by enabling a user to initiate editing or deletion of a recurring chore shown in CalendarDayPlanner and CalendarWeekPlanner. Editing must route through the existing recurring chore update flow and deletion must prompt for confirmation before calling the existing recurring chore delete mutation. Only allow these actions when the current user is the recurring chore creator (chore.createdBy matches the authenticated principal).",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-1"
+          "msg-4"
         ],
         "quotes": [
-          "Recurring chores flow still not working or saving correctly"
+          "Add the ability to delete and edit each task and recurring chore"
         ]
       },
       "acceptanceCriteria": [
-        "When the Save button is clicked, the corresponding create/update mutation is fired exactly once.",
-        "While saving, the Save button shows “Saving...” and is disabled until completion.",
-        "After a successful save, the form resets and the user can see the saved item in the list."
+        "In both day and week planner recurring chores sections, chores created by the current user expose Edit/Delete actions (or an equivalent per-chore action menu).",
+        "Edit allows changing recurring chore fields and persists changes via the existing updateRecurringChore mutation (with expected React Query invalidation so calendar/task views refresh).",
+        "Delete prompts for confirmation and deletes via the existing deleteRecurringChore mutation, removing the chore from relevant views after refresh/invalidation.",
+        "Recurring chores not created by the current user do not show Edit/Delete actions."
       ]
     }
   ],
   "constraints": [
-    "Backend must remain a single-actor Motoko canister with all logic in backend/main.mo.",
-    "Only add backend/migration.mo if state migration is required for existing deployments (conditional migration policy).",
-    "Do not edit frontend files under frontend/src/components/ui or any paths listed in frontend.immutablePaths."
+    "Do not modify files under frontend/src/components/ui (Shadcn components are read-only and must be composed, not edited).",
+    "Do not modify any frontend paths listed in SYSTEM_CONTEXT.frontend.immutablePaths."
   ],
   "nonGoals": [
-    "Do not add new recurring chore product features (e.g., new schedule types, notifications, reminders).",
-    "Do not introduce external databases or non-Internet Computer storage."
+    "Do not implement new backend CRUD APIs for tasks or recurring chores (use existing endpoints).",
+    "Do not change authorization rules (creator-only edits/deletes must remain enforced).",
+    "Do not address unrelated known issues (e.g., backend getCalendar() correctness, due-date timestamp equality, upgrade persistence) as part of this request."
   ],
   "imageRequirements": {
     "required": [],

@@ -132,6 +132,7 @@ export interface CookingAssignment {
     assignedBy: Principal;
     cook?: Principal;
     cookName?: string;
+    description: string;
 }
 export interface CalendarDay {
     tasks: Array<Task>;
@@ -142,6 +143,7 @@ export interface UpdateCookingDayRequest {
     day: string;
     cook?: Principal;
     cookName?: string;
+    description: string;
 }
 export interface PauseResumeChoreRequest {
     id: bigint;
@@ -151,6 +153,7 @@ export interface AssignCookingDayRequest {
     day: string;
     cook?: Principal;
     cookName?: string;
+    description: string;
 }
 export interface FilterByAssigneeRequest {
     assignee: Principal;
@@ -177,7 +180,8 @@ export interface PersonProfile {
 export enum Timeline {
     fortnightly = "fortnightly",
     weeklies = "weeklies",
-    monthly = "monthly"
+    monthly = "monthly",
+    daily = "daily"
 }
 export enum UserRole {
     admin = "admin",
@@ -783,17 +787,20 @@ function from_candid_record_n27(_uploadFile: (file: ExternalBlob) => Promise<Uin
     assignedBy: Principal;
     cook: [] | [Principal];
     cookName: [] | [string];
+    description: string;
 }): {
     day: string;
     assignedBy: Principal;
     cook?: Principal;
     cookName?: string;
+    description: string;
 } {
     return {
         day: value.day,
         assignedBy: value.assignedBy,
         cook: record_opt_to_undefined(from_candid_opt_n14(_uploadFile, _downloadFile, value.cook)),
-        cookName: record_opt_to_undefined(from_candid_opt_n28(_uploadFile, _downloadFile, value.cookName))
+        cookName: record_opt_to_undefined(from_candid_opt_n28(_uploadFile, _downloadFile, value.cookName)),
+        description: value.description
     };
 }
 function from_candid_variant_n16(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
@@ -802,8 +809,10 @@ function from_candid_variant_n16(_uploadFile: (file: ExternalBlob) => Promise<Ui
     weeklies: null;
 } | {
     monthly: null;
+} | {
+    daily: null;
 }): Timeline {
-    return "fortnightly" in value ? Timeline.fortnightly : "weeklies" in value ? Timeline.weeklies : "monthly" in value ? Timeline.monthly : value;
+    return "fortnightly" in value ? Timeline.fortnightly : "weeklies" in value ? Timeline.weeklies : "monthly" in value ? Timeline.monthly : "daily" in value ? Timeline.daily : value;
 }
 function from_candid_variant_n30(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
     admin: null;
@@ -944,15 +953,18 @@ function to_candid_record_n6(_uploadFile: (file: ExternalBlob) => Promise<Uint8A
     day: string;
     cook?: Principal;
     cookName?: string;
+    description: string;
 }): {
     day: string;
     cook: [] | [Principal];
     cookName: [] | [string];
+    description: string;
 } {
     return {
         day: value.day,
         cook: value.cook ? candid_some(value.cook) : candid_none(),
-        cookName: value.cookName ? candid_some(value.cookName) : candid_none()
+        cookName: value.cookName ? candid_some(value.cookName) : candid_none(),
+        description: value.description
     };
 }
 function to_candid_record_n8(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
@@ -982,6 +994,8 @@ function to_candid_variant_n10(_uploadFile: (file: ExternalBlob) => Promise<Uint
     weeklies: null;
 } | {
     monthly: null;
+} | {
+    daily: null;
 } {
     return value == Timeline.fortnightly ? {
         fortnightly: null
@@ -989,6 +1003,8 @@ function to_candid_variant_n10(_uploadFile: (file: ExternalBlob) => Promise<Uint
         weeklies: null
     } : value == Timeline.monthly ? {
         monthly: null
+    } : value == Timeline.daily ? {
+        daily: null
     } : value;
 }
 function to_candid_variant_n4(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: UserRole): {

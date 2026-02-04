@@ -1,65 +1,50 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-04T01:10:24.388Z",
+  "generatedAt": "2026-02-04T23:05:56.590Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
-    "total": 4,
+    "total": 3,
     "implemented": 3,
     "items": [
       {
         "id": "REQ-1",
-        "summary": "Diagnose and fix the recurring chores create/update flow so that pressing “Create Chore” / “Update Chore” reliably writes the record to the backend and the UI immediately reflects the saved state (including after closing and reopening the dialog).",
+        "summary": "Add per-task Edit and Delete UI controls to the calendar day view (frontend/src/components/CalendarDayPlanner.tsx) for tasks scheduled on the selected day. Edit must open the existing EditTaskDialog for that task, and Delete must prompt for confirmation before calling the existing delete task mutation. Only show Edit/Delete controls when the current user is the task creator (task.createdBy matches the authenticated principal).",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/hooks/useQueries.ts",
-          "frontend/src/components/RecurringChoresDialog.tsx",
-          "frontend/src/utils/recurringChoreMutationErrors.ts"
+          "frontend/src/components/CalendarDayPlanner.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/hooks/useQueries.ts",
-          "frontend/src/components/RecurringChoresDialog.tsx",
-          "frontend/src/utils/recurringChoreMutationErrors.ts"
+          "frontend/src/components/CalendarDayPlanner.tsx"
         ]
       },
       {
         "id": "REQ-2",
-        "summary": "Add backend persistence for recurring chores across canister upgrades by storing recurring chores and the recurring chore ID counter in stable state using preupgrade/postupgrade hooks (Motoko). Ensure existing behavior (ownership enforcement, validation, pause/resume, list/get APIs) remains unchanged.",
-        "status": "unknown",
-        "plannedFiles": [],
-        "matchedFiles": []
-      },
-      {
-        "id": "REQ-3",
-        "summary": "Improve recurring chore save reliability diagnostics: add structured console logging (frontend + backend) around create/update/pause/delete showing key fields (id, weekday, timeline, assignedTo presence) and backend traps, so failures can be pinpointed quickly without changing user-facing behavior.",
+        "summary": "Add per-task Edit and Delete UI controls to the calendar week view (frontend/src/components/CalendarWeekPlanner.tsx) for tasks on each day. Edit must open the existing EditTaskDialog, and Delete must prompt for confirmation before calling the existing delete task mutation. Only show Edit/Delete controls when the current user is the task creator.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/utils/recurringChoreDiagnostics.ts",
-          "frontend/src/hooks/useQueries.ts",
-          "frontend/src/components/RecurringChoresDialog.tsx",
-          "frontend/src/utils/recurringChoreMutationErrors.ts"
+          "frontend/src/components/CalendarWeekPlanner.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/utils/recurringChoreDiagnostics.ts",
-          "frontend/src/hooks/useQueries.ts",
-          "frontend/src/components/RecurringChoresDialog.tsx",
-          "frontend/src/utils/recurringChoreMutationErrors.ts"
+          "frontend/src/components/CalendarWeekPlanner.tsx"
         ]
       },
       {
-        "id": "REQ-4",
-        "summary": "Ensure the Recurring Chores dialog form submit cannot silently fail due to UI state: the Save button must always submit the correct form, remain enabled only when inputs are valid, and show a clear pending state while the mutation is in-flight.",
+        "id": "REQ-3",
+        "summary": "Add edit/delete access for recurring chores from calendar views by enabling a user to initiate editing or deletion of a recurring chore shown in CalendarDayPlanner and CalendarWeekPlanner. Editing must route through the existing recurring chore update flow and deletion must prompt for confirmation before calling the existing recurring chore delete mutation. Only allow these actions when the current user is the recurring chore creator (chore.createdBy matches the authenticated principal).",
         "status": "implemented",
         "plannedFiles": [
           "frontend/src/components/RecurringChoresDialog.tsx",
-          "frontend/src/hooks/useQueries.ts"
+          "frontend/src/components/CalendarDayPlanner.tsx",
+          "frontend/src/components/CalendarWeekPlanner.tsx"
         ],
         "matchedFiles": [
           "frontend/src/components/RecurringChoresDialog.tsx",
-          "frontend/src/hooks/useQueries.ts"
+          "frontend/src/components/CalendarDayPlanner.tsx",
+          "frontend/src/components/CalendarWeekPlanner.tsx"
         ]
       }
     ]
@@ -69,10 +54,9 @@
     "feature_evidence.json",
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
+    "frontend/src/components/CalendarDayPlanner.tsx",
+    "frontend/src/components/CalendarWeekPlanner.tsx",
     "frontend/src/components/RecurringChoresDialog.tsx",
-    "frontend/src/hooks/useQueries.ts",
-    "frontend/src/utils/recurringChoreDiagnostics.ts",
-    "frontend/src/utils/recurringChoreMutationErrors.ts",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",

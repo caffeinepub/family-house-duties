@@ -1,12 +1,12 @@
 # Specification
 
 ## Summary
-**Goal:** Fix recurring chores create/update so saves are reliable, the UI immediately reflects changes, errors are clearly shown, and recurring chores persist across canister upgrades.
+**Goal:** Enable users to edit or delete their own tasks and recurring chores directly from calendar day and week planner views.
 
 **Planned changes:**
-- Diagnose and fix the recurring chores create/update save flow so “Create Chore” / “Update Chore” reliably writes to the backend and the dialog/list reflect the saved state immediately.
-- Add stable-state persistence for recurring chores and the recurring chore ID counter using Motoko preupgrade/postupgrade hooks (keeping existing behavior and APIs unchanged).
-- Add structured diagnostic console logging on both frontend and backend for recurring chore mutations (create/update/pause/delete), including key payload fields and trap details.
-- Ensure the Recurring Chores dialog Save button always submits the correct form exactly once, is only enabled when inputs are valid, and shows a disabled “Saving...” pending state while in-flight.
+- Add per-task Edit and Delete controls in `CalendarDayPlanner.tsx` for tasks on the selected day; wire Edit to the existing `EditTaskDialog` and Delete to an existing delete mutation with confirmation and React Query invalidation.
+- Add per-task Edit and Delete controls in `CalendarWeekPlanner.tsx` for tasks displayed across the week; wire Edit to `EditTaskDialog` and Delete to an existing delete mutation with confirmation and React Query invalidation.
+- Add per-recurring-chore Edit and Delete actions in both day and week planner views; route edits through the existing recurring chore update flow and deletes through the existing recurring chore delete mutation with confirmation and React Query invalidation.
+- Gate all Edit/Delete controls so they only appear for items created by the current authenticated user (`createdBy` matches the principal).
 
-**User-visible outcome:** Users can create and edit recurring chores and see the updated “Existing Recurring Chores” list immediately without refreshing; failures keep the dialog open with a clear English error message; recurring chores remain intact after canister upgrades.
+**User-visible outcome:** In day and week calendar planners, users can edit or delete tasks and recurring chores they created (with a confirmation before deletion), while items created by others show no edit/delete actions.

@@ -24,11 +24,13 @@ export const AssignCookingDayRequest = IDL.Record({
   'day' : IDL.Text,
   'cook' : IDL.Opt(IDL.Principal),
   'cookName' : IDL.Opt(IDL.Text),
+  'description' : IDL.Text,
 });
 export const Timeline = IDL.Variant({
   'fortnightly' : IDL.Null,
   'weeklies' : IDL.Null,
   'monthly' : IDL.Null,
+  'daily' : IDL.Null,
 });
 export const CreateRecurringChoreRequest = IDL.Record({
   'weekday' : IDL.Nat,
@@ -71,6 +73,7 @@ export const CookingAssignment = IDL.Record({
   'assignedBy' : IDL.Principal,
   'cook' : IDL.Opt(IDL.Principal),
   'cookName' : IDL.Opt(IDL.Text),
+  'description' : IDL.Text,
 });
 export const CalendarDay = IDL.Record({
   'tasks' : IDL.Vec(Task),
@@ -92,6 +95,7 @@ export const UpdateCookingDayRequest = IDL.Record({
   'day' : IDL.Text,
   'cook' : IDL.Opt(IDL.Principal),
   'cookName' : IDL.Opt(IDL.Text),
+  'description' : IDL.Text,
 });
 export const UpdateRecurringChoreRequest = IDL.Record({
   'id' : IDL.Nat,
@@ -188,11 +192,13 @@ export const idlFactory = ({ IDL }) => {
     'day' : IDL.Text,
     'cook' : IDL.Opt(IDL.Principal),
     'cookName' : IDL.Opt(IDL.Text),
+    'description' : IDL.Text,
   });
   const Timeline = IDL.Variant({
     'fortnightly' : IDL.Null,
     'weeklies' : IDL.Null,
     'monthly' : IDL.Null,
+    'daily' : IDL.Null,
   });
   const CreateRecurringChoreRequest = IDL.Record({
     'weekday' : IDL.Nat,
@@ -235,6 +241,7 @@ export const idlFactory = ({ IDL }) => {
     'assignedBy' : IDL.Principal,
     'cook' : IDL.Opt(IDL.Principal),
     'cookName' : IDL.Opt(IDL.Text),
+    'description' : IDL.Text,
   });
   const CalendarDay = IDL.Record({
     'tasks' : IDL.Vec(Task),
@@ -252,6 +259,7 @@ export const idlFactory = ({ IDL }) => {
     'day' : IDL.Text,
     'cook' : IDL.Opt(IDL.Principal),
     'cookName' : IDL.Opt(IDL.Text),
+    'description' : IDL.Text,
   });
   const UpdateRecurringChoreRequest = IDL.Record({
     'id' : IDL.Nat,

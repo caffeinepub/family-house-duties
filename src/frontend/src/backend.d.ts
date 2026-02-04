@@ -50,6 +50,7 @@ export interface CookingAssignment {
     assignedBy: Principal;
     cook?: Principal;
     cookName?: string;
+    description: string;
 }
 export interface CalendarDay {
     tasks: Array<Task>;
@@ -60,6 +61,7 @@ export interface UpdateCookingDayRequest {
     day: string;
     cook?: Principal;
     cookName?: string;
+    description: string;
 }
 export interface PauseResumeChoreRequest {
     id: bigint;
@@ -69,6 +71,7 @@ export interface AssignCookingDayRequest {
     day: string;
     cook?: Principal;
     cookName?: string;
+    description: string;
 }
 export interface FilterByAssigneeRequest {
     assignee: Principal;
@@ -95,7 +98,8 @@ export interface PersonProfile {
 export enum Timeline {
     fortnightly = "fortnightly",
     weeklies = "weeklies",
-    monthly = "monthly"
+    monthly = "monthly",
+    daily = "daily"
 }
 export enum UserRole {
     admin = "admin",

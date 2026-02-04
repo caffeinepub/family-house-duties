@@ -19,6 +19,8 @@ import { getTimelineLabel } from '../utils/recurringChoresPreview';
 interface RecurringChoresDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  initialEditChoreId?: bigint | null;
+  onDialogClose?: () => void;
 }
 
 const WEEKDAYS = [
@@ -32,12 +34,13 @@ const WEEKDAYS = [
 ];
 
 const FREQUENCIES = [
+  { value: 'daily' as const, label: 'Daily' },
   { value: 'weeklies' as const, label: 'Weekly' },
   { value: 'fortnightly' as const, label: 'Fortnightly' },
   { value: 'monthly' as const, label: 'Monthly' },
 ];
 
-export function RecurringChoresDialog({ open, onOpenChange }: RecurringChoresDialogProps) {
+export function RecurringChoresDialog({ open, onOpenChange, initialEditChoreId, onDialogClose }: RecurringChoresDialogProps) {
   const [isCreating, setIsCreating] = useState(false);
   const [editingChore, setEditingChore] = useState<RecurringChore | null>(null);
   const [name, setName] = useState('');
@@ -75,8 +78,21 @@ export function RecurringChoresDialog({ open, onOpenChange }: RecurringChoresDia
     if (!open) {
       console.log('[RecurringChoresDialog] Dialog closed, resetting form');
       resetForm();
+      if (onDialogClose) {
+        onDialogClose();
+      }
     }
-  }, [open]);
+  }, [open, onDialogClose]);
+
+  // Handle initial edit chore ID
+  useEffect(() => {
+    if (open && initialEditChoreId && chores.length > 0) {
+      const choreToEdit = chores.find(c => c.id === initialEditChoreId);
+      if (choreToEdit) {
+        handleStartEdit(choreToEdit);
+      }
+    }
+  }, [open, initialEditChoreId, chores]);
 
   const handleStartCreate = () => {
     console.log('[RecurringChoresDialog] User initiated create');
@@ -241,7 +257,7 @@ export function RecurringChoresDialog({ open, onOpenChange }: RecurringChoresDia
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl w-[95vw] sm:w-full max-h-[90dvh] p-0 flex flex-col gap-0">
+      <DialogContent className="max-w-4xl w-[95vw] sm:w-full h-[90dvh] p-0 flex flex-col gap-0 overflow-hidden">
         <DialogHeader className="px-4 sm:px-6 pt-4 sm:pt-6 pb-3 sm:pb-4 border-b shrink-0">
           <DialogTitle className="flex items-center gap-2 text-lg sm:text-xl">
             <Repeat className="h-5 w-5 sm:h-6 sm:w-6" />
@@ -252,7 +268,7 @@ export function RecurringChoresDialog({ open, onOpenChange }: RecurringChoresDia
           </DialogDescription>
         </DialogHeader>
 
-        <ScrollArea className="flex-1 min-h-0">
+        <ScrollArea className="flex-1 overflow-y-auto">
           <div className="px-4 sm:px-6 py-4 sm:py-6 space-y-6">
             {(isCreating || editingChore) && (
               <Card className="border-2">
@@ -314,6 +330,7 @@ export function RecurringChoresDialog({ open, onOpenChange }: RecurringChoresDia
                         </SelectContent>
                       </Select>
                       <p className="text-xs text-muted-foreground">
+                        {frequency === 'daily' && 'Appears every day'}
                         {frequency === 'weeklies' && 'Appears every week on the selected day'}
                         {frequency === 'fortnightly' && 'Appears every other week on the selected day'}
                         {frequency === 'monthly' && 'Appears on the first occurrence of the selected day each month'}

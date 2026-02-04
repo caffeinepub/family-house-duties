@@ -1,45 +1,41 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-02-04T01:10:24.371Z",
-  "summary": "Frontend changes add structured diagnostics utilities and update RecurringChores dialog/query hooks for better mutation logging and error normalization. No backend (Motoko) changes are present in the provided diff summary, so upgrade persistence and backend-side diagnostics cannot be verified as implemented.",
+  "generatedAt": "2026-02-04T23:05:56.567Z",
+  "summary": "Diff adds task edit/delete handlers and identity lookup in CalendarDayPlanner/CalendarWeekPlanner, and enhances RecurringChoresDialog to support opening to a specific chore ID. However, recurring chore deletion from calendar views does not appear to call the existing deleteRecurringChore mutation directly after confirmation (it opens the dialog instead), and due to truncation there isn’t clear evidence that the per-item Edit/Delete controls are actually rendered in the day/week task & chore lists with creator-only gating.",
   "missing_requirements": [
     {
-      "id": "REQ-2",
-      "requirement": "Add backend persistence for recurring chores across canister upgrades by storing recurring chores and the recurring chore ID counter in stable state using preupgrade/postupgrade hooks (Motoko).",
-      "reason": "The diff summary shows only frontend file additions/modifications; there is no evidence of any backend/main.mo changes or new backend/migration.mo implementing stable storage and upgrade hooks.",
-      "evidence": [
-        "<file-diff> summary shows Added/Modified files all under frontend/src; no backend files listed"
-      ]
-    },
-    {
       "id": "REQ-3",
-      "requirement": "Add structured console logging on the backend around create/update/pause/delete (including backend traps) so failures can be pinpointed quickly.",
-      "reason": "Frontend structured logging was added, but there is no evidence of any backend logging/trap instrumentation because no backend files were modified in the diff summary.",
+      "requirement": "Recurring chore Delete from CalendarDayPlanner/CalendarWeekPlanner must prompt for confirmation and, on confirmation, call the existing deleteRecurringChore mutation (with React Query invalidation/refresh).",
+      "reason": "In both planners, `handleDeleteChore` confirms but then only sets `editingChoreId` and opens `RecurringChoresDialog` rather than invoking a delete mutation. In CalendarDayPlanner it even attempts a dynamic import of `useDeleteRecurringChore` and comments that hooks must be used at component level, indicating deletion is not performed here.",
       "evidence": [
-        "frontend/src/utils/recurringChoreDiagnostics.ts",
-        "frontend/src/hooks/useQueries.ts",
-        "<file-diff> summary shows no backend changes"
-      ]
-    },
-    {
-      "id": "REQ-4",
-      "requirement": "Ensure the Recurring Chores dialog Save button always submits the correct form, remains enabled only when inputs are valid, and shows a clear pending state (\"Saving...\") while the mutation is in-flight; clicking fires exactly once; after success form resets and list updates.",
-      "reason": "RecurringChoresDialog.tsx is truncated; the diff summary mentions double-submission prevention and inline validation in a separate file-summary text, but the provided code excerpt does not show the Save button wiring, pending state label \"Saving...\", or the single-fire submit behavior. This cannot be confirmed from the diff evidence provided.",
-      "evidence": [
-        "frontend/src/components/RecurringChoresDialog.tsx (truncated)",
-        "frontend-file-summaries.txt (truncated)"
+        "frontend/src/components/CalendarDayPlanner.tsx",
+        "frontend/src/components/CalendarWeekPlanner.tsx"
       ]
     }
   ],
-  "hallucinated_features": [],
-  "confidence": 0.62,
+  "hallucinated_features": [
+    {
+      "description": "Added/used pause/resume recurring chore functionality in RecurringChoresDialog via `usePauseResumeRecurringChore`.",
+      "reason": "BuildRequest only asked for edit/delete controls from calendar views; it did not request adding pause/resume controls/flow changes in the recurring chores dialog.",
+      "evidence": [
+        "frontend/src/components/RecurringChoresDialog.tsx"
+      ]
+    },
+    {
+      "description": "Dynamic import of `useDeleteRecurringChore` inside an event handler in CalendarDayPlanner.",
+      "reason": "Not requested by the BuildRequest and does not align with the requirement (should call existing delete mutation after confirmation).",
+      "evidence": [
+        "frontend/src/components/CalendarDayPlanner.tsx"
+      ]
+    }
+  ],
+  "confidence": 0.63,
   "changed_files": [
     "frontend-file-summaries.txt",
+    "frontend/src/components/CalendarDayPlanner.tsx",
+    "frontend/src/components/CalendarWeekPlanner.tsx",
     "frontend/src/components/RecurringChoresDialog.tsx",
-    "frontend/src/hooks/useQueries.ts",
-    "frontend/src/utils/recurringChoreDiagnostics.ts",
-    "frontend/src/utils/recurringChoreMutationErrors.ts",
     "project_state.json"
   ]
 }

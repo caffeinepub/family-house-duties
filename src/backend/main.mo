@@ -9,8 +9,11 @@ import Time "mo:core/Time";
 import Principal "mo:core/Principal";
 import Order "mo:core/Order";
 
+
 import MixinAuthorization "authorization/MixinAuthorization";
 import AccessControl "authorization/access-control";
+
+// Specify the migration function in with clause
 
 actor {
   type Task = {
@@ -28,6 +31,7 @@ actor {
     day : Text;
     cook : ?Principal;
     cookName : ?Text;
+    description : Text;
     assignedBy : Principal;
   };
 
@@ -54,6 +58,7 @@ actor {
   };
 
   type Timeline = {
+    #daily;
     #weeklies;
     #fortnightly;
     #monthly;
@@ -255,11 +260,13 @@ actor {
     day : Text;
     cook : ?Principal;
     cookName : ?Text;
+    description : Text;
   };
   public type UpdateCookingDayRequest = {
     day : Text;
     cook : ?Principal;
     cookName : ?Text;
+    description : Text;
   };
 
   public shared ({ caller }) func assignCookingDay(request : AssignCookingDayRequest) : async () {
@@ -270,6 +277,7 @@ actor {
       day = request.day;
       cook = request.cook;
       cookName = request.cookName;
+      description = request.description;
       assignedBy = caller;
     };
     cookingAssignments.add(request.day, assignment);
@@ -290,6 +298,7 @@ actor {
           day = request.day;
           cook = request.cook;
           cookName = request.cookName;
+          description = request.description;
           assignedBy = caller;
         };
         cookingAssignments.add(request.day, updatedAssignment);
