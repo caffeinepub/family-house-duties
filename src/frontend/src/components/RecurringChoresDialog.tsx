@@ -15,12 +15,13 @@ import type { RecurringChore, Timeline } from '../backend';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { safeParsePrincipal } from '../utils/principal';
 import { getTimelineLabel } from '../utils/recurringChoresPreview';
+import { useVoiceDictation } from '../hooks/useVoiceDictation';
+import { VoiceDictationButton } from './VoiceDictationButton';
+import { toast } from 'sonner';
 
 interface RecurringChoresDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  initialEditChoreId?: bigint | null;
-  onDialogClose?: () => void;
 }
 
 const WEEKDAYS = [
@@ -40,7 +41,7 @@ const FREQUENCIES = [
   { value: 'monthly' as const, label: 'Monthly' },
 ];
 
-export function RecurringChoresDialog({ open, onOpenChange, initialEditChoreId, onDialogClose }: RecurringChoresDialogProps) {
+export function RecurringChoresDialog({ open, onOpenChange }: RecurringChoresDialogProps) {
   const [isCreating, setIsCreating] = useState(false);
   const [editingChore, setEditingChore] = useState<RecurringChore | null>(null);
   const [name, setName] = useState('');
@@ -50,6 +51,7 @@ export function RecurringChoresDialog({ open, onOpenChange, initialEditChoreId, 
   const [assignedToPrincipal, setAssignedToPrincipal] = useState('');
   const [principalError, setPrincipalError] = useState<string | null>(null);
   const [nameError, setNameError] = useState<string | null>(null);
+  const [activeField, setActiveField] = useState<'name' | 'description' | null>(null);
 
   const { identity } = useInternetIdentity();
   const { data: chores = [], isLoading } = useGetAllRecurringChores();
@@ -59,6 +61,36 @@ export function RecurringChoresDialog({ open, onOpenChange, initialEditChoreId, 
   const pauseResumeChore = usePauseResumeRecurringChore();
 
   const currentUserPrincipal = identity?.getPrincipal().toString();
+
+  // Voice dictation for name field
+  const nameDictation = useVoiceDictation({
+    continuous: false,
+    interimResults: true,
+    onTranscript: (transcript, isFinal) => {
+      if (isFinal && activeField === 'name') {
+        setName((prev) => (prev ? prev + ' ' + transcript : transcript));
+      }
+    },
+    onError: (error) => {
+      toast.error(error);
+      setActiveField(null);
+    },
+  });
+
+  // Voice dictation for description field
+  const descriptionDictation = useVoiceDictation({
+    continuous: false,
+    interimResults: true,
+    onTranscript: (transcript, isFinal) => {
+      if (isFinal && activeField === 'description') {
+        setDescription((prev) => (prev ? prev + ' ' + transcript : transcript));
+      }
+    },
+    onError: (error) => {
+      toast.error(error);
+      setActiveField(null);
+    },
+  });
 
   const resetForm = () => {
     console.log('[RecurringChoresDialog] Resetting form state');
@@ -71,6 +103,9 @@ export function RecurringChoresDialog({ open, onOpenChange, initialEditChoreId, 
     setNameError(null);
     setIsCreating(false);
     setEditingChore(null);
+    nameDictation.stop();
+    descriptionDictation.stop();
+    setActiveField(null);
   };
 
   // Reset form when dialog closes
@@ -78,21 +113,8 @@ export function RecurringChoresDialog({ open, onOpenChange, initialEditChoreId, 
     if (!open) {
       console.log('[RecurringChoresDialog] Dialog closed, resetting form');
       resetForm();
-      if (onDialogClose) {
-        onDialogClose();
-      }
     }
-  }, [open, onDialogClose]);
-
-  // Handle initial edit chore ID
-  useEffect(() => {
-    if (open && initialEditChoreId && chores.length > 0) {
-      const choreToEdit = chores.find(c => c.id === initialEditChoreId);
-      if (choreToEdit) {
-        handleStartEdit(choreToEdit);
-      }
-    }
-  }, [open, initialEditChoreId, chores]);
+  }, [open]);
 
   const handleStartCreate = () => {
     console.log('[RecurringChoresDialog] User initiated create');
@@ -114,6 +136,9 @@ export function RecurringChoresDialog({ open, onOpenChange, initialEditChoreId, 
     setNameError(null);
     setEditingChore(chore);
     setIsCreating(false);
+    nameDictation.stop();
+    descriptionDictation.stop();
+    setActiveField(null);
   };
 
   const handleNameChange = (value: string) => {
@@ -128,6 +153,28 @@ export function RecurringChoresDialog({ open, onOpenChange, initialEditChoreId, 
     if (principalError) {
       setPrincipalError(null);
     }
+  };
+
+  const handleStartNameDictation = () => {
+    descriptionDictation.stop();
+    setActiveField('name');
+    nameDictation.start();
+  };
+
+  const handleStopNameDictation = () => {
+    nameDictation.stop();
+    setActiveField(null);
+  };
+
+  const handleStartDescriptionDictation = () => {
+    nameDictation.stop();
+    setActiveField('description');
+    descriptionDictation.start();
+  };
+
+  const handleStopDescriptionDictation = () => {
+    descriptionDictation.stop();
+    setActiveField(null);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -151,6 +198,11 @@ export function RecurringChoresDialog({ open, onOpenChange, initialEditChoreId, 
       setNameError('Chore name is required');
       return;
     }
+
+    // Stop any active dictation before submitting
+    nameDictation.stop();
+    descriptionDictation.stop();
+    setActiveField(null);
 
     const parseResult = safeParsePrincipal(assignedToPrincipal);
     
@@ -257,68 +309,75 @@ export function RecurringChoresDialog({ open, onOpenChange, initialEditChoreId, 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl w-[95vw] sm:w-full h-[90dvh] p-0 flex flex-col gap-0 overflow-hidden">
-        <DialogHeader className="px-4 sm:px-6 pt-4 sm:pt-6 pb-3 sm:pb-4 border-b shrink-0">
-          <DialogTitle className="flex items-center gap-2 text-lg sm:text-xl">
-            <Repeat className="h-5 w-5 sm:h-6 sm:w-6" />
-            Recurring Chores
-          </DialogTitle>
-          <DialogDescription className="text-sm">
-            Create recurring chores that automatically appear on the selected day with your chosen frequency
+      <DialogContent className="max-h-[90vh] max-w-3xl">
+        <DialogHeader>
+          <DialogTitle>Recurring Chores</DialogTitle>
+          <DialogDescription>
+            Manage chores that repeat on a schedule
           </DialogDescription>
         </DialogHeader>
 
-        <ScrollArea className="flex-1 overflow-y-auto">
-          <div className="px-4 sm:px-6 py-4 sm:py-6 space-y-6">
-            {(isCreating || editingChore) && (
-              <Card className="border-2">
-                <CardContent className="p-4 sm:p-6">
-                  <form id="recurring-chore-form" onSubmit={handleSubmit} className="space-y-5">
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
-                      <div className="space-y-2">
-                        <Label htmlFor="chore-name" className="text-sm font-medium">
-                          Chore Name *
-                        </Label>
-                        <Input
-                          id="chore-name"
-                          value={name}
-                          onChange={(e) => handleNameChange(e.target.value)}
-                          placeholder="e.g., Take out trash"
-                          className={`h-10 sm:h-11 ${nameError ? 'border-destructive focus-visible:ring-destructive' : ''}`}
-                        />
-                        {nameError && (
-                          <div className="flex items-center gap-1.5 text-sm text-destructive">
-                            <AlertCircle className="h-4 w-4 flex-shrink-0" />
-                            <span>{nameError}</span>
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor="chore-weekday" className="text-sm font-medium">
-                          Repeats On *
-                        </Label>
-                        <Select value={weekday.toString()} onValueChange={(val) => setWeekday(BigInt(val))}>
-                          <SelectTrigger id="chore-weekday" className="h-10 sm:h-11">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {WEEKDAYS.map((day) => (
-                              <SelectItem key={day.value.toString()} value={day.value.toString()}>
-                                {day.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
+        <div className="flex flex-col gap-4 overflow-hidden">
+          {/* Form Section */}
+          {showFormFooter && (
+            <Card className="border-primary">
+              <CardContent className="pt-6">
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="chore-name">
+                      Chore Name *
+                    </Label>
+                    <div className="flex gap-2">
+                      <Input
+                        id="chore-name"
+                        placeholder="e.g., Take out trash"
+                        value={name}
+                        onChange={(e) => handleNameChange(e.target.value)}
+                        className={nameError ? 'border-destructive' : ''}
+                      />
+                      <VoiceDictationButton
+                        isListening={nameDictation.isListening && activeField === 'name'}
+                        isSupported={nameDictation.isSupported}
+                        onStart={handleStartNameDictation}
+                        onStop={handleStopNameDictation}
+                        disabled={createChore.isPending || updateChore.isPending}
+                        disabledReason={createChore.isPending || updateChore.isPending ? 'Saving chore...' : undefined}
+                      />
                     </div>
+                    {nameError && (
+                      <p className="text-sm text-destructive">{nameError}</p>
+                    )}
+                  </div>
 
+                  <div className="space-y-2">
+                    <Label htmlFor="chore-description">Description</Label>
+                    <div className="flex gap-2">
+                      <Textarea
+                        id="chore-description"
+                        placeholder="Add details about this chore..."
+                        value={description}
+                        onChange={(e) => setDescription(e.target.value)}
+                        rows={2}
+                      />
+                      <VoiceDictationButton
+                        isListening={descriptionDictation.isListening && activeField === 'description'}
+                        isSupported={descriptionDictation.isSupported}
+                        onStart={handleStartDescriptionDictation}
+                        onStop={handleStopDescriptionDictation}
+                        disabled={createChore.isPending || updateChore.isPending}
+                        disabledReason={createChore.isPending || updateChore.isPending ? 'Saving chore...' : undefined}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid gap-4 sm:grid-cols-2">
                     <div className="space-y-2">
-                      <Label htmlFor="chore-frequency" className="text-sm font-medium">
-                        Frequency *
-                      </Label>
-                      <Select value={frequency} onValueChange={(val) => setFrequency(val as Timeline)}>
-                        <SelectTrigger id="chore-frequency" className="h-10 sm:h-11">
+                      <Label htmlFor="frequency">Frequency</Label>
+                      <Select
+                        value={frequency}
+                        onValueChange={(value) => setFrequency(value as Timeline)}
+                      >
+                        <SelectTrigger id="frequency">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -329,238 +388,204 @@ export function RecurringChoresDialog({ open, onOpenChange, initialEditChoreId, 
                           ))}
                         </SelectContent>
                       </Select>
-                      <p className="text-xs text-muted-foreground">
-                        {frequency === 'daily' && 'Appears every day'}
-                        {frequency === 'weeklies' && 'Appears every week on the selected day'}
-                        {frequency === 'fortnightly' && 'Appears every other week on the selected day'}
-                        {frequency === 'monthly' && 'Appears on the first occurrence of the selected day each month'}
-                      </p>
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="chore-description" className="text-sm font-medium">
-                        Description
-                      </Label>
-                      <Textarea
-                        id="chore-description"
-                        value={description}
-                        onChange={(e) => setDescription(e.target.value)}
-                        placeholder="Optional details about this chore"
-                        rows={3}
-                        className="resize-none"
+                      <Label htmlFor="weekday">Weekday</Label>
+                      <Select
+                        value={weekday.toString()}
+                        onValueChange={(value) => setWeekday(BigInt(value))}
+                        disabled={frequency === 'daily'}
+                      >
+                        <SelectTrigger id="weekday">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {WEEKDAYS.map((day) => (
+                            <SelectItem key={day.value.toString()} value={day.value.toString()}>
+                              {day.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {frequency === 'daily' && (
+                        <p className="text-xs text-muted-foreground">
+                          Weekday is ignored for daily chores
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="assigned-to">Assigned To (optional)</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        id="assigned-to"
+                        placeholder="Enter Principal ID"
+                        value={assignedToPrincipal}
+                        onChange={(e) => handlePrincipalChange(e.target.value)}
+                        className={principalError ? 'border-destructive' : ''}
                       />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        onClick={handleAssignToMe}
+                        disabled={!identity}
+                      >
+                        <User className="h-4 w-4" />
+                      </Button>
                     </div>
+                    {principalError && (
+                      <p className="text-sm text-destructive">{principalError}</p>
+                    )}
+                  </div>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="chore-assigned" className="text-sm font-medium">
-                        Assign To (Principal ID)
-                      </Label>
-                      <div className="flex flex-col sm:flex-row gap-2">
-                        <div className="flex-1">
-                          <Input
-                            id="chore-assigned"
-                            value={assignedToPrincipal}
-                            onChange={(e) => handlePrincipalChange(e.target.value)}
-                            placeholder="Optional: Enter principal ID"
-                            className={`h-10 sm:h-11 ${principalError ? 'border-destructive focus-visible:ring-destructive' : ''}`}
-                          />
-                          {principalError && (
-                            <div className="flex items-center gap-1.5 mt-1.5 text-sm text-destructive">
-                              <AlertCircle className="h-4 w-4 flex-shrink-0" />
-                              <span>{principalError}</span>
-                            </div>
-                          )}
-                        </div>
-                        <Button 
-                          type="button" 
-                          variant="outline" 
-                          onClick={handleAssignToMe}
-                          className="h-10 sm:h-11 whitespace-nowrap"
-                        >
-                          Assign to Me
-                        </Button>
-                      </div>
+                  {/* Preview */}
+                  <div className="rounded-md border bg-muted/50 p-3">
+                    <div className="mb-1 text-xs font-medium text-muted-foreground">Preview:</div>
+                    <div className="flex flex-wrap items-center gap-2 text-sm">
+                      <Badge variant="outline">
+                        <Repeat className="mr-1 h-3 w-3" />
+                        {getTimelineLabel(frequency)}
+                      </Badge>
+                      {frequency !== 'daily' && (
+                        <Badge variant="outline">
+                          <Calendar className="mr-1 h-3 w-3" />
+                          {getWeekdayLabel(weekday)}
+                        </Badge>
+                      )}
+                      {assignedToPrincipal && isPrincipalValid && (
+                        <Badge variant="outline">
+                          <User className="mr-1 h-3 w-3" />
+                          {formatPrincipal(assignedToPrincipal)}
+                        </Badge>
+                      )}
                     </div>
+                  </div>
 
-                    <Card className="bg-muted/30 border-muted">
-                      <CardContent className="p-4 space-y-3">
-                        <div className="flex items-center gap-2 text-sm font-semibold text-muted-foreground">
-                          <Repeat className="h-4 w-4" />
-                          Preview
-                        </div>
-                        
-                        <div className="space-y-2 text-sm">
-                          <div className="flex items-start gap-2">
-                            <span className="text-muted-foreground min-w-[80px]">Chore:</span>
-                            <span className="font-medium flex-1">
-                              {name.trim() || <span className="text-muted-foreground italic">No name entered</span>}
-                            </span>
-                          </div>
-                          
-                          <div className="flex items-start gap-2">
-                            <span className="text-muted-foreground min-w-[80px]">Schedule:</span>
-                            <div className="flex flex-wrap gap-2">
-                              <Badge variant="outline" className="font-normal">
-                                <Calendar className="mr-1 h-3 w-3" />
-                                {getWeekdayLabel(weekday)}
-                              </Badge>
-                              <Badge variant="secondary" className="font-normal">
-                                {getTimelineLabel(frequency)}
-                              </Badge>
-                            </div>
-                          </div>
-                          
-                          <div className="flex items-start gap-2">
-                            <span className="text-muted-foreground min-w-[80px]">Assigned:</span>
-                            <span className="font-medium">
-                              {assignedToPrincipal.trim() ? (
-                                parseResult.success && parseResult.principal ? (
-                                  <Badge variant="secondary" className="font-normal">
-                                    {formatPrincipal(parseResult.principal)}
-                                  </Badge>
-                                ) : parseResult.errorCode === 'EMPTY' ? (
-                                  <span className="text-muted-foreground">Unassigned</span>
-                                ) : (
-                                  <span className="text-destructive">Invalid Principal ID</span>
-                                )
-                              ) : (
-                                <span className="text-muted-foreground">Unassigned</span>
-                              )}
-                            </span>
-                          </div>
-                        </div>
+                  <div className="flex justify-end gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={resetForm}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      type="submit"
+                      disabled={!canSave}
+                    >
+                      {createChore.isPending || updateChore.isPending ? (
+                        'Saving...'
+                      ) : editingChore ? (
+                        'Update Chore'
+                      ) : (
+                        'Create Chore'
+                      )}
+                    </Button>
+                  </div>
+                </form>
+              </CardContent>
+            </Card>
+          )}
 
-                        <div className="pt-2 border-t border-border/50">
-                          {canSave ? (
-                            <div className="flex items-center gap-2 text-sm text-success">
-                              <CheckCircle2 className="h-4 w-4" />
-                              <span className="font-medium">Ready to save</span>
-                            </div>
-                          ) : (
-                            <div className="flex items-center gap-2 text-sm text-destructive">
-                              <XCircle className="h-4 w-4" />
-                              <span className="font-medium">
-                                Cannot save: {!isNameValid && 'Chore name required'}
-                                {!isNameValid && !isPrincipalValid && ', '}
-                                {!isPrincipalValid && 'Invalid Principal ID'}
-                              </span>
-                            </div>
-                          )}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </form>
-                </CardContent>
-              </Card>
+          {/* List Section */}
+          <div className="flex-1 overflow-hidden">
+            {!showFormFooter && (
+              <div className="mb-4">
+                <Button onClick={handleStartCreate} className="w-full">
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add New Recurring Chore
+                </Button>
+              </div>
             )}
 
-            {!isCreating && !editingChore && (
-              <Button onClick={handleStartCreate} className="w-full h-11 sm:h-12 text-base">
-                <Plus className="mr-2 h-5 w-5" />
-                Add Recurring Chore
-              </Button>
-            )}
-
-            <div className="space-y-4">
-              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-                Existing Recurring Chores
-              </h3>
-              
+            <ScrollArea className="h-[400px] pr-4">
               {isLoading ? (
                 <div className="space-y-3">
-                  <Skeleton className="h-32 w-full" />
-                  <Skeleton className="h-32 w-full" />
+                  {[1, 2, 3].map((i) => (
+                    <Card key={i}>
+                      <CardContent className="p-4">
+                        <Skeleton className="h-6 w-3/4 mb-2" />
+                        <Skeleton className="h-4 w-1/2" />
+                      </CardContent>
+                    </Card>
+                  ))}
                 </div>
               ) : chores.length === 0 ? (
-                <Card>
-                  <CardContent className="py-12 text-center text-muted-foreground">
-                    <Repeat className="h-12 w-12 mx-auto mb-3 opacity-20" />
-                    <p className="text-sm">No recurring chores yet. Create one to get started!</p>
-                  </CardContent>
-                </Card>
+                <div className="flex flex-col items-center justify-center py-12 text-center">
+                  <AlertCircle className="h-12 w-12 text-muted-foreground mb-4" />
+                  <p className="text-muted-foreground">No recurring chores yet</p>
+                  <p className="text-sm text-muted-foreground">Click the button above to create one</p>
+                </div>
               ) : (
                 <div className="space-y-3">
                   {chores.map((chore) => (
-                    <Card 
-                      key={chore.id.toString()} 
-                      className={`hover:shadow-md transition-shadow ${chore.paused ? 'opacity-60 bg-muted/30' : ''}`}
-                    >
-                      <CardContent className="p-4 sm:p-5">
-                        <div className="flex flex-col sm:flex-row sm:items-start gap-3 sm:gap-4">
-                          <div className="flex-1 min-w-0 space-y-3">
-                            <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                              <h4 className="font-semibold text-base sm:text-lg">{chore.name}</h4>
-                              <div className="flex flex-wrap gap-2">
-                                {chore.paused && (
-                                  <Badge variant="secondary" className="font-normal w-fit bg-muted text-muted-foreground">
-                                    <Pause className="mr-1 h-3 w-3" />
-                                    Paused
-                                  </Badge>
-                                )}
-                                <Badge variant="outline" className="font-normal w-fit">
-                                  <Calendar className="mr-1.5 h-3.5 w-3.5" />
-                                  {getWeekdayLabel(chore.weekday)}
+                    <Card key={chore.id.toString()} className={chore.paused ? 'opacity-60' : ''}>
+                      <CardContent className="p-4">
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-2">
+                              <h3 className="font-medium truncate">{chore.name}</h3>
+                              {chore.paused && (
+                                <Badge variant="outline" className="shrink-0">
+                                  <Pause className="mr-1 h-3 w-3" />
+                                  Paused
                                 </Badge>
-                                <Badge variant="secondary" className="font-normal w-fit">
-                                  {getTimelineLabel(chore.timeline)}
-                                </Badge>
-                              </div>
+                              )}
                             </div>
-                            
                             {chore.description && (
-                              <p className="text-sm text-muted-foreground leading-relaxed">
+                              <p className="text-sm text-muted-foreground mb-2 line-clamp-2">
                                 {chore.description}
                               </p>
                             )}
-                            
-                            <div className="flex flex-wrap items-center gap-2 text-xs">
-                              <Badge variant="secondary" className="font-normal">
-                                <User className="mr-1 h-3 w-3" />
-                                Created: {formatPrincipal(chore.createdBy)}
+                            <div className="flex flex-wrap items-center gap-2 text-sm">
+                              <Badge variant="outline">
+                                <Repeat className="mr-1 h-3 w-3" />
+                                {getTimelineLabel(chore.timeline)}
                               </Badge>
+                              {chore.timeline !== 'daily' && (
+                                <Badge variant="outline">
+                                  <Calendar className="mr-1 h-3 w-3" />
+                                  {getWeekdayLabel(chore.weekday)}
+                                </Badge>
+                              )}
                               {chore.assignedTo && (
-                                <Badge variant="outline" className="font-normal">
+                                <Badge variant="outline">
                                   <User className="mr-1 h-3 w-3" />
-                                  Assigned: {formatPrincipal(chore.assignedTo)}
+                                  {formatPrincipal(chore.assignedTo)}
                                 </Badge>
                               )}
                             </div>
                           </div>
-
                           {canEditChore(chore) && (
-                            <div className="flex sm:flex-col gap-2 self-end sm:self-start">
+                            <div className="flex gap-1 shrink-0">
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                className="h-9 w-9 sm:h-10 sm:w-10"
                                 onClick={() => handlePauseResume(chore.id, chore.paused)}
-                                disabled={pauseResumeChore.isPending}
-                                title={chore.paused ? 'Resume chore' : 'Pause chore'}
+                                title={chore.paused ? 'Resume' : 'Pause'}
                               >
                                 {chore.paused ? (
                                   <Play className="h-4 w-4" />
                                 ) : (
                                   <Pause className="h-4 w-4" />
                                 )}
-                                <span className="sr-only">{chore.paused ? 'Resume' : 'Pause'} chore</span>
                               </Button>
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                className="h-9 w-9 sm:h-10 sm:w-10"
                                 onClick={() => handleStartEdit(chore)}
                               >
                                 <Edit2 className="h-4 w-4" />
-                                <span className="sr-only">Edit chore</span>
                               </Button>
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                className="h-9 w-9 sm:h-10 sm:w-10 text-destructive hover:bg-destructive/10"
                                 onClick={() => handleDelete(chore.id)}
                               >
                                 <Trash2 className="h-4 w-4" />
-                                <span className="sr-only">Delete chore</span>
                               </Button>
                             </div>
                           )}
@@ -570,36 +595,9 @@ export function RecurringChoresDialog({ open, onOpenChange, initialEditChoreId, 
                   ))}
                 </div>
               )}
-            </div>
+            </ScrollArea>
           </div>
-        </ScrollArea>
-
-        {showFormFooter && (
-          <div className="px-4 sm:px-6 py-3 sm:py-4 border-t bg-background shrink-0">
-            <div className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-3">
-              <Button 
-                type="button" 
-                variant="outline" 
-                onClick={resetForm}
-                className="h-10 sm:h-11 flex-1 sm:flex-initial sm:min-w-[100px]"
-              >
-                Cancel
-              </Button>
-              <Button 
-                type="submit"
-                form="recurring-chore-form"
-                disabled={!canSave}
-                className="h-10 sm:h-11 flex-1 sm:flex-initial sm:min-w-[140px]"
-              >
-                {createChore.isPending || updateChore.isPending
-                  ? 'Saving...'
-                  : editingChore
-                  ? 'Update Chore'
-                  : 'Create Chore'}
-              </Button>
-            </div>
-          </div>
-        )}
+        </div>
       </DialogContent>
     </Dialog>
   );

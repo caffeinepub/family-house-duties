@@ -82,6 +82,10 @@ export interface AddTaskRequest {
     dueDate?: Time;
     description: string;
 }
+export interface UpdateMealDescriptionRequest {
+    day: string;
+    description: string;
+}
 export interface UpdateRecurringChoreRequest {
     id: bigint;
     weekday: bigint;
@@ -135,6 +139,7 @@ export interface backendInterface {
     sortTasksByDueDate(request: SortTasksByDueDateRequest): Promise<Array<Task>>;
     toggleTaskCompletion(id: bigint): Promise<void>;
     updateCookingDay(request: UpdateCookingDayRequest): Promise<void>;
+    updateMealDescription(request: UpdateMealDescriptionRequest): Promise<void>;
     updateRecurringChore(request: UpdateRecurringChoreRequest): Promise<void>;
     updateTask(id: bigint, name: string, description: string, dueDate: Time | null, assignedTo: Principal | null): Promise<void>;
     upsertProfile(profile: PersonProfile): Promise<void>;

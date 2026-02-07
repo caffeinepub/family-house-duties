@@ -82,6 +82,10 @@ export interface UpdateCookingDayRequest {
   'cookName' : [] | [string],
   'description' : string,
 }
+export interface UpdateMealDescriptionRequest {
+  'day' : string,
+  'description' : string,
+}
 export interface UpdateRecurringChoreRequest {
   'id' : bigint,
   'weekday' : bigint,
@@ -129,6 +133,10 @@ export interface _SERVICE {
   'sortTasksByDueDate' : ActorMethod<[SortTasksByDueDateRequest], Array<Task>>,
   'toggleTaskCompletion' : ActorMethod<[bigint], undefined>,
   'updateCookingDay' : ActorMethod<[UpdateCookingDayRequest], undefined>,
+  'updateMealDescription' : ActorMethod<
+    [UpdateMealDescriptionRequest],
+    undefined
+  >,
   'updateRecurringChore' : ActorMethod<
     [UpdateRecurringChoreRequest],
     undefined

@@ -11,7 +11,6 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { PopulateSampleDataAction } from './PopulateSampleDataAction';
 
 export function Header() {
   const { identity, clear, loginStatus } = useInternetIdentity();
@@ -44,8 +43,6 @@ export function Header() {
         </div>
 
         <div className="flex items-center gap-3">
-          {isAuthenticated && <PopulateSampleDataAction />}
-          
           {isAuthenticated && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>

@@ -1,8 +1,10 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useActor } from './useActor';
+import { useActorWithReadiness } from './useActorWithReadiness';
 import type { PersonProfile } from '../backend';
 import { toast } from 'sonner';
 import { Principal } from '@icp-sdk/core/principal';
+import { guardActorAvailability } from '../utils/actorAvailability';
 
 export function useGetAllProfiles() {
   const { actor, isFetching } = useActor();
@@ -35,12 +37,14 @@ export function useGetProfile(principal: Principal | undefined) {
 }
 
 export function useUpsertProfile() {
-  const { actor } = useActor();
+  const { actor, isReady, isInitializing, initError } = useActorWithReadiness();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (profile: PersonProfile) => {
-      if (!actor) throw new Error('Actor not initialized');
+      guardActorAvailability({ isReady, isInitializing, initError });
+      if (!actor) throw new Error('Backend is not ready. Please try again.');
+      
       return actor.upsertProfile(profile);
     },
     onSuccess: () => {
@@ -55,12 +59,14 @@ export function useUpsertProfile() {
 }
 
 export function useDeleteProfile() {
-  const { actor } = useActor();
+  const { actor, isReady, isInitializing, initError } = useActorWithReadiness();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (principal: Principal) => {
-      if (!actor) throw new Error('Actor not initialized');
+      guardActorAvailability({ isReady, isInitializing, initError });
+      if (!actor) throw new Error('Backend is not ready. Please try again.');
+      
       return actor.deleteProfile(principal);
     },
     onSuccess: () => {

@@ -9,9 +9,9 @@ import Time "mo:core/Time";
 import Principal "mo:core/Principal";
 import Order "mo:core/Order";
 
-
 import MixinAuthorization "authorization/MixinAuthorization";
 import AccessControl "authorization/access-control";
+
 
 // Specify the migration function in with clause
 
@@ -101,6 +101,11 @@ actor {
   type PauseResumeChoreRequest = {
     id : Nat;
     pause : Bool;
+  };
+
+  type UpdateMealDescriptionRequest = {
+    day : Text;
+    description : Text;
   };
 
   let accessControlState = AccessControl.initState();
@@ -501,6 +506,7 @@ actor {
   public type GetCookingAssignment = {
     day : Text;
   };
+
   public query ({ caller }) func getCookingAssignment(request : GetCookingAssignment) : async CookingAssignment {
     if (not AccessControl.hasPermission(accessControlState, caller, #user)) {
       Runtime.trap("Unauthorized: Must be a registered user to view cooking assignments");
@@ -508,6 +514,41 @@ actor {
     switch (cookingAssignments.get(request.day)) {
       case (null) { Runtime.trap("Assignment not found") };
       case (?assignment) { assignment };
+    };
+  };
+
+  public shared ({ caller }) func updateMealDescription(request : UpdateMealDescriptionRequest) : async () {
+    if (not AccessControl.hasPermission(accessControlState, caller, #user)) {
+      Runtime.trap("Unauthorized: Must be a registered user to update meal descriptions");
+    };
+
+    switch (cookingAssignments.get(request.day)) {
+      case (null) {
+        Runtime.trap("Cooking assignment not found for the specified day");
+      };
+      case (?assignment) {
+        switch (assignment.cook) {
+          case (null) {
+            if (assignment.assignedBy != caller) {
+              Runtime.trap("Unauthorized: Only the assigned cook or creator can update the meal description");
+            };
+          };
+          case (?cook) {
+            if (cook != caller and assignment.assignedBy != caller) {
+              Runtime.trap("Unauthorized: Only the assigned cook or creator can update the meal description");
+            };
+          };
+        };
+
+        let updatedAssignment : CookingAssignment = {
+          day = assignment.day;
+          cook = assignment.cook;
+          cookName = assignment.cookName;
+          description = request.description;
+          assignedBy = assignment.assignedBy;
+        };
+        cookingAssignments.add(request.day, updatedAssignment);
+      };
     };
   };
 

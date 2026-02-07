@@ -19,6 +19,9 @@ import { CalendarIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { PersonProfileSelect } from './PersonProfileSelect';
 import { Principal } from '@icp-sdk/core/principal';
+import { useVoiceDictation } from '../hooks/useVoiceDictation';
+import { VoiceDictationButton } from './VoiceDictationButton';
+import { toast } from 'sonner';
 
 interface EditTaskDialogProps {
   task: Task;
@@ -33,19 +36,90 @@ export function EditTaskDialog({ task, open, onOpenChange }: EditTaskDialogProps
   const [dueDate, setDueDate] = useState<Date | undefined>(
     task.dueDate ? new Date(Number(task.dueDate) / 1000000) : undefined
   );
+  const [activeField, setActiveField] = useState<'name' | 'description' | null>(null);
 
   const updateTask = useUpdateTask();
+
+  // Voice dictation for name field
+  const nameDictation = useVoiceDictation({
+    continuous: false,
+    interimResults: true,
+    onTranscript: (transcript, isFinal) => {
+      if (isFinal && activeField === 'name') {
+        setName((prev) => (prev ? prev + ' ' + transcript : transcript));
+      }
+    },
+    onError: (error) => {
+      toast.error(error);
+      setActiveField(null);
+    },
+  });
+
+  // Voice dictation for description field
+  const descriptionDictation = useVoiceDictation({
+    continuous: false,
+    interimResults: true,
+    onTranscript: (transcript, isFinal) => {
+      if (isFinal && activeField === 'description') {
+        setDescription((prev) => (prev ? prev + ' ' + transcript : transcript));
+      }
+    },
+    onError: (error) => {
+      toast.error(error);
+      setActiveField(null);
+    },
+  });
 
   useEffect(() => {
     setName(task.name);
     setDescription(task.description);
     setAssignedToPrincipal(task.assignedTo?.toString() || '');
     setDueDate(task.dueDate ? new Date(Number(task.dueDate) / 1000000) : undefined);
+    // Stop dictation when task changes
+    nameDictation.stop();
+    descriptionDictation.stop();
+    setActiveField(null);
   }, [task]);
+
+  // Stop dictation when dialog closes
+  useEffect(() => {
+    if (!open) {
+      nameDictation.stop();
+      descriptionDictation.stop();
+      setActiveField(null);
+    }
+  }, [open]);
+
+  const handleStartNameDictation = () => {
+    descriptionDictation.stop();
+    setActiveField('name');
+    nameDictation.start();
+  };
+
+  const handleStopNameDictation = () => {
+    nameDictation.stop();
+    setActiveField(null);
+  };
+
+  const handleStartDescriptionDictation = () => {
+    nameDictation.stop();
+    setActiveField('description');
+    descriptionDictation.start();
+  };
+
+  const handleStopDescriptionDictation = () => {
+    descriptionDictation.stop();
+    setActiveField(null);
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) return;
+
+    // Stop any active dictation before submitting
+    nameDictation.stop();
+    descriptionDictation.stop();
+    setActiveField(null);
 
     const dueDateNano = dueDate ? BigInt(dueDate.getTime() * 1000000) : null;
     let assignee: Principal | null = null;
@@ -81,28 +155,50 @@ export function EditTaskDialog({ task, open, onOpenChange }: EditTaskDialogProps
         <form onSubmit={handleSubmit}>
           <DialogHeader>
             <DialogTitle>Edit Task</DialogTitle>
-            <DialogDescription>Update the task details.</DialogDescription>
+            <DialogDescription>Update the details of this task.</DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="edit-name">Task Name *</Label>
-              <Input
-                id="edit-name"
-                placeholder="e.g., Vacuum living room"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
-              />
+              <Label htmlFor="name">Task Name *</Label>
+              <div className="flex gap-2">
+                <Input
+                  id="name"
+                  placeholder="e.g., Vacuum living room"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  required
+                  className="flex-1"
+                />
+                <VoiceDictationButton
+                  isListening={nameDictation.isListening && activeField === 'name'}
+                  isSupported={nameDictation.isSupported}
+                  onStart={handleStartNameDictation}
+                  onStop={handleStopNameDictation}
+                  disabled={updateTask.isPending}
+                  disabledReason={updateTask.isPending ? 'Updating task...' : undefined}
+                />
+              </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="edit-description">Description</Label>
-              <Textarea
-                id="edit-description"
-                placeholder="Add any details about this task..."
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                rows={3}
-              />
+              <Label htmlFor="description">Description</Label>
+              <div className="flex gap-2">
+                <Textarea
+                  id="description"
+                  placeholder="Add any details about this task..."
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  rows={3}
+                  className="flex-1"
+                />
+                <VoiceDictationButton
+                  isListening={descriptionDictation.isListening && activeField === 'description'}
+                  isSupported={descriptionDictation.isSupported}
+                  onStart={handleStartDescriptionDictation}
+                  onStop={handleStopDescriptionDictation}
+                  disabled={updateTask.isPending}
+                  disabledReason={updateTask.isPending ? 'Updating task...' : undefined}
+                />
+              </div>
             </div>
             <PersonProfileSelect
               value={assignedToPrincipal}
@@ -131,7 +227,7 @@ export function EditTaskDialog({ task, open, onOpenChange }: EditTaskDialogProps
               Cancel
             </Button>
             <Button type="submit" disabled={updateTask.isPending}>
-              {updateTask.isPending ? 'Saving...' : 'Save Changes'}
+              {updateTask.isPending ? 'Updating...' : 'Update Task'}
             </Button>
           </DialogFooter>
         </form>

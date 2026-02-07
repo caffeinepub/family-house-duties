@@ -1,51 +1,43 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-04T23:05:56.590Z",
+  "generatedAt": "2026-02-07T21:15:28.576Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
     "total": 3,
-    "implemented": 3,
+    "implemented": 1,
     "items": [
       {
         "id": "REQ-1",
-        "summary": "Add per-task Edit and Delete UI controls to the calendar day view (frontend/src/components/CalendarDayPlanner.tsx) for tasks scheduled on the selected day. Edit must open the existing EditTaskDialog for that task, and Delete must prompt for confirmation before calling the existing delete task mutation. Only show Edit/Delete controls when the current user is the task creator (task.createdBy matches the authenticated principal).",
-        "status": "implemented",
+        "summary": "Update the actor initialization hook to avoid failing actor creation due to access-control initialization and to surface initialization errors.\n\nSpecifically:\n- In frontend/src/hooks/useActor.ts, make access-control initialization (_initializeAccessControlWithSecret) conditional on a non-empty caffeineAdminToken.\n- Wrap the access-control initialization call in try/catch so that actor creation can still succeed (return the actor) even if access-control init fails.\n- Expose the React Query error state from the actor query (e.g., return an `error` field alongside `actor` and `isFetching`) so the UI can distinguish “still loading” vs “failed to connect/initialize”.",
+        "status": "missing",
         "plannedFiles": [
-          "frontend/src/components/CalendarDayPlanner.tsx"
+          "frontend/src/hooks/useActor.ts"
         ],
-        "matchedFiles": [
-          "frontend/src/components/CalendarDayPlanner.tsx"
-        ]
+        "matchedFiles": []
       },
       {
         "id": "REQ-2",
-        "summary": "Add per-task Edit and Delete UI controls to the calendar week view (frontend/src/components/CalendarWeekPlanner.tsx) for tasks on each day. Edit must open the existing EditTaskDialog, and Delete must prompt for confirmation before calling the existing delete task mutation. Only show Edit/Delete controls when the current user is the task creator.",
+        "summary": "Make readiness checks use real initialization error state so the app shows accurate backend connection status.\n\nSpecifically:\n- In frontend/src/hooks/useActorWithReadiness.ts, consume the new error state from useActor and set `initError` accordingly.\n- Ensure the derived flags behave consistently:\n  - `isInitializing` is true while the actor query is fetching and no actor is available yet.\n  - `isReady` is true only when an actor exists and the query is not fetching.\n  - `initError` is non-null when actor initialization failed (query error).",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/components/CalendarWeekPlanner.tsx"
+          "frontend/src/hooks/useActorWithReadiness.ts"
         ],
         "matchedFiles": [
-          "frontend/src/components/CalendarWeekPlanner.tsx"
+          "frontend/src/hooks/useActorWithReadiness.ts"
         ]
       },
       {
         "id": "REQ-3",
-        "summary": "Add edit/delete access for recurring chores from calendar views by enabling a user to initiate editing or deletion of a recurring chore shown in CalendarDayPlanner and CalendarWeekPlanner. Editing must route through the existing recurring chore update flow and deletion must prompt for confirmation before calling the existing recurring chore delete mutation. Only allow these actions when the current user is the recurring chore creator (chore.createdBy matches the authenticated principal).",
-        "status": "implemented",
+        "summary": "Improve diagnostics for actor initialization to speed up troubleshooting of “backend not ready” reports.\n\nSpecifically:\n- Add structured console diagnostics around actor creation and access-control initialization steps in frontend/src/hooks/useActor.ts using existing diagnostics utilities (frontend/src/utils/deploymentDiagnostics.ts and/or frontend/src/utils/actorInitDiagnostics.ts).\n- Ensure diagnostics do not include sensitive values (do not log the admin token).",
+        "status": "missing",
         "plannedFiles": [
-          "frontend/src/components/RecurringChoresDialog.tsx",
-          "frontend/src/components/CalendarDayPlanner.tsx",
-          "frontend/src/components/CalendarWeekPlanner.tsx"
+          "frontend/src/hooks/useActor.ts"
         ],
-        "matchedFiles": [
-          "frontend/src/components/RecurringChoresDialog.tsx",
-          "frontend/src/components/CalendarDayPlanner.tsx",
-          "frontend/src/components/CalendarWeekPlanner.tsx"
-        ]
+        "matchedFiles": []
       }
     ]
   },
@@ -54,9 +46,8 @@
     "feature_evidence.json",
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
-    "frontend/src/components/CalendarDayPlanner.tsx",
-    "frontend/src/components/CalendarWeekPlanner.tsx",
-    "frontend/src/components/RecurringChoresDialog.tsx",
+    "frontend/src/components/AddTaskDialog.tsx",
+    "frontend/src/hooks/useActorWithReadiness.ts",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",

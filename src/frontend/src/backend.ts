@@ -164,6 +164,10 @@ export interface AddTaskRequest {
     dueDate?: Time;
     description: string;
 }
+export interface UpdateMealDescriptionRequest {
+    day: string;
+    description: string;
+}
 export interface UpdateRecurringChoreRequest {
     id: bigint;
     weekday: bigint;
@@ -218,6 +222,7 @@ export interface backendInterface {
     sortTasksByDueDate(request: SortTasksByDueDateRequest): Promise<Array<Task>>;
     toggleTaskCompletion(id: bigint): Promise<void>;
     updateCookingDay(request: UpdateCookingDayRequest): Promise<void>;
+    updateMealDescription(request: UpdateMealDescriptionRequest): Promise<void>;
     updateRecurringChore(request: UpdateRecurringChoreRequest): Promise<void>;
     updateTask(id: bigint, name: string, description: string, dueDate: Time | null, assignedTo: Principal | null): Promise<void>;
     upsertProfile(profile: PersonProfile): Promise<void>;
@@ -628,6 +633,20 @@ export class Backend implements backendInterface {
             }
         } else {
             const result = await this.actor.updateCookingDay(to_candid_UpdateCookingDayRequest_n37(this._uploadFile, this._downloadFile, arg0));
+            return result;
+        }
+    }
+    async updateMealDescription(arg0: UpdateMealDescriptionRequest): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.updateMealDescription(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.updateMealDescription(arg0);
             return result;
         }
     }

@@ -2,29 +2,10 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-add-per-task-edit-and-delete-ui-controls-to-the-calendar-day-view-frontend-src-components-calendardayplanner-tsx-for-tasks-scheduled-on-the-selected-day-edit-must-open-the-existing-edittaskdialog-for-that-task-and-delete-must-prompt-for-confirmation-before-calling-the-existing-delete-task-mutation-only-show-edit-delete-controls-when-the-current-user-is-the-task-creator-task-createdby-matches-the-authenticated-principal",
-      "featureTitle": "Add per-task Edit and Delete UI controls to the calendar day view (frontend/src/components/CalendarDayPlanner.tsx) for tasks scheduled on the selected day. Edit must open the existing EditTaskDialog for that task, and Delete must prompt for confirmation before calling the existing delete task mutation. Only show Edit/Delete controls when the current user is the task creator (task.createdBy matches the authenticated principal).",
+      "featureId": "feature-make-readiness-checks-use-real-initialization-error-state-so-the-app-shows-accurate-backend-connection-status-specifically-in-frontend-src-hooks-useactorwithreadiness-ts-consume-the-new-error-state-from-useactor-and-set-initerror-accordingly-ensure-the-derived-flags-behave-consistently-isinitializing-is-true-while-the-actor-query-is-fetching-and-no-actor-is-available-yet-isready-is-true-only-when-an-actor-exists-and-the-query-is-not-fetching-initerror-is-non-null-when-actor-initialization-failed-query-error",
+      "featureTitle": "Make readiness checks use real initialization error state so the app shows accurate backend connection status.\n\nSpecifically:\n- In frontend/src/hooks/useActorWithReadiness.ts, consume the new error state from useActor and set `initError` accordingly.\n- Ensure the derived flags behave consistently:\n  - `isInitializing` is true while the actor query is fetching and no actor is available yet.\n  - `isReady` is true only when an actor exists and the query is not fetching.\n  - `initError` is non-null when actor initialization failed (query error).",
       "files": [
-        "frontend/src/components/CalendarDayPlanner.tsx"
-      ],
-      "components": [
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "authorization@4.0.0",
-        "github-export-icp-cli@1.0.0"
-      ],
-      "testIds": [
-        "REQ-1"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-add-per-task-edit-and-delete-ui-controls-to-the-calendar-week-view-frontend-src-components-calendarweekplanner-tsx-for-tasks-on-each-day-edit-must-open-the-existing-edittaskdialog-and-delete-must-prompt-for-confirmation-before-calling-the-existing-delete-task-mutation-only-show-edit-delete-controls-when-the-current-user-is-the-task-creator",
-      "featureTitle": "Add per-task Edit and Delete UI controls to the calendar week view (frontend/src/components/CalendarWeekPlanner.tsx) for tasks on each day. Edit must open the existing EditTaskDialog, and Delete must prompt for confirmation before calling the existing delete task mutation. Only show Edit/Delete controls when the current user is the task creator.",
-      "files": [
-        "frontend/src/components/CalendarWeekPlanner.tsx"
+        "frontend/src/hooks/useActorWithReadiness.ts"
       ],
       "components": [
         "core-infrastructure@1.0.2",
@@ -36,27 +17,6 @@
       ],
       "testIds": [
         "REQ-2"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-add-edit-delete-access-for-recurring-chores-from-calendar-views-by-enabling-a-user-to-initiate-editing-or-deletion-of-a-recurring-chore-shown-in-calendardayplanner-and-calendarweekplanner-editing-must-route-through-the-existing-recurring-chore-update-flow-and-deletion-must-prompt-for-confirmation-before-calling-the-existing-recurring-chore-delete-mutation-only-allow-these-actions-when-the-current-user-is-the-recurring-chore-creator-chore-createdby-matches-the-authenticated-principal",
-      "featureTitle": "Add edit/delete access for recurring chores from calendar views by enabling a user to initiate editing or deletion of a recurring chore shown in CalendarDayPlanner and CalendarWeekPlanner. Editing must route through the existing recurring chore update flow and deletion must prompt for confirmation before calling the existing recurring chore delete mutation. Only allow these actions when the current user is the recurring chore creator (chore.createdBy matches the authenticated principal).",
-      "files": [
-        "frontend/src/components/CalendarDayPlanner.tsx",
-        "frontend/src/components/CalendarWeekPlanner.tsx",
-        "frontend/src/components/RecurringChoresDialog.tsx"
-      ],
-      "components": [
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "authorization@4.0.0",
-        "github-export-icp-cli@1.0.0"
-      ],
-      "testIds": [
-        "REQ-3"
       ],
       "confidence": "high"
     }

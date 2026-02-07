@@ -1,9 +1,9 @@
-import { useMemo, useState } from 'react';
-import { ChevronLeft, ChevronRight, ChefHat, CheckCircle2, Circle, Edit2, Trash2 } from 'lucide-react';
+import { useMemo } from 'react';
+import { ChevronLeft, ChevronRight, ChefHat, CheckCircle2, Circle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { useGetAllTasks, useGetCookingAssignments, useGetAllRecurringChores, useToggleTaskCompletion, useGetAllProfiles, useDeleteTask } from '../hooks/useQueries';
+import { useGetAllTasks, useGetCookingAssignments, useGetAllRecurringChores, useToggleTaskCompletion, useGetAllProfiles } from '../hooks/useQueries';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   format,
@@ -14,16 +14,13 @@ import {
   subWeeks,
   isToday,
 } from 'date-fns';
-import type { Task, CookingAssignment, RecurringChore } from '../backend';
+import type { Task, CookingAssignment } from '../backend';
 import { dateToDayKey, taskDueDateToDayKey } from '../utils/taskDayKey';
 import { getCookingAssignmentDisplay } from '../utils/cookingAssignmentLabel';
 import { resolvePersonDisplay } from '../utils/personProfiles';
 import { PersonBadge } from './PersonBadge';
 import { getChoresForDate } from '../utils/recurringChoresSchedule';
 import { getTimelineLabel } from '../utils/recurringChoresPreview';
-import { EditTaskDialog } from './EditTaskDialog';
-import { RecurringChoresDialog } from './RecurringChoresDialog';
-import { useInternetIdentity } from '../hooks/useInternetIdentity';
 
 interface CalendarWeekPlannerProps {
   selectedDate: Date;
@@ -41,14 +38,6 @@ export function CalendarWeekPlanner({ selectedDate, onDateChange, showRecurringC
   const { data: recurringChores = [], isLoading: choresLoading } = useGetAllRecurringChores();
   const { data: profiles = [], isLoading: profilesLoading } = useGetAllProfiles();
   const toggleCompletion = useToggleTaskCompletion();
-  const deleteTask = useDeleteTask();
-  const { identity } = useInternetIdentity();
-
-  const [editingTask, setEditingTask] = useState<Task | null>(null);
-  const [editingChoreId, setEditingChoreId] = useState<bigint | null>(null);
-  const [choreDialogOpen, setChoreDialogOpen] = useState(false);
-
-  const currentUserPrincipal = identity?.getPrincipal().toString();
 
   const tasksByDay = useMemo(() => {
     const map = new Map<string, Task[]>();
@@ -79,36 +68,6 @@ export function CalendarWeekPlanner({ selectedDate, onDateChange, showRecurringC
     await toggleCompletion.mutateAsync(taskId);
   };
 
-  const handleDeleteTask = async (taskId: bigint) => {
-    if (confirm('Are you sure you want to delete this task?')) {
-      await deleteTask.mutateAsync(taskId);
-    }
-  };
-
-  const handleEditTask = (task: Task) => {
-    setEditingTask(task);
-  };
-
-  const handleEditChore = (chore: RecurringChore) => {
-    setEditingChoreId(chore.id);
-    setChoreDialogOpen(true);
-  };
-
-  const handleDeleteChore = async (choreId: bigint) => {
-    if (confirm('Are you sure you want to delete this recurring chore?')) {
-      setEditingChoreId(choreId);
-      setChoreDialogOpen(true);
-    }
-  };
-
-  const isTaskCreator = (task: Task) => {
-    return task.createdBy.toString() === currentUserPrincipal;
-  };
-
-  const isChoreCreator = (chore: RecurringChore) => {
-    return chore.createdBy.toString() === currentUserPrincipal;
-  };
-
   if (tasksLoading || assignmentsLoading || choresLoading || profilesLoading) {
     return (
       <Card>
@@ -120,193 +79,124 @@ export function CalendarWeekPlanner({ selectedDate, onDateChange, showRecurringC
   }
 
   return (
-    <>
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle>
-              {format(weekStart, 'MMM d')} - {format(weekEnd, 'MMM d, yyyy')}
-            </CardTitle>
-            <div className="flex gap-2">
-              <Button variant="outline" size="icon" onClick={previousWeek}>
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <Button variant="outline" size="sm" onClick={() => onDateChange(new Date())}>
-                Today
-              </Button>
-              <Button variant="outline" size="icon" onClick={nextWeek}>
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
+    <Card>
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <CardTitle>
+            {format(weekStart, 'MMM d')} - {format(weekEnd, 'MMM d, yyyy')}
+          </CardTitle>
+          <div className="flex gap-2">
+            <Button variant="outline" size="icon" onClick={previousWeek}>
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => onDateChange(new Date())}>
+              Today
+            </Button>
+            <Button variant="outline" size="icon" onClick={nextWeek}>
+              <ChevronRight className="h-4 w-4" />
+            </Button>
           </div>
-        </CardHeader>
-        <CardContent className="p-6">
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-7">
-            {weekDays.map((day) => {
-              const dayKey = dateToDayKey(day);
-              const dayTasks = tasksByDay.get(dayKey) || [];
-              const assignment = assignmentsByDay.get(dayKey);
-              const cookDisplay = getCookingAssignmentDisplay(assignment, profiles);
-              const dayChores = showRecurringChores ? getChoresForDate(recurringChores, day) : [];
-              const isDayToday = isToday(day);
+        </div>
+      </CardHeader>
+      <CardContent className="p-6">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-7">
+          {weekDays.map((day) => {
+            const dayKey = dateToDayKey(day);
+            const dayTasks = tasksByDay.get(dayKey) || [];
+            const assignment = assignmentsByDay.get(dayKey);
+            const cookDisplay = getCookingAssignmentDisplay(assignment, profiles);
+            const dayChores = showRecurringChores ? getChoresForDate(recurringChores, day) : [];
+            const isDayToday = isToday(day);
 
-              const hasItems = dayTasks.length > 0 || cookDisplay.label || dayChores.length > 0;
+            const hasItems = dayTasks.length > 0 || cookDisplay.label || dayChores.length > 0;
 
-              return (
-                <Card
-                  key={day.toISOString()}
-                  className={`${isDayToday ? 'border-primary ring-2 ring-primary/20' : ''}`}
-                >
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-sm font-medium">
-                      <div className="flex flex-col gap-1">
-                        <span className="text-muted-foreground">{format(day, 'EEE')}</span>
-                        <span className="text-lg">{format(day, 'd')}</span>
+            return (
+              <Card
+                key={day.toISOString()}
+                className={`${isDayToday ? 'border-primary ring-2 ring-primary/20' : ''}`}
+              >
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-medium">
+                    <div className="flex flex-col gap-1">
+                      <span className="text-muted-foreground">{format(day, 'EEE')}</span>
+                      <span className="text-lg">{format(day, 'd')}</span>
+                    </div>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3 pb-4">
+                  {cookDisplay.label && (
+                    <div className="rounded-lg bg-accent p-2">
+                      <div className="mb-1 flex items-center gap-1 text-xs font-medium text-muted-foreground">
+                        <ChefHat className="h-3 w-3" />
+                        <span>Cooking</span>
                       </div>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-3 pb-4">
-                    {cookDisplay.label && (
-                      <div className="rounded-lg bg-accent p-2">
-                        <div className="mb-1 flex items-center gap-1 text-xs font-medium text-muted-foreground">
-                          <ChefHat className="h-3 w-3" />
-                          <span>Cooking</span>
+                      <PersonBadge label={cookDisplay.label} color={cookDisplay.color} size="sm" />
+                    </div>
+                  )}
+
+                  {dayTasks.length > 0 && (
+                    <div className="space-y-2">
+                      <div className="text-xs font-medium text-muted-foreground">Tasks</div>
+                      {dayTasks.map((task) => (
+                        <div
+                          key={task.id.toString()}
+                          className="flex items-start gap-2 rounded-lg border p-2 text-sm"
+                        >
+                          <button
+                            onClick={() => handleToggleTask(task.id)}
+                            className="mt-0.5 flex-shrink-0"
+                            disabled={toggleCompletion.isPending}
+                          >
+                            {task.completed ? (
+                              <CheckCircle2 className="h-4 w-4 text-success" />
+                            ) : (
+                              <Circle className="h-4 w-4 text-muted-foreground" />
+                            )}
+                          </button>
+                          <span className={task.completed ? 'line-through text-muted-foreground' : ''}>
+                            {task.name}
+                          </span>
                         </div>
-                        <PersonBadge label={cookDisplay.label} color={cookDisplay.color} size="sm" />
-                      </div>
-                    )}
+                      ))}
+                    </div>
+                  )}
 
-                    {dayTasks.length > 0 && (
-                      <div className="space-y-2">
-                        <div className="text-xs font-medium text-muted-foreground">Tasks</div>
-                        {dayTasks.map((task) => {
-                          const canEdit = isTaskCreator(task);
-                          return (
-                            <div
-                              key={task.id.toString()}
-                              className="flex items-start gap-2 rounded-lg border p-2 text-sm"
-                            >
-                              <button
-                                onClick={() => handleToggleTask(task.id)}
-                                className="mt-0.5 flex-shrink-0"
-                                disabled={toggleCompletion.isPending}
-                              >
-                                {task.completed ? (
-                                  <CheckCircle2 className="h-4 w-4 text-success" />
-                                ) : (
-                                  <Circle className="h-4 w-4 text-muted-foreground" />
-                                )}
-                              </button>
-                              <span className={`flex-1 ${task.completed ? 'line-through text-muted-foreground' : ''}`}>
-                                {task.name}
-                              </span>
-                              {canEdit && (
-                                <div className="flex gap-0.5">
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-6 w-6"
-                                    onClick={() => handleEditTask(task)}
-                                  >
-                                    <Edit2 className="h-3 w-3" />
-                                    <span className="sr-only">Edit</span>
-                                  </Button>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-6 w-6 text-destructive hover:bg-destructive/10"
-                                    onClick={() => handleDeleteTask(task.id)}
-                                  >
-                                    <Trash2 className="h-3 w-3" />
-                                    <span className="sr-only">Delete</span>
-                                  </Button>
-                                </div>
-                              )}
+                  {dayChores.length > 0 && (
+                    <div className="space-y-2">
+                      <div className="text-xs font-medium text-muted-foreground">Recurring Chores</div>
+                      {dayChores.map((chore) => {
+                        const assigneeDisplay = chore.assignedTo ? resolvePersonDisplay(chore.assignedTo, profiles) : null;
+                        return (
+                          <div
+                            key={chore.id.toString()}
+                            className="rounded-lg bg-secondary/50 p-2 text-sm"
+                          >
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <span className="font-medium">{chore.name}</span>
+                              <Badge variant="outline" className="text-xs">
+                                {getTimelineLabel(chore.timeline)}
+                              </Badge>
                             </div>
-                          );
-                        })}
-                      </div>
-                    )}
-
-                    {dayChores.length > 0 && (
-                      <div className="space-y-2">
-                        <div className="text-xs font-medium text-muted-foreground">Recurring Chores</div>
-                        {dayChores.map((chore) => {
-                          const assigneeDisplay = chore.assignedTo ? resolvePersonDisplay(chore.assignedTo, profiles) : null;
-                          const canEdit = isChoreCreator(chore);
-                          return (
-                            <div
-                              key={chore.id.toString()}
-                              className="rounded-lg bg-secondary/50 p-2 text-sm"
-                            >
-                              <div className="flex items-start gap-2">
-                                <div className="flex-1">
-                                  <div className="flex items-center gap-1.5 flex-wrap">
-                                    <span className="font-medium">{chore.name}</span>
-                                    <Badge variant="outline" className="text-xs">
-                                      {getTimelineLabel(chore.timeline)}
-                                    </Badge>
-                                  </div>
-                                  {assigneeDisplay && (
-                                    <div className="mt-1">
-                                      <PersonBadge label={assigneeDisplay.label} color={assigneeDisplay.color} size="sm" variant="outline" />
-                                    </div>
-                                  )}
-                                </div>
-                                {canEdit && (
-                                  <div className="flex gap-0.5">
-                                    <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      className="h-6 w-6"
-                                      onClick={() => handleEditChore(chore)}
-                                    >
-                                      <Edit2 className="h-3 w-3" />
-                                      <span className="sr-only">Edit</span>
-                                    </Button>
-                                    <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      className="h-6 w-6 text-destructive hover:bg-destructive/10"
-                                      onClick={() => handleDeleteChore(chore.id)}
-                                    >
-                                      <Trash2 className="h-3 w-3" />
-                                      <span className="sr-only">Delete</span>
-                                    </Button>
-                                  </div>
-                                )}
+                            {assigneeDisplay && (
+                              <div className="mt-1">
+                                <PersonBadge label={assigneeDisplay.label} color={assigneeDisplay.color} size="sm" variant="outline" />
                               </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
 
-                    {!hasItems && (
-                      <div className="py-4 text-center text-sm text-muted-foreground">No items</div>
-                    )}
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
-        </CardContent>
-      </Card>
-
-      {editingTask && (
-        <EditTaskDialog
-          task={editingTask}
-          open={!!editingTask}
-          onOpenChange={(open) => !open && setEditingTask(null)}
-        />
-      )}
-
-      <RecurringChoresDialog
-        open={choreDialogOpen}
-        onOpenChange={setChoreDialogOpen}
-        initialEditChoreId={editingChoreId}
-        onDialogClose={() => setEditingChoreId(null)}
-      />
-    </>
+                  {!hasItems && (
+                    <div className="py-4 text-center text-sm text-muted-foreground">No items</div>
+                  )}
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      </CardContent>
+    </Card>
   );
 }

@@ -97,6 +97,10 @@ export const UpdateCookingDayRequest = IDL.Record({
   'cookName' : IDL.Opt(IDL.Text),
   'description' : IDL.Text,
 });
+export const UpdateMealDescriptionRequest = IDL.Record({
+  'day' : IDL.Text,
+  'description' : IDL.Text,
+});
 export const UpdateRecurringChoreRequest = IDL.Record({
   'id' : IDL.Nat,
   'weekday' : IDL.Nat,
@@ -164,6 +168,7 @@ export const idlService = IDL.Service({
     ),
   'toggleTaskCompletion' : IDL.Func([IDL.Nat], [], []),
   'updateCookingDay' : IDL.Func([UpdateCookingDayRequest], [], []),
+  'updateMealDescription' : IDL.Func([UpdateMealDescriptionRequest], [], []),
   'updateRecurringChore' : IDL.Func([UpdateRecurringChoreRequest], [], []),
   'updateTask' : IDL.Func(
       [IDL.Nat, IDL.Text, IDL.Text, IDL.Opt(Time), IDL.Opt(IDL.Principal)],
@@ -261,6 +266,10 @@ export const idlFactory = ({ IDL }) => {
     'cookName' : IDL.Opt(IDL.Text),
     'description' : IDL.Text,
   });
+  const UpdateMealDescriptionRequest = IDL.Record({
+    'day' : IDL.Text,
+    'description' : IDL.Text,
+  });
   const UpdateRecurringChoreRequest = IDL.Record({
     'id' : IDL.Nat,
     'weekday' : IDL.Nat,
@@ -332,6 +341,7 @@ export const idlFactory = ({ IDL }) => {
       ),
     'toggleTaskCompletion' : IDL.Func([IDL.Nat], [], []),
     'updateCookingDay' : IDL.Func([UpdateCookingDayRequest], [], []),
+    'updateMealDescription' : IDL.Func([UpdateMealDescriptionRequest], [], []),
     'updateRecurringChore' : IDL.Func([UpdateRecurringChoreRequest], [], []),
     'updateTask' : IDL.Func(
         [IDL.Nat, IDL.Text, IDL.Text, IDL.Opt(Time), IDL.Opt(IDL.Principal)],

@@ -1,41 +1,56 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-02-04T23:05:56.567Z",
-  "summary": "Diff adds task edit/delete handlers and identity lookup in CalendarDayPlanner/CalendarWeekPlanner, and enhances RecurringChoresDialog to support opening to a specific chore ID. However, recurring chore deletion from calendar views does not appear to call the existing deleteRecurringChore mutation directly after confirmation (it opens the dialog instead), and due to truncation there isn’t clear evidence that the per-item Edit/Delete controls are actually rendered in the day/week task & chore lists with creator-only gating.",
+  "generatedAt": "2026-02-07T21:15:28.573Z",
+  "summary": "REQ-2 is partially implemented by updating useActorWithReadiness to derive initError from a potential React Query error, and AddTaskDialog now gates submission using actorAvailability messages. However, the core changes requested in useActor.ts (conditional access-control init, try/catch, and exposing query error state) and the requested structured diagnostics are not evidenced in the diff summary.",
   "missing_requirements": [
     {
-      "id": "REQ-3",
-      "requirement": "Recurring chore Delete from CalendarDayPlanner/CalendarWeekPlanner must prompt for confirmation and, on confirmation, call the existing deleteRecurringChore mutation (with React Query invalidation/refresh).",
-      "reason": "In both planners, `handleDeleteChore` confirms but then only sets `editingChoreId` and opens `RecurringChoresDialog` rather than invoking a delete mutation. In CalendarDayPlanner it even attempts a dynamic import of `useDeleteRecurringChore` and comments that hooks must be used at component level, indicating deletion is not performed here.",
+      "id": "REQ-1",
+      "requirement": "Update frontend/src/hooks/useActor.ts to (1) only call _initializeAccessControlWithSecret when caffeineAdminToken is non-empty, (2) wrap that call in try/catch so actor creation can still succeed, and (3) expose the React Query error state (e.g., return error/isError) alongside actor/isFetching.",
+      "reason": "The diff shows no modifications to frontend/src/hooks/useActor.ts, and useActorWithReadiness includes backwards-compatible checks ('error' in actorResult) implying useActor may not yet expose the error state as required.",
       "evidence": [
-        "frontend/src/components/CalendarDayPlanner.tsx",
-        "frontend/src/components/CalendarWeekPlanner.tsx"
+        "frontend/src/hooks/useActorWithReadiness.ts"
+      ]
+    },
+    {
+      "id": "REQ-2",
+      "requirement": "In frontend/src/hooks/useActorWithReadiness.ts, consume the new error state from useActor and set initError accordingly, with consistent derived flags (isInitializing, isReady, initError).",
+      "reason": "While isReady/isInitializing/initError are derived, the implementation uses `'error' in actorResult` / `'isError' in actorResult` guards, suggesting useActor may not provide the required error state. The requirement specifically calls for consuming the new error state exposed by useActor.",
+      "evidence": [
+        "frontend/src/hooks/useActorWithReadiness.ts"
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "requirement": "Add structured console diagnostics around actor creation and access-control initialization in frontend/src/hooks/useActor.ts using existing diagnostics utilities, without logging sensitive values (admin token).",
+      "reason": "No diff content indicates any changes to frontend/src/hooks/useActor.ts or additions of diagnostics calls; only useActorWithReadiness and AddTaskDialog are shown as modified.",
+      "evidence": [
+        "frontend/src/hooks/useActorWithReadiness.ts",
+        "frontend/src/components/AddTaskDialog.tsx"
       ]
     }
   ],
   "hallucinated_features": [
     {
-      "description": "Added/used pause/resume recurring chore functionality in RecurringChoresDialog via `usePauseResumeRecurringChore`.",
-      "reason": "BuildRequest only asked for edit/delete controls from calendar views; it did not request adding pause/resume controls/flow changes in the recurring chores dialog.",
+      "description": "Added/updated project tracking metadata in project_state.json (new_feature_requests with AR-1/AR-2/AR-3 statuses).",
+      "reason": "The BuildRequest does not ask for changes to project_state.json; it focuses on frontend hooks and diagnostics behavior.",
       "evidence": [
-        "frontend/src/components/RecurringChoresDialog.tsx"
+        "project_state.json"
       ]
     },
     {
-      "description": "Dynamic import of `useDeleteRecurringChore` inside an event handler in CalendarDayPlanner.",
-      "reason": "Not requested by the BuildRequest and does not align with the requirement (should call existing delete mutation after confirmation).",
+      "description": "Updated frontend-file-summaries.txt content describing various frontend components.",
+      "reason": "The BuildRequest does not request updating repository summary documentation files.",
       "evidence": [
-        "frontend/src/components/CalendarDayPlanner.tsx"
+        "frontend-file-summaries.txt"
       ]
     }
   ],
-  "confidence": 0.63,
+  "confidence": 0.74,
   "changed_files": [
     "frontend-file-summaries.txt",
-    "frontend/src/components/CalendarDayPlanner.tsx",
-    "frontend/src/components/CalendarWeekPlanner.tsx",
-    "frontend/src/components/RecurringChoresDialog.tsx",
+    "frontend/src/components/AddTaskDialog.tsx",
+    "frontend/src/hooks/useActorWithReadiness.ts",
     "project_state.json"
   ]
 }

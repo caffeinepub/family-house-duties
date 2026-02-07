@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { ChefHat, Calendar as CalendarIcon, User, TrendingUp, TrendingDown } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { ChefHat, Calendar as CalendarIcon, User, TrendingUp, TrendingDown, Edit } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -17,6 +17,7 @@ import {
   useGetCookingAssignments,
   useAssignCookingDay,
   useUpdateCookingDay,
+  useUpdateMealDescription,
   useGetAllProfiles,
 } from '../hooks/useQueries';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -29,9 +30,13 @@ import { getCookingAssignmentDisplay, formatPrincipal } from '../utils/cookingAs
 import { PersonProfileSelect } from './PersonProfileSelect';
 import { PersonBadge } from './PersonBadge';
 import { computeFairnessStats, type FairnessRange } from '../utils/fairness';
+import { useVoiceDictation } from '../hooks/useVoiceDictation';
+import { VoiceDictationButton } from './VoiceDictationButton';
+import { toast } from 'sonner';
 
 export function DinnerRota() {
   const [editingDay, setEditingDay] = useState<string | null>(null);
+  const [editingMealDay, setEditingMealDay] = useState<string | null>(null);
   const [cookPrincipal, setCookPrincipal] = useState('');
   const [cookName, setCookName] = useState('');
   const [mealDescription, setMealDescription] = useState('');
@@ -42,11 +47,53 @@ export function DinnerRota() {
   const { data: profiles = [], isLoading: profilesLoading } = useGetAllProfiles();
   const assignCooking = useAssignCookingDay();
   const updateCooking = useUpdateCookingDay();
+  const updateMealDesc = useUpdateMealDescription();
 
   const weekStart = startOfWeek(new Date(), { weekStartsOn: 1 });
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
 
   const currentUserPrincipal = identity?.getPrincipal().toString();
+
+  // Voice dictation for meal description in assign/edit dialog
+  const assignMealDictation = useVoiceDictation({
+    continuous: false,
+    interimResults: true,
+    onTranscript: (transcript, isFinal) => {
+      if (isFinal && editingDay) {
+        setMealDescription((prev) => (prev ? prev + ' ' + transcript : transcript));
+      }
+    },
+    onError: (error) => {
+      toast.error(error);
+    },
+  });
+
+  // Voice dictation for meal description in dedicated edit dialog
+  const editMealDictation = useVoiceDictation({
+    continuous: false,
+    interimResults: true,
+    onTranscript: (transcript, isFinal) => {
+      if (isFinal && editingMealDay) {
+        setMealDescription((prev) => (prev ? prev + ' ' + transcript : transcript));
+      }
+    },
+    onError: (error) => {
+      toast.error(error);
+    },
+  });
+
+  // Stop dictation when dialogs close
+  useEffect(() => {
+    if (!editingDay) {
+      assignMealDictation.stop();
+    }
+  }, [editingDay]);
+
+  useEffect(() => {
+    if (!editingMealDay) {
+      editMealDictation.stop();
+    }
+  }, [editingMealDay]);
 
   const getAssignmentForDay = (date: Date) => {
     const dayKey = format(date, 'yyyy-MM-dd');
@@ -58,6 +105,14 @@ export function DinnerRota() {
     return assignment.assignedBy.toString() === currentUserPrincipal;
   };
 
+  const canEditMealDescription = (assignment: CookingAssignment | undefined) => {
+    if (!assignment) return false; // No assignment exists
+    // Can edit if you're the cook or the person who assigned
+    const isCook = assignment.cook?.toString() === currentUserPrincipal;
+    const isAssigner = assignment.assignedBy.toString() === currentUserPrincipal;
+    return isCook || isAssigner;
+  };
+
   const handleAssign = (date: Date) => {
     const dayKey = format(date, 'yyyy-MM-dd');
     const assignment = getAssignmentForDay(date);
@@ -65,6 +120,15 @@ export function DinnerRota() {
     setCookName(assignment?.cookName || '');
     setMealDescription(assignment?.description || '');
     setEditingDay(dayKey);
+    assignMealDictation.stop();
+  };
+
+  const handleEditMeal = (date: Date) => {
+    const dayKey = format(date, 'yyyy-MM-dd');
+    const assignment = getAssignmentForDay(date);
+    setMealDescription(assignment?.description || '');
+    setEditingMealDay(dayKey);
+    editMealDictation.stop();
   };
 
   const handleSave = () => {
@@ -125,11 +189,35 @@ export function DinnerRota() {
     }
   };
 
+  const handleSaveMealDescription = () => {
+    if (!editingMealDay) return;
+
+    updateMealDesc.mutate(
+      {
+        day: editingMealDay,
+        description: mealDescription.trim(),
+      },
+      {
+        onSuccess: () => {
+          setEditingMealDay(null);
+          setMealDescription('');
+        },
+      }
+    );
+  };
+
   const handleDialogClose = () => {
     setEditingDay(null);
     setCookPrincipal('');
     setCookName('');
     setMealDescription('');
+    assignMealDictation.stop();
+  };
+
+  const handleMealDialogClose = () => {
+    setEditingMealDay(null);
+    setMealDescription('');
+    editMealDictation.stop();
   };
 
   // Compute fairness stats
@@ -289,6 +377,7 @@ export function DinnerRota() {
           const assignment = getAssignmentForDay(date);
           const isToday = format(date, 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd');
           const canEdit = canEditAssignment(assignment);
+          const canEditMeal = canEditMealDescription(assignment);
           const cookDisplay = getCookingAssignmentDisplay(assignment, profiles);
 
           return (
@@ -312,11 +401,32 @@ export function DinnerRota() {
                         <PersonBadge label={cookDisplay.label} color={cookDisplay.color} variant="secondary" />
                       </div>
                     </div>
-                    {assignment?.description && (
-                      <div className="rounded-md bg-muted/50 p-3 text-sm">
-                        <p className="text-foreground">{assignment.description}</p>
+                    {assignment?.description ? (
+                      <div className="group relative rounded-md bg-muted/50 p-3">
+                        <div className="pr-8">
+                          <p className="whitespace-pre-wrap text-sm text-foreground">{assignment.description}</p>
+                        </div>
+                        {canEditMeal && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="absolute right-2 top-2 h-6 w-6 opacity-0 transition-opacity group-hover:opacity-100"
+                            onClick={() => handleEditMeal(date)}
+                          >
+                            <Edit className="h-3 w-3" />
+                          </Button>
+                        )}
                       </div>
-                    )}
+                    ) : canEditMeal ? (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full"
+                        onClick={() => handleEditMeal(date)}
+                      >
+                        Add meal description
+                      </Button>
+                    ) : null}
                     {assignment && (
                       <Badge variant="outline" className="text-xs">
                         Assigned by: {formatPrincipal(assignment.assignedBy)}
@@ -339,6 +449,7 @@ export function DinnerRota() {
         })}
       </div>
 
+      {/* Assign/Edit Cook Dialog */}
       <Dialog open={!!editingDay} onOpenChange={handleDialogClose}>
         <DialogContent>
           <DialogHeader>
@@ -366,16 +477,26 @@ export function DinnerRota() {
               </p>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="meal-description">What are you cooking?</Label>
-              <Textarea
-                id="meal-description"
-                placeholder="e.g., Spaghetti Bolognese, Chicken Curry, Pizza Night..."
-                value={mealDescription}
-                onChange={(e) => setMealDescription(e.target.value)}
-                rows={3}
-              />
+              <Label htmlFor="meal-description">What are you cooking (include ingredients)?</Label>
+              <div className="flex gap-2">
+                <Textarea
+                  id="meal-description"
+                  placeholder="e.g., Spaghetti Bolognese with ground beef, tomatoes, onions, garlic, and herbs"
+                  value={mealDescription}
+                  onChange={(e) => setMealDescription(e.target.value)}
+                  rows={4}
+                  className="flex-1"
+                />
+                <VoiceDictationButton
+                  isListening={assignMealDictation.isListening}
+                  isSupported={assignMealDictation.isSupported}
+                  onStart={() => assignMealDictation.start()}
+                  onStop={() => assignMealDictation.stop()}
+                  disabled={assignCooking.isPending || updateCooking.isPending}
+                />
+              </div>
               <p className="text-xs text-muted-foreground">
-                Optional: Describe the meal or add notes about what you're planning to cook
+                Describe the meal and list the main ingredients
               </p>
             </div>
           </div>
@@ -385,6 +506,49 @@ export function DinnerRota() {
             </Button>
             <Button onClick={handleSave} disabled={assignCooking.isPending || updateCooking.isPending}>
               {assignCooking.isPending || updateCooking.isPending ? 'Saving...' : 'Save'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Meal Description Dialog */}
+      <Dialog open={!!editingMealDay} onOpenChange={handleMealDialogClose}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Meal Description</DialogTitle>
+            <DialogDescription>Update what you're planning to cook with ingredients</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="edit-meal-description">Meal Description</Label>
+              <div className="flex gap-2">
+                <Textarea
+                  id="edit-meal-description"
+                  placeholder="e.g., Spaghetti Bolognese with ground beef, tomatoes, onions, garlic, and herbs"
+                  value={mealDescription}
+                  onChange={(e) => setMealDescription(e.target.value)}
+                  rows={4}
+                  className="flex-1"
+                />
+                <VoiceDictationButton
+                  isListening={editMealDictation.isListening}
+                  isSupported={editMealDictation.isSupported}
+                  onStart={() => editMealDictation.start()}
+                  onStop={() => editMealDictation.stop()}
+                  disabled={updateMealDesc.isPending}
+                />
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Describe the meal and list the main ingredients
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={handleMealDialogClose}>
+              Cancel
+            </Button>
+            <Button onClick={handleSaveMealDescription} disabled={updateMealDesc.isPending}>
+              {updateMealDesc.isPending ? 'Saving...' : 'Save'}
             </Button>
           </DialogFooter>
         </DialogContent>

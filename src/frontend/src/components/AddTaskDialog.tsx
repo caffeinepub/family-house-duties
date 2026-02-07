@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -12,12 +12,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useAddTask } from '../hooks/useQueries';
-import { Calendar } from '@/components/ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon } from 'lucide-react';
-import { format } from 'date-fns';
 import { PersonProfileSelect } from './PersonProfileSelect';
 import { Principal } from '@icp-sdk/core/principal';
+import { useVoiceDictation } from '../hooks/useVoiceDictation';
+import { VoiceDictationButton } from './VoiceDictationButton';
+import { toast } from 'sonner';
+import { useActorWithReadiness } from '../hooks/useActorWithReadiness';
+import { getActorAvailabilityMessage, isActorAvailable } from '../utils/actorAvailability';
 
 interface AddTaskDialogProps {
   open: boolean;
@@ -25,107 +26,225 @@ interface AddTaskDialogProps {
 }
 
 export function AddTaskDialog({ open, onOpenChange }: AddTaskDialogProps) {
-  const [name, setName] = useState('');
+  const [taskName, setTaskName] = useState('');
   const [description, setDescription] = useState('');
-  const [assignedToPrincipal, setAssignedToPrincipal] = useState('');
-  const [dueDate, setDueDate] = useState<Date | undefined>(undefined);
+  const [dueDate, setDueDate] = useState('');
+  const [assignedToString, setAssignedToString] = useState<string>('');
+  const [activeField, setActiveField] = useState<'name' | 'description' | null>(null);
+  const addTaskMutation = useAddTask();
+  const { isReady, isInitializing, initError } = useActorWithReadiness();
 
-  const addTask = useAddTask();
+  // Voice dictation for Task Name
+  const nameDictation = useVoiceDictation({
+    continuous: false,
+    interimResults: true,
+    onTranscript: (transcript, isFinal) => {
+      if (isFinal && activeField === 'name') {
+        setTaskName((prev) => (prev ? prev + ' ' + transcript : transcript));
+      }
+    },
+    onError: (error) => {
+      toast.error(error);
+      setActiveField(null);
+    },
+  });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Voice dictation for Description
+  const descriptionDictation = useVoiceDictation({
+    continuous: false,
+    interimResults: true,
+    onTranscript: (transcript, isFinal) => {
+      if (isFinal && activeField === 'description') {
+        setDescription((prev) => (prev ? prev + ' ' + transcript : transcript));
+      }
+    },
+    onError: (error) => {
+      toast.error(error);
+      setActiveField(null);
+    },
+  });
+
+  // Stop dictation and reset active field when dialog closes
+  useEffect(() => {
+    if (!open) {
+      nameDictation.stop();
+      descriptionDictation.stop();
+      setActiveField(null);
+    }
+  }, [open]);
+
+  const handleStartNameDictation = () => {
+    descriptionDictation.stop();
+    setActiveField('name');
+    nameDictation.start();
+  };
+
+  const handleStopNameDictation = () => {
+    nameDictation.stop();
+    setActiveField(null);
+  };
+
+  const handleStartDescriptionDictation = () => {
+    nameDictation.stop();
+    setActiveField('description');
+    descriptionDictation.start();
+  };
+
+  const handleStopDescriptionDictation = () => {
+    descriptionDictation.stop();
+    setActiveField(null);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim()) return;
 
-    const dueDateNano = dueDate ? BigInt(dueDate.getTime() * 1000000) : undefined;
-    let assignee: Principal | undefined = undefined;
+    // Check actor availability before attempting submission
+    if (!isActorAvailable({ isReady, isInitializing, initError })) {
+      const message = getActorAvailabilityMessage({ isReady, isInitializing, initError });
+      toast.error(message);
+      return;
+    }
 
-    // Try to parse the principal if provided
-    if (assignedToPrincipal.trim()) {
+    // Stop any active dictation
+    nameDictation.stop();
+    descriptionDictation.stop();
+    setActiveField(null);
+
+    const dueDateBigInt = dueDate ? BigInt(new Date(dueDate).getTime() * 1_000_000) : undefined;
+    
+    // Parse assignedTo from string to Principal if provided
+    let assignedTo: Principal | undefined = undefined;
+    if (assignedToString.trim()) {
       try {
-        assignee = Principal.fromText(assignedToPrincipal.trim());
+        assignedTo = Principal.fromText(assignedToString);
       } catch (error) {
-        // Invalid principal, skip assignment
+        toast.error('Invalid Principal ID format');
+        return;
       }
     }
 
-    addTask.mutate(
+    addTaskMutation.mutate(
       {
-        name: name.trim(),
-        description: description.trim(),
-        dueDate: dueDateNano,
-        assignedTo: assignee,
+        name: taskName,
+        description,
+        dueDate: dueDateBigInt,
+        assignedTo,
       },
       {
         onSuccess: () => {
-          setName('');
+          setTaskName('');
           setDescription('');
-          setAssignedToPrincipal('');
-          setDueDate(undefined);
+          setDueDate('');
+          setAssignedToString('');
           onOpenChange(false);
         },
       }
     );
   };
 
+  const handleCancel = () => {
+    nameDictation.stop();
+    descriptionDictation.stop();
+    setActiveField(null);
+    onOpenChange(false);
+  };
+
+  // Determine if submit should be disabled
+  const actorNotReady = !isActorAvailable({ isReady, isInitializing, initError });
+  const isSubmitDisabled = !taskName.trim() || addTaskMutation.isPending || actorNotReady;
+
+  // Get disabled reason for tooltip
+  let disabledReason = '';
+  if (actorNotReady) {
+    disabledReason = getActorAvailabilityMessage({ isReady, isInitializing, initError });
+  } else if (addTaskMutation.isPending) {
+    disabledReason = 'Adding task…';
+  } else if (!taskName.trim()) {
+    disabledReason = 'Task name is required';
+  }
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
+        <DialogHeader>
+          <DialogTitle>Add New Task</DialogTitle>
+          <DialogDescription>Create a new household task for your family.</DialogDescription>
+        </DialogHeader>
         <form onSubmit={handleSubmit}>
-          <DialogHeader>
-            <DialogTitle>Add New Task</DialogTitle>
-            <DialogDescription>Create a new household task for your family.</DialogDescription>
-          </DialogHeader>
           <div className="grid gap-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">Task Name *</Label>
-              <Input
-                id="name"
-                placeholder="e.g., Vacuum living room"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
-              />
+            <div className="grid gap-2">
+              <Label htmlFor="task-name">
+                Task Name <span className="text-destructive">*</span>
+              </Label>
+              <div className="flex gap-2">
+                <Input
+                  id="task-name"
+                  value={taskName}
+                  onChange={(e) => setTaskName(e.target.value)}
+                  placeholder="e.g., Take out the trash"
+                  required
+                  className="flex-1"
+                />
+                <VoiceDictationButton
+                  isListening={nameDictation.isListening && activeField === 'name'}
+                  isSupported={nameDictation.isSupported}
+                  onStart={handleStartNameDictation}
+                  onStop={handleStopNameDictation}
+                  disabled={addTaskMutation.isPending}
+                  disabledReason={addTaskMutation.isPending ? 'Adding task...' : undefined}
+                />
+              </div>
             </div>
-            <div className="space-y-2">
+            <div className="grid gap-2">
               <Label htmlFor="description">Description</Label>
-              <Textarea
-                id="description"
-                placeholder="Add any details about this task..."
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                rows={3}
-              />
+              <div className="flex gap-2">
+                <Textarea
+                  id="description"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="Add any additional details..."
+                  rows={3}
+                  className="flex-1"
+                />
+                <VoiceDictationButton
+                  isListening={descriptionDictation.isListening && activeField === 'description'}
+                  isSupported={descriptionDictation.isSupported}
+                  onStart={handleStartDescriptionDictation}
+                  onStop={handleStopDescriptionDictation}
+                  disabled={addTaskMutation.isPending}
+                  disabledReason={addTaskMutation.isPending ? 'Adding task...' : undefined}
+                />
+              </div>
             </div>
-            <PersonProfileSelect
-              value={assignedToPrincipal}
-              onChange={setAssignedToPrincipal}
-              label="Assigned To"
-              placeholder="Select a person or enter Principal ID"
-              showMeButton={true}
-            />
-            <div className="space-y-2">
-              <Label>Due Date</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" className="w-full justify-start text-left font-normal">
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {dueDate ? format(dueDate, 'PPP') : <span>Pick a date</span>}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
-                  <Calendar mode="single" selected={dueDate} onSelect={setDueDate} initialFocus />
-                </PopoverContent>
-              </Popover>
+            <PersonProfileSelect value={assignedToString} onChange={setAssignedToString} label="Assigned To" />
+            <div className="grid gap-2">
+              <Label htmlFor="due-date">Due Date</Label>
+              <Input
+                id="due-date"
+                type="date"
+                value={dueDate}
+                onChange={(e) => setDueDate(e.target.value)}
+              />
             </div>
           </div>
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            <Button
+              type="submit"
+              disabled={isSubmitDisabled}
+              className="relative"
+              title={disabledReason}
+            >
+              {addTaskMutation.isPending ? 'Adding...' : 'Add Task'}
+            </Button>
+            <Button type="button" variant="outline" onClick={handleCancel}>
               Cancel
             </Button>
-            <Button type="submit" disabled={addTask.isPending}>
-              {addTask.isPending ? 'Adding...' : 'Add Task'}
-            </Button>
           </DialogFooter>
+          {actorNotReady && (
+            <div className="mt-2 text-sm text-muted-foreground text-center">
+              {getActorAvailabilityMessage({ isReady, isInitializing, initError })}
+            </div>
+          )}
         </form>
       </DialogContent>
     </Dialog>

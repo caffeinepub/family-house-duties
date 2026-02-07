@@ -1,74 +1,71 @@
 {
   "kind": "build_request",
-  "title": "Add edit/delete controls for tasks and recurring chores in calendar views",
-  "priority": "normal",
+  "title": "Fix false “Backend is not ready” by hardening actor initialization and surfacing real init errors",
+  "priority": "high",
   "requirements": [
     {
       "id": "REQ-1",
-      "text": "Add per-task Edit and Delete UI controls to the calendar day view (frontend/src/components/CalendarDayPlanner.tsx) for tasks scheduled on the selected day. Edit must open the existing EditTaskDialog for that task, and Delete must prompt for confirmation before calling the existing delete task mutation. Only show Edit/Delete controls when the current user is the task creator (task.createdBy matches the authenticated principal).",
+      "text": "Update the actor initialization hook to avoid failing actor creation due to access-control initialization and to surface initialization errors.\n\nSpecifically:\n- In frontend/src/hooks/useActor.ts, make access-control initialization (_initializeAccessControlWithSecret) conditional on a non-empty caffeineAdminToken.\n- Wrap the access-control initialization call in try/catch so that actor creation can still succeed (return the actor) even if access-control init fails.\n- Expose the React Query error state from the actor query (e.g., return an `error` field alongside `actor` and `isFetching`) so the UI can distinguish “still loading” vs “failed to connect/initialize”.",
       "target": "frontend",
       "source": {
         "messageIds": [
           "msg-4"
         ],
         "quotes": [
-          "Add the ability to delete and edit each task and recurring chore"
+          "Still not working correctly. I think you'll be getting an error saying the back-end is not ready. Please fix."
         ]
       },
       "acceptanceCriteria": [
-        "In the day planner task list, each task created by the current user shows Edit and Delete controls.",
-        "Clicking Edit opens the existing task edit dialog pre-filled with that task’s fields and successfully saves via the existing update path.",
-        "Clicking Delete shows a confirmation prompt and, on confirmation, deletes the task via the existing mutation and refreshes the calendar/task data (React Query invalidation).",
-        "Tasks not created by the current user do not show Edit/Delete controls."
+        "When caffeineAdminToken is missing/empty, the app does not attempt to call _initializeAccessControlWithSecret during actor initialization.",
+        "If _initializeAccessControlWithSecret throws/traps, the actor is still returned when possible (so the app can proceed for non-admin use cases) and the error is available to the UI via the hook.",
+        "If actor creation fails (e.g., canister unavailable), the hook exposes a non-null error state (not just `actor: null`)."
       ]
     },
     {
       "id": "REQ-2",
-      "text": "Add per-task Edit and Delete UI controls to the calendar week view (frontend/src/components/CalendarWeekPlanner.tsx) for tasks on each day. Edit must open the existing EditTaskDialog, and Delete must prompt for confirmation before calling the existing delete task mutation. Only show Edit/Delete controls when the current user is the task creator.",
+      "text": "Make readiness checks use real initialization error state so the app shows accurate backend connection status.\n\nSpecifically:\n- In frontend/src/hooks/useActorWithReadiness.ts, consume the new error state from useActor and set `initError` accordingly.\n- Ensure the derived flags behave consistently:\n  - `isInitializing` is true while the actor query is fetching and no actor is available yet.\n  - `isReady` is true only when an actor exists and the query is not fetching.\n  - `initError` is non-null when actor initialization failed (query error).",
       "target": "frontend",
       "source": {
         "messageIds": [
           "msg-4"
         ],
         "quotes": [
-          "Add the ability to delete and edit each task and recurring chore"
+          "I think you'll be getting an error saying the back-end is not ready. Please fix."
         ]
       },
       "acceptanceCriteria": [
-        "In the week planner, tasks created by the current user show Edit/Delete controls on their task row/card.",
-        "Edit opens EditTaskDialog and successfully updates the task.",
-        "Delete confirms and successfully removes the task, with UI reflecting the change without a full page reload.",
-        "Tasks not created by the current user do not show Edit/Delete controls."
+        "When the backend canister cannot be reached or actor initialization fails, AddTaskDialog shows the “Backend connection failed…” message (from actorAvailability) instead of the generic “Backend is not ready…”.",
+        "When the actor is still being created, AddTaskDialog shows the “Connecting to backend…” message, and transitions to enabled submission automatically once ready.",
+        "When the actor is ready, the Add Task submit button is enabled (assuming required fields are filled) without requiring a page refresh."
       ]
     },
     {
       "id": "REQ-3",
-      "text": "Add edit/delete access for recurring chores from calendar views by enabling a user to initiate editing or deletion of a recurring chore shown in CalendarDayPlanner and CalendarWeekPlanner. Editing must route through the existing recurring chore update flow and deletion must prompt for confirmation before calling the existing recurring chore delete mutation. Only allow these actions when the current user is the recurring chore creator (chore.createdBy matches the authenticated principal).",
+      "text": "Improve diagnostics for actor initialization to speed up troubleshooting of “backend not ready” reports.\n\nSpecifically:\n- Add structured console diagnostics around actor creation and access-control initialization steps in frontend/src/hooks/useActor.ts using existing diagnostics utilities (frontend/src/utils/deploymentDiagnostics.ts and/or frontend/src/utils/actorInitDiagnostics.ts).\n- Ensure diagnostics do not include sensitive values (do not log the admin token).",
       "target": "frontend",
       "source": {
         "messageIds": [
           "msg-4"
         ],
         "quotes": [
-          "Add the ability to delete and edit each task and recurring chore"
+          "Still not working correctly. I think you'll be getting an error saying the back-end is not ready. Please fix."
         ]
       },
       "acceptanceCriteria": [
-        "In both day and week planner recurring chores sections, chores created by the current user expose Edit/Delete actions (or an equivalent per-chore action menu).",
-        "Edit allows changing recurring chore fields and persists changes via the existing updateRecurringChore mutation (with expected React Query invalidation so calendar/task views refresh).",
-        "Delete prompts for confirmation and deletes via the existing deleteRecurringChore mutation, removing the chore from relevant views after refresh/invalidation.",
-        "Recurring chores not created by the current user do not show Edit/Delete actions."
+        "Console output clearly indicates whether failure occurred during actor creation vs access-control initialization, without logging secrets.",
+        "A developer can reproduce a backend-down scenario and see a single, clear diagnostic failure path (no noisy repeated logs)."
       ]
     }
   ],
   "constraints": [
-    "Do not modify files under frontend/src/components/ui (Shadcn components are read-only and must be composed, not edited).",
-    "Do not modify any frontend paths listed in SYSTEM_CONTEXT.frontend.immutablePaths."
+    "Keep all backend logic within the single Motoko actor in backend/main.mo (no new canisters/services).",
+    "Do not edit files under frontend/src/components/ui or any other frontend immutablePaths.",
+    "Use English for any user-facing text."
   ],
   "nonGoals": [
-    "Do not implement new backend CRUD APIs for tasks or recurring chores (use existing endpoints).",
-    "Do not change authorization rules (creator-only edits/deletes must remain enforced).",
-    "Do not address unrelated known issues (e.g., backend getCalendar() correctness, due-date timestamp equality, upgrade persistence) as part of this request."
+    "Implementing a new authentication provider (only Internet Identity is supported).",
+    "Adding new speech-to-text features beyond restoring backend connectivity/readiness behavior.",
+    "Changing backend authorization rules unless strictly required to resolve initialization failure."
   ],
   "imageRequirements": {
     "required": [],

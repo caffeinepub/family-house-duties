@@ -1,10 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useActor } from './useActor';
-import type { Task, CookingAssignment, AddTaskRequest, AssignCookingDayRequest, UpdateCookingDayRequest, RecurringChore, CreateRecurringChoreRequest, UpdateRecurringChoreRequest, Timeline, PauseResumeChoreRequest } from '../backend';
+import { useActorWithReadiness } from './useActorWithReadiness';
+import type { Task, CookingAssignment, AddTaskRequest, AssignCookingDayRequest, UpdateCookingDayRequest, UpdateMealDescriptionRequest, RecurringChore, CreateRecurringChoreRequest, UpdateRecurringChoreRequest, Timeline, PauseResumeChoreRequest } from '../backend';
 import { toast } from 'sonner';
 import { Principal } from '@icp-sdk/core/principal';
 import { normalizeRecurringChoreError } from '../utils/recurringChoreMutationErrors';
 import { logRecurringChoreMutationStart, logRecurringChoreMutationOutcome } from '../utils/recurringChoreDiagnostics';
+import { guardActorAvailability } from '../utils/actorAvailability';
 
 export function useGetAllTasks() {
   const { actor, isFetching } = useActor();
@@ -20,7 +22,7 @@ export function useGetAllTasks() {
 }
 
 export function useAddTask() {
-  const { actor } = useActor();
+  const { actor, isReady, isInitializing, initError } = useActorWithReadiness();
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -30,7 +32,9 @@ export function useAddTask() {
       dueDate: bigint | undefined;
       assignedTo: Principal | undefined;
     }) => {
-      if (!actor) throw new Error('Actor not initialized');
+      guardActorAvailability({ isReady, isInitializing, initError });
+      if (!actor) throw new Error('Backend is not ready. Please try again.');
+      
       const request: AddTaskRequest = {
         name: params.name,
         description: params.description,
@@ -51,7 +55,7 @@ export function useAddTask() {
 }
 
 export function useUpdateTask() {
-  const { actor } = useActor();
+  const { actor, isReady, isInitializing, initError } = useActorWithReadiness();
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -62,7 +66,9 @@ export function useUpdateTask() {
       dueDate: bigint | null;
       assignedTo: Principal | null;
     }) => {
-      if (!actor) throw new Error('Actor not initialized');
+      guardActorAvailability({ isReady, isInitializing, initError });
+      if (!actor) throw new Error('Backend is not ready. Please try again.');
+      
       return actor.updateTask(params.id, params.name, params.description, params.dueDate, params.assignedTo);
     },
     onSuccess: () => {
@@ -77,12 +83,14 @@ export function useUpdateTask() {
 }
 
 export function useDeleteTask() {
-  const { actor } = useActor();
+  const { actor, isReady, isInitializing, initError } = useActorWithReadiness();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (id: bigint) => {
-      if (!actor) throw new Error('Actor not initialized');
+      guardActorAvailability({ isReady, isInitializing, initError });
+      if (!actor) throw new Error('Backend is not ready. Please try again.');
+      
       return actor.deleteTask(id);
     },
     onSuccess: () => {
@@ -97,12 +105,14 @@ export function useDeleteTask() {
 }
 
 export function useToggleTaskCompletion() {
-  const { actor } = useActor();
+  const { actor, isReady, isInitializing, initError } = useActorWithReadiness();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (id: bigint) => {
-      if (!actor) throw new Error('Actor not initialized');
+      guardActorAvailability({ isReady, isInitializing, initError });
+      if (!actor) throw new Error('Backend is not ready. Please try again.');
+      
       return actor.toggleTaskCompletion(id);
     },
     onSuccess: () => {
@@ -116,12 +126,14 @@ export function useToggleTaskCompletion() {
 }
 
 export function useClearCompletedTasks() {
-  const { actor } = useActor();
+  const { actor, isReady, isInitializing, initError } = useActorWithReadiness();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async () => {
-      if (!actor) throw new Error('Actor not initialized');
+      guardActorAvailability({ isReady, isInitializing, initError });
+      if (!actor) throw new Error('Backend is not ready. Please try again.');
+      
       return actor.clearCompletedTasks();
     },
     onSuccess: () => {
@@ -149,12 +161,14 @@ export function useGetCookingAssignments() {
 }
 
 export function useAssignCookingDay() {
-  const { actor } = useActor();
+  const { actor, isReady, isInitializing, initError } = useActorWithReadiness();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (params: { day: string; cook: Principal | undefined; cookName?: string; description: string }) => {
-      if (!actor) throw new Error('Actor not initialized');
+      guardActorAvailability({ isReady, isInitializing, initError });
+      if (!actor) throw new Error('Backend is not ready. Please try again.');
+      
       const request: AssignCookingDayRequest = {
         day: params.day,
         cook: params.cook,
@@ -175,12 +189,14 @@ export function useAssignCookingDay() {
 }
 
 export function useUpdateCookingDay() {
-  const { actor } = useActor();
+  const { actor, isReady, isInitializing, initError } = useActorWithReadiness();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (params: { day: string; cook: Principal | undefined; cookName?: string; description: string }) => {
-      if (!actor) throw new Error('Actor not initialized');
+      guardActorAvailability({ isReady, isInitializing, initError });
+      if (!actor) throw new Error('Backend is not ready. Please try again.');
+      
       const request: UpdateCookingDayRequest = {
         day: params.day,
         cook: params.cook,
@@ -196,6 +212,32 @@ export function useUpdateCookingDay() {
     },
     onError: (error: any) => {
       toast.error(error.message || 'Failed to update assignment');
+    },
+  });
+}
+
+export function useUpdateMealDescription() {
+  const { actor, isReady, isInitializing, initError } = useActorWithReadiness();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (params: { day: string; description: string }) => {
+      guardActorAvailability({ isReady, isInitializing, initError });
+      if (!actor) throw new Error('Backend is not ready. Please try again.');
+      
+      const request: UpdateMealDescriptionRequest = {
+        day: params.day,
+        description: params.description,
+      };
+      return actor.updateMealDescription(request);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['cooking-assignments'] });
+      queryClient.invalidateQueries({ queryKey: ['calendar'] });
+      toast.success('Meal description updated');
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Failed to update meal description');
     },
   });
 }
@@ -227,7 +269,7 @@ export function useGetAllRecurringChores() {
 }
 
 export function useCreateRecurringChore() {
-  const { actor } = useActor();
+  const { actor, isReady, isInitializing, initError } = useActorWithReadiness();
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -238,7 +280,8 @@ export function useCreateRecurringChore() {
       assignedTo: Principal | undefined;
       timeline: Timeline;
     }) => {
-      if (!actor) throw new Error('Actor not initialized');
+      guardActorAvailability({ isReady, isInitializing, initError });
+      if (!actor) throw new Error('Backend is not ready. Please try again.');
       
       // Log mutation start with payload details
       logRecurringChoreMutationStart({
@@ -299,7 +342,7 @@ export function useCreateRecurringChore() {
 }
 
 export function useUpdateRecurringChore() {
-  const { actor } = useActor();
+  const { actor, isReady, isInitializing, initError } = useActorWithReadiness();
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -311,7 +354,8 @@ export function useUpdateRecurringChore() {
       assignedTo: Principal | undefined;
       timeline: Timeline;
     }) => {
-      if (!actor) throw new Error('Actor not initialized');
+      guardActorAvailability({ isReady, isInitializing, initError });
+      if (!actor) throw new Error('Backend is not ready. Please try again.');
       
       // Log mutation start with payload details
       logRecurringChoreMutationStart({
@@ -376,12 +420,13 @@ export function useUpdateRecurringChore() {
 }
 
 export function useDeleteRecurringChore() {
-  const { actor } = useActor();
+  const { actor, isReady, isInitializing, initError } = useActorWithReadiness();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (id: bigint) => {
-      if (!actor) throw new Error('Actor not initialized');
+      guardActorAvailability({ isReady, isInitializing, initError });
+      if (!actor) throw new Error('Backend is not ready. Please try again.');
       
       logRecurringChoreMutationStart({
         operation: 'delete',
@@ -418,12 +463,13 @@ export function useDeleteRecurringChore() {
 }
 
 export function usePauseResumeRecurringChore() {
-  const { actor } = useActor();
+  const { actor, isReady, isInitializing, initError } = useActorWithReadiness();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (params: { id: bigint; pause: boolean }) => {
-      if (!actor) throw new Error('Actor not initialized');
+      guardActorAvailability({ isReady, isInitializing, initError });
+      if (!actor) throw new Error('Backend is not ready. Please try again.');
       
       logRecurringChoreMutationStart({
         operation: 'pause-resume',
