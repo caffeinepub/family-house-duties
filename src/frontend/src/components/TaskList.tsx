@@ -8,6 +8,7 @@ import { EditTaskDialog } from './EditTaskDialog';
 import { RecurringChoresDialog } from './RecurringChoresDialog';
 import { RecurringChoresInlineSection } from './RecurringChoresInlineSection';
 import { PersonBadge } from './PersonBadge';
+import { HeroHeader } from './HeroHeader';
 import {
   useGetAllTasks,
   useToggleTaskCompletion,
@@ -76,6 +77,11 @@ export function TaskList() {
 
   return (
     <div className="space-y-8">
+      <HeroHeader
+        imageSrc="/assets/generated/header-tasks.dim_1600x420.jpg"
+        alt="Household tasks and chores organization"
+      />
+
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-3xl font-bold tracking-tight">Household Tasks</h2>

@@ -1,29 +1,46 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-02-08T00:02:00.398Z",
-  "summary": "VoiceDictationButton now shows an additional “live” listening indicator (animated ping ring + solid dot) when isListening is true, preserves tooltip start/stop messaging, and adds accessibility semantics (aria-pressed + sr-only aria-live status text). No backend or Shadcn UI source files were modified in the diff shown.",
-  "missing_requirements": [],
-  "hallucinated_features": [
+  "generatedAt": "2026-02-08T00:33:45.638Z",
+  "summary": "A reusable HeroHeader component was added and integrated into TaskList, People, and (partially shown) CalendarView; DinnerRota import/use is suggested but not visible in the truncated region. However, the required static hero image assets and exact required filenames/paths are not evidenced in the diff, and at least one hero image reference (CalendarView) appears truncated/possibly incorrect. An additional non-requested generated image is referenced in TaskList.",
+  "missing_requirements": [
     {
-      "description": "Project metadata/state tracking updates (project_state.json) unrelated to the requested UI/accessibility behavior.",
-      "reason": "BuildRequest only asks for UI cue and accessibility semantics; it does not request updating project tracking JSON.",
+      "id": "REQ-2",
+      "requirement": "Add a distinct hero/header image at the top of each main tab view (Task List, Dinner Rota, Calendar, People) using the consistent hero/header styling.",
+      "reason": "CalendarView’s HeroHeader imageSrc is shown as a truncated/possibly invalid path (ends with \".jp\" in the truncated snippet), so it is not verifiable that the Calendar hero renders successfully. DinnerRota’s actual HeroHeader placement is not visible in the truncated diff content, so it cannot be confirmed.",
       "evidence": [
-        "project_state.json"
+        "frontend/src/components/CalendarView.tsx",
+        "frontend/src/components/DinnerRota.tsx"
       ]
     },
     {
-      "description": "Updated/added repository file summary content (frontend-file-summaries.txt) not requested.",
-      "reason": "BuildRequest does not mention generating or modifying documentation/summary files.",
+      "id": "REQ-3",
+      "requirement": "Add the generated hero images under frontend/public/assets/generated and reference them via absolute paths like /assets/generated/...",
+      "reason": "The diff summary shows no added files under frontend/public/assets/generated, so the presence of the required hero image files cannot be confirmed. Additionally, the referenced hero filenames in code use a different naming pattern (e.g., header-*.dim_1600x420.jpg) than the BuildRequest-required names (hero-*.dim_1600x400.jpg).",
       "evidence": [
-        "frontend-file-summaries.txt"
+        "frontend/src/components/TaskList.tsx",
+        "frontend/src/components/People.tsx",
+        "frontend/src/components/CalendarView.tsx"
       ]
     }
   ],
-  "confidence": 0.86,
+  "hallucinated_features": [
+    {
+      "description": "Added/used an extra generated image asset (task-clipboard.dim_200x200.jpg) in the TaskList empty state, which was not part of the requested four hero header images.",
+      "reason": "BuildRequest only asks for four specific hero header banners for the main tabs; it does not request additional generated images for empty states.",
+      "evidence": [
+        "frontend/src/components/TaskList.tsx"
+      ]
+    }
+  ],
+  "confidence": 0.72,
   "changed_files": [
     "frontend-file-summaries.txt",
-    "frontend/src/components/VoiceDictationButton.tsx",
+    "frontend/src/components/CalendarView.tsx",
+    "frontend/src/components/DinnerRota.tsx",
+    "frontend/src/components/HeroHeader.tsx",
+    "frontend/src/components/People.tsx",
+    "frontend/src/components/TaskList.tsx",
     "project_state.json"
   ]
 }

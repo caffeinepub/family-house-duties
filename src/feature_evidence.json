@@ -2,10 +2,10 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-enhance-the-voice-dictation-ui-so-it-provides-a-clear-subtle-visual-cue-when-the-microphone-is-actively-listening-i-e-speechrecognition-has-started-beyond-the-current-icon-pulse-and-ensure-the-cue-is-visible-in-all-places-the-voicedictationbutton-is-used-e-g-addtaskdialog-and-edittaskdialog-dictation-controls",
-      "featureTitle": "Enhance the voice dictation UI so it provides a clear, subtle visual cue when the microphone is actively listening (i.e., SpeechRecognition has started), beyond the current icon pulse, and ensure the cue is visible in all places the VoiceDictationButton is used (e.g., AddTaskDialog and EditTaskDialog dictation controls).",
+      "featureId": "feature-add-a-reusable-hero-header-section-component-that-can-be-placed-at-the-top-of-each-main-tab-view-and-renders-a-static-hero-image-with-consistent-styling-responsive-rounded-corners-gradient-overlay-for-text-readability-and-accessible-alt-text",
+      "featureTitle": "Add a reusable hero/header section component that can be placed at the top of each main tab view and renders a static hero image with consistent styling (responsive, rounded corners, gradient overlay for text readability, and accessible alt text).",
       "files": [
-        "frontend/src/components/VoiceDictationButton.tsx"
+        "frontend/src/components/HeroHeader.tsx"
       ],
       "components": [
         "core-infrastructure@1.0.2",
@@ -21,10 +21,13 @@
       "confidence": "high"
     },
     {
-      "featureId": "feature-add-accessibility-semantics-for-the-listening-state-on-the-dictation-control-so-assistive-technologies-can-detect-when-dictation-is-active",
-      "featureTitle": "Add accessibility semantics for the listening state on the dictation control so assistive technologies can detect when dictation is active.",
+      "featureId": "feature-add-a-distinct-hero-header-image-at-the-top-of-each-main-tab-view-task-list-frontend-src-components-tasklist-tsx-dinner-rota-frontend-src-components-dinnerrota-tsx-calendar-frontend-src-components-calendarview-tsx-and-people-frontend-src-components-people-tsx",
+      "featureTitle": "Add a distinct hero/header image at the top of each main tab view: Task List (frontend/src/components/TaskList.tsx), Dinner Rota (frontend/src/components/DinnerRota.tsx), Calendar (frontend/src/components/CalendarView.tsx), and People (frontend/src/components/People.tsx).",
       "files": [
-        "frontend/src/components/VoiceDictationButton.tsx"
+        "frontend/src/components/CalendarView.tsx",
+        "frontend/src/components/DinnerRota.tsx",
+        "frontend/src/components/People.tsx",
+        "frontend/src/components/TaskList.tsx"
       ],
       "components": [
         "core-infrastructure@1.0.2",
@@ -36,6 +39,23 @@
       ],
       "testIds": [
         "REQ-2"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-add-the-generated-hero-images-to-the-frontend-as-static-assets-under-frontend-public-assets-generated-and-reference-them-via-absolute-paths-e-g-assets-generated",
+      "featureTitle": "Add the generated hero images to the frontend as static assets under frontend/public/assets/generated and reference them via absolute paths (e.g., /assets/generated/...).",
+      "files": [],
+      "components": [
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "authorization@4.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-3"
       ],
       "confidence": "high"
     }

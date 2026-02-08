@@ -1,58 +1,92 @@
 {
   "kind": "build_request",
-  "title": "Add clear UI indicator when voice dictation microphone is actively listening",
+  "title": "Add hero header images for each main tab (Task List, Dinner Rota, Calendar, People)",
   "priority": "normal",
   "requirements": [
     {
       "id": "REQ-1",
-      "text": "Enhance the voice dictation UI so it provides a clear, subtle visual cue when the microphone is actively listening (i.e., SpeechRecognition has started), beyond the current icon pulse, and ensure the cue is visible in all places the VoiceDictationButton is used (e.g., AddTaskDialog and EditTaskDialog dictation controls).",
+      "text": "Add a reusable hero/header section component that can be placed at the top of each main tab view and renders a static hero image with consistent styling (responsive, rounded corners, gradient overlay for text readability, and accessible alt text).",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "recent-messages-3"
+          "msg-1"
         ],
         "quotes": [
-          "Yes, let's add a certain UI cue when the mic is actually listening."
+          "Include some nice header hero images for each of the tasks, for each of the tabs, task list, calendar, people."
         ]
       },
       "acceptanceCriteria": [
-        "When dictation is actively listening, the mic control has an additional visible indicator (e.g., a small red 'live' dot, glow ring, or similar subtle accent) that is not shown when not listening.",
-        "The listening indicator turns on only while `isListening` is true for the active dictation field, and turns off immediately when dictation stops/ends/errors.",
-        "The indicator is visible and legible on both light and dark themes and does not rely solely on color (e.g., uses shape/animation as well).",
-        "The existing tooltip behavior remains correct (Start voice dictation vs Stop dictation), and the button remains operable on mobile."
+        "A reusable hero/header component exists and can be used by Task List, Dinner Rota, Calendar, and People views.",
+        "Hero section is responsive (maintains aspect ratio, crops via object-cover), has rounded corners, and uses an overlay to ensure any text remains readable.",
+        "All hero images have non-empty, descriptive alt text in English."
       ]
     },
     {
       "id": "REQ-2",
-      "text": "Add accessibility semantics for the listening state on the dictation control so assistive technologies can detect when dictation is active.",
+      "text": "Add a distinct hero/header image at the top of each main tab view: Task List (frontend/src/components/TaskList.tsx), Dinner Rota (frontend/src/components/DinnerRota.tsx), Calendar (frontend/src/components/CalendarView.tsx), and People (frontend/src/components/People.tsx).",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "recent-messages-3"
+          "msg-1"
         ],
         "quotes": [
-          "Yes, let's add a certain UI cue when the mic is actually listening."
+          "Include some nice header hero images for each of the tasks, for each of the tabs, task list, calendar, people."
         ]
       },
       "acceptanceCriteria": [
-        "When listening, the dictation control exposes an appropriate state to screen readers (e.g., `aria-pressed=true` and/or an `aria-live` status text that announces \"Listening\" / \"Not listening\").",
-        "User-facing accessibility text is in English.",
-        "No accessibility attributes are added to any immutable-path files."
+        "Task List shows a hero image above the \"Household Tasks\" header content.",
+        "Dinner Rota shows a hero image in its header area (keeping or replacing the existing image block, but using the new consistent hero/header styling).",
+        "Calendar shows a hero image above the \"Calendar View\" header content.",
+        "People shows a hero image above the \"People\" header content.",
+        "No hero images are loaded via backend; all are served as static assets."
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "text": "Add the generated hero images to the frontend as static assets under frontend/public/assets/generated and reference them via absolute paths (e.g., /assets/generated/...).",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ],
+        "quotes": [
+          "Include some nice header hero images for each of the tasks, for each of the tabs, task list, calendar, people."
+        ]
+      },
+      "acceptanceCriteria": [
+        "All new hero image files exist under frontend/public/assets/generated.",
+        "Each tab references its corresponding hero image path and renders successfully in the browser without 404s."
       ]
     }
   ],
   "constraints": [
-    "Do not modify files under frontend/src/components/ui (Shadcn UI sources are read-only).",
-    "Do not modify any paths listed as immutable in SYSTEM_CONTEXT (compose existing hooks/components instead).",
-    "Keep the backend single-actor architecture unchanged; no backend changes are required for this UI-only cue."
+    "Do not edit files under frontend/src/components/ui (read-only UI components).",
+    "Do not edit files under frontend/src/hooks/useInternetIdentity.ts, frontend/src/hooks/useInternetIdentity.tsx, frontend/src/hooks/useActor.ts, or frontend/src/main.tsx (immutable paths)."
   ],
   "nonGoals": [
-    "Do not add new authentication methods or third-party integrations.",
-    "Do not implement audio visualization, waveform rendering, or real-time transcription UI beyond the listening cue.",
-    "Do not change the underlying Web Speech API start/stop logic unless required to correctly reflect the existing `isListening` state."
+    "Fixing backend data persistence/stable storage issues.",
+    "Adding new tabs or changing tab navigation structure.",
+    "Implementing image upload or user-customizable hero images."
   ],
   "imageRequirements": {
-    "required": [],
+    "required": [
+      "Warm, cozy task-management themed hero banner with subtle household/clipboard motifs (hero-task-list.dim_1600x400.jpg)",
+      "Warm, family dinner/cooking themed hero banner with kitchen elements (hero-dinner-rota.dim_1600x400.jpg)",
+      "Clean planning/calendar themed hero banner with date grid motifs (hero-calendar.dim_1600x400.jpg)",
+      "Friendly people/community themed hero banner with abstract avatars/shapes (hero-people.dim_1600x400.jpg)"
+    ],
     "edits": []
+  },
+  "userProfileUpdate": {
+    "goalsToAdd": [],
+    "goalsToRemove": [],
+    "preferencesToAdd": [
+      "Use English for any user-facing text."
+    ],
+    "preferencesToRemove": [],
+    "miscToAdd": [],
+    "miscToRemove": [],
+    "fieldsToSet": {},
+    "fieldsToDelete": []
   }
 }

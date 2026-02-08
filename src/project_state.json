@@ -1,24 +1,35 @@
 {
   "schemaVersion": "1.0.0",
   "projectStateVersion": 3,
-  "summary": "Mobile speech-to-text feature with an added UI cue indicating when the microphone is actively listening.",
+  "summary": "New project",
   "architectural_notes": [],
-  "known_issues": [],
-  "isFixRequest": false,
+  "known_issues": [
+    "Data is not persisting/showing after updates despite making the database/canister persistent (likely transient vs stable storage issue)."
+  ],
+  "isFixRequest": true,
+  "imageRequirements": "## Required Images\n- Warm, cozy task-management themed hero banner with subtle household/clipboard motifs (hero-task-list.dim_1600x400.jpg)\n- Warm, family dinner/cooking themed hero banner with kitchen elements (hero-dinner-rota.dim_1600x400.jpg)\n- Clean planning/calendar themed hero banner with date grid motifs (hero-calendar.dim_1600x400.jpg)\n- Friendly people/community themed hero banner with abstract avatars/shapes (hero-people.dim_1600x400.jpg)",
   "existing_features": [
     {
-      "id": "feature-enhance-the-voice-dictation-ui-so-it-provides-a-clear-subtle-visual-cue-when-the-microphone-is-actively-listening-i-e-speechrecognition-has-started-beyond-the-current-icon-pulse-and-ensure-the-cue-is-visible-in-all-places-the-voicedictationbutton-is-used-e-g-addtaskdialog-and-edittaskdialog-dictation-controls",
-      "title": "Enhance the voice dictation UI so it provides a clear, subtle visual cue when the microphone is actively listening (i.e., SpeechRecognition has started), beyond the current icon pulse, and ensure the cue is visible in all places the VoiceDictationButton is used (e.g., AddTaskDialog and EditTaskDialog dictation controls).",
+      "id": "feature-add-a-reusable-hero-header-section-component-that-can-be-placed-at-the-top-of-each-main-tab-view-and-renders-a-static-hero-image-with-consistent-styling-responsive-rounded-corners-gradient-overlay-for-text-readability-and-accessible-alt-text",
+      "title": "Add a reusable hero/header section component that can be placed at the top of each main tab view and renders a static hero image with consistent styling (responsive, rounded corners, gradient overlay for text readability, and accessible alt text).",
       "reqIds": [
         "REQ-1"
       ],
       "version": 1
     },
     {
-      "id": "feature-add-accessibility-semantics-for-the-listening-state-on-the-dictation-control-so-assistive-technologies-can-detect-when-dictation-is-active",
-      "title": "Add accessibility semantics for the listening state on the dictation control so assistive technologies can detect when dictation is active.",
+      "id": "feature-add-a-distinct-hero-header-image-at-the-top-of-each-main-tab-view-task-list-frontend-src-components-tasklist-tsx-dinner-rota-frontend-src-components-dinnerrota-tsx-calendar-frontend-src-components-calendarview-tsx-and-people-frontend-src-components-people-tsx",
+      "title": "Add a distinct hero/header image at the top of each main tab view: Task List (frontend/src/components/TaskList.tsx), Dinner Rota (frontend/src/components/DinnerRota.tsx), Calendar (frontend/src/components/CalendarView.tsx), and People (frontend/src/components/People.tsx).",
       "reqIds": [
         "REQ-2"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-the-generated-hero-images-to-the-frontend-as-static-assets-under-frontend-public-assets-generated-and-reference-them-via-absolute-paths-e-g-assets-generated",
+      "title": "Add the generated hero images to the frontend as static assets under frontend/public/assets/generated and reference them via absolute paths (e.g., /assets/generated/...).",
+      "reqIds": [
+        "REQ-3"
       ],
       "version": 1
     }
@@ -26,12 +37,13 @@
   "new_feature_requests": [
     {
       "id": "AR-1",
-      "summary": "Add a subtle UI cue/indicator when the mic is actively listening during mobile speech-to-text.",
+      "summary": "Add nice header/hero images for each main tab/section (Tasks, Task List, Calendar, People)",
       "reqIds": [],
       "status": "pending"
     }
   ],
-  "projectName": "Add clear UI indicator when voice dictation microphone is actively listening",
+  "gameProjectType": "none",
+  "projectName": "Add hero header images for each main tab (Task List, Dinner Rota, Calendar, People)",
   "clarification_mode": "instant",
   "clarification_rounds": 0
 }

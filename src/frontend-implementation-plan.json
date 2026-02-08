@@ -1,38 +1,84 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Voice dictation: add a clear listening indicator + accessibility semantics",
+  "title": "Reusable hero header images for main tabs",
   "requirements": [
     {
       "id": "REQ-1",
-      "summary": "Add a subtle but clearly visible “listening” indicator to VoiceDictationButton whenever SpeechRecognition is active, so it appears consistently everywhere the button is used.",
+      "summary": "Create a reusable HeroHeader component with responsive, accessible hero image styling used across main tab views.",
       "acceptanceCriteria": [
-        "When dictation is actively listening, the mic control has an additional visible indicator (e.g., a small red 'live' dot, glow ring, or similar subtle accent) that is not shown when not listening.",
-        "The listening indicator turns on only while `isListening` is true for the active dictation field, and turns off immediately when dictation stops/ends/errors.",
-        "The indicator is visible and legible on both light and dark themes and does not rely solely on color (e.g., uses shape/animation as well).",
-        "The existing tooltip behavior remains correct (Start voice dictation vs Stop dictation), and the button remains operable on mobile."
+        "A reusable hero/header component exists and can be used by Task List, Dinner Rota, Calendar, and People views.",
+        "Hero section is responsive (maintains aspect ratio, crops via object-cover), has rounded corners, and uses an overlay to ensure any text remains readable.",
+        "All hero images have non-empty, descriptive alt text in English."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/components/VoiceDictationButton.tsx",
-          "operation": "modify",
-          "description": "Enhance the existing shadcn-ui Button/Tooltip-based VoiceDictationButton to render an additional, subtle listening indicator when `isListening` is true (e.g., an overlaid dot + ring/glow/animation that also communicates state via shape/motion, not color alone), while preserving the current icon pulse and current tooltip text logic. Ensure the indicator styling works in both light/dark themes and does not reduce tap-target usability on mobile. Verify the component's usage instructions before implementing."
+          "path": "frontend/src/components/HeroHeader.tsx",
+          "operation": "create",
+          "description": "Create a reusable HeroHeader component that renders a static hero image with consistent styling: responsive aspect ratio, object-cover cropping, rounded corners, and a gradient overlay layer to improve text readability; supports passing non-empty English alt text and optional title/subtitle content."
         }
       ]
     },
     {
       "id": "REQ-2",
-      "summary": "Expose accessibility semantics for the dictation listening state so assistive technologies can detect and announce when dictation is active.",
+      "summary": "Add distinct hero images to Task List, Dinner Rota, Calendar, and People tab views using the new HeroHeader styling.",
       "acceptanceCriteria": [
-        "When listening, the dictation control exposes an appropriate state to screen readers (e.g., `aria-pressed=true` and/or an `aria-live` status text that announces \"Listening\" / \"Not listening\").",
-        "User-facing accessibility text is in English.",
-        "No accessibility attributes are added to any immutable-path files."
+        "Task List shows a hero image above the \"Household Tasks\" header content.",
+        "Dinner Rota shows a hero image in its header area (keeping or replacing the existing image block, but using the new consistent hero/header styling).",
+        "Calendar shows a hero image above the \"Calendar View\" header content.",
+        "People shows a hero image above the \"People\" header content.",
+        "No hero images are loaded via backend; all are served as static assets."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/components/VoiceDictationButton.tsx",
+          "path": "frontend/src/components/TaskList.tsx",
           "operation": "modify",
-          "description": "Add screen-reader-detectable semantics for listening state on the dictation control (e.g., `aria-pressed` reflecting `isListening` and a small `aria-live` status message announcing \"Listening\" / \"Not listening\" in English). Keep existing `aria-label` and tooltip behavior correct, and ensure all a11y attributes are confined to this non-immutable component file. Verify the component's usage instructions before implementing."
+          "description": "Import and render the new HeroHeader component at the top of the Task List view, above the existing \"Household Tasks\" header area, using the static asset path /assets/generated/hero-task-list.dim_1600x400.jpg with a descriptive English alt text."
+        },
+        {
+          "path": "frontend/src/components/DinnerRota.tsx",
+          "operation": "modify",
+          "description": "Replace (or refactor) the existing header image block to use the new HeroHeader component for consistent styling, referencing /assets/generated/hero-dinner-rota.dim_1600x400.jpg with a descriptive English alt text; ensure it appears in the header area above the main Dinner Rota content."
+        },
+        {
+          "path": "frontend/src/components/CalendarView.tsx",
+          "operation": "modify",
+          "description": "Import and render the new HeroHeader component at the top of the Calendar view, above the existing \"Calendar View\" header area, referencing /assets/generated/hero-calendar.dim_1600x400.jpg with a descriptive English alt text."
+        },
+        {
+          "path": "frontend/src/components/People.tsx",
+          "operation": "modify",
+          "description": "Import and render the new HeroHeader component at the top of the People view, above the existing \"People\" header area, referencing /assets/generated/hero-people.dim_1600x400.jpg with a descriptive English alt text."
+        }
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "summary": "Add generated hero images as static assets under frontend/public/assets/generated and reference them via absolute paths.",
+      "acceptanceCriteria": [
+        "All new hero image files exist under frontend/public/assets/generated.",
+        "Each tab references its corresponding hero image path and renders successfully in the browser without 404s."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/public/assets/generated/hero-task-list.dim_1600x400.jpg",
+          "operation": "create",
+          "description": "Add the generated static hero image asset for the Task List tab: frontend/public/assets/generated/hero-task-list.dim_1600x400.jpg."
+        },
+        {
+          "path": "frontend/public/assets/generated/hero-dinner-rota.dim_1600x400.jpg",
+          "operation": "create",
+          "description": "Add the generated static hero image asset for the Dinner Rota tab: frontend/public/assets/generated/hero-dinner-rota.dim_1600x400.jpg."
+        },
+        {
+          "path": "frontend/public/assets/generated/hero-calendar.dim_1600x400.jpg",
+          "operation": "create",
+          "description": "Add the generated static hero image asset for the Calendar tab: frontend/public/assets/generated/hero-calendar.dim_1600x400.jpg."
+        },
+        {
+          "path": "frontend/public/assets/generated/hero-people.dim_1600x400.jpg",
+          "operation": "create",
+          "description": "Add the generated static hero image asset for the People tab: frontend/public/assets/generated/hero-people.dim_1600x400.jpg."
         }
       ]
     }

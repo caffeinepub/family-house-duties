@@ -26,6 +26,7 @@ import { LightweightMonthOverview } from './LightweightMonthOverview';
 import { getCookingAssignmentDisplay } from '../utils/cookingAssignmentLabel';
 import { getChoresForDate } from '../utils/recurringChoresSchedule';
 import { useSessionStorageState } from '../hooks/useSessionStorageState';
+import { HeroHeader } from './HeroHeader';
 
 export function CalendarView() {
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -104,6 +105,11 @@ export function CalendarView() {
 
   return (
     <div className="space-y-6">
+      <HeroHeader
+        imageSrc="/assets/generated/header-calendar.dim_1600x420.jpg"
+        alt="Family calendar with tasks and meal planning"
+      />
+
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold">Calendar View</h2>

@@ -16,6 +16,7 @@ import { useGetAllProfiles, useUpsertProfile, useDeleteProfile } from '../hooks/
 import { useInternetIdentity } from '../hooks/useInternetIdentity';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PersonBadge } from './PersonBadge';
+import { HeroHeader } from './HeroHeader';
 import type { PersonProfile } from '../backend';
 import { Principal } from '@icp-sdk/core/principal';
 
@@ -131,6 +132,11 @@ export function People() {
 
   return (
     <div className="space-y-6">
+      <HeroHeader
+        imageSrc="/assets/generated/header-people.dim_1600x420.jpg"
+        alt="Family members and household people profiles"
+      />
+
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-3xl font-bold tracking-tight">People</h2>
@@ -206,8 +212,8 @@ export function People() {
             <DialogTitle>{editingProfile ? 'Edit Profile' : 'Add Person Profile'}</DialogTitle>
             <DialogDescription>
               {editingProfile
-                ? 'Update the profile details.'
-                : 'Create a profile with a name and color for easy identification.'}
+                ? 'Update the profile information'
+                : 'Create a profile with a name and color for a family member'}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
@@ -216,11 +222,10 @@ export function People() {
               <div className="flex gap-2">
                 <Input
                   id="principal"
-                  placeholder="Principal ID"
                   value={principalInput}
                   onChange={(e) => setPrincipalInput(e.target.value)}
+                  placeholder="Enter principal ID"
                   disabled={!!editingProfile}
-                  className="flex-1"
                 />
                 {!editingProfile && (
                   <Button type="button" variant="outline" onClick={fillMyPrincipal}>
@@ -228,20 +233,14 @@ export function People() {
                   </Button>
                 )}
               </div>
-              <p className="text-xs text-muted-foreground">
-                {editingProfile
-                  ? 'Principal ID cannot be changed'
-                  : 'Enter a principal ID or click "Me" to use your own'}
-              </p>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="displayName">Display Name *</Label>
+              <Label htmlFor="display-name">Display Name</Label>
               <Input
-                id="displayName"
-                placeholder="e.g., Mom, Dad, Sarah"
+                id="display-name"
                 value={displayName}
                 onChange={(e) => setDisplayName(e.target.value)}
-                required
+                placeholder="e.g., Mom, Dad, Alex"
               />
             </div>
             <div className="space-y-2">
@@ -252,7 +251,7 @@ export function People() {
                     key={color}
                     type="button"
                     className={`h-10 w-10 rounded-full transition-all ${
-                      selectedColor === color ? 'ring-2 ring-offset-2 ring-primary scale-110' : 'hover:scale-105'
+                      selectedColor === color ? 'ring-2 ring-offset-2 ring-primary scale-110' : ''
                     }`}
                     style={{ backgroundColor: color }}
                     onClick={() => setSelectedColor(color)}
@@ -262,10 +261,10 @@ export function People() {
             </div>
           </div>
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={handleCloseDialog}>
+            <Button variant="outline" onClick={handleCloseDialog}>
               Cancel
             </Button>
-            <Button onClick={handleSave} disabled={upsertProfile.isPending || !displayName.trim()}>
+            <Button onClick={handleSave} disabled={!displayName.trim() || upsertProfile.isPending}>
               {upsertProfile.isPending ? 'Saving...' : 'Save'}
             </Button>
           </DialogFooter>

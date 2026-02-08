@@ -1,11 +1,11 @@
 # Specification
 
 ## Summary
-**Goal:** Make it unambiguous when voice dictation is actively listening by adding a subtle but clear visual indicator and exposing the listening state to assistive technologies.
+**Goal:** Add consistent hero/header images to the top of each main tab (Task List, Dinner Rota, Calendar, People) using a reusable component and static frontend assets.
 
 **Planned changes:**
-- Update the VoiceDictationButton UI to show an additional listening indicator (beyond the existing pulse) only while `isListening` is true.
-- Ensure the listening indicator is visible in every place the VoiceDictationButton is used (including AddTaskDialog and EditTaskDialog dictation controls).
-- Add accessibility semantics so screen readers can detect/announce the listening state (English text), while keeping existing tooltip behavior and mobile operability intact.
+- Create a reusable hero/header section component with responsive styling, rounded corners, a gradient overlay for text readability, and descriptive English alt text.
+- Add a distinct hero image to the top of Task List, Dinner Rota, Calendar, and People views using the shared hero/header component and consistent styling.
+- Add new generated hero images as static assets under `frontend/public/assets/generated` and reference them via absolute paths (e.g., `/assets/generated/...`) without any backend loading.
 
-**User-visible outcome:** When starting voice dictation, users see a clear “listening” cue on the mic control that works on light/dark themes and is reflected in accessibility output; the cue disappears immediately when dictation stops or errors.
+**User-visible outcome:** Each main tab displays a polished, consistent hero banner image at the top of the page with accessible alt text and responsive layout.

@@ -33,6 +33,7 @@ import { computeFairnessStats, type FairnessRange } from '../utils/fairness';
 import { useVoiceDictation } from '../hooks/useVoiceDictation';
 import { VoiceDictationButton } from './VoiceDictationButton';
 import { toast } from 'sonner';
+import { HeroHeader } from './HeroHeader';
 
 export function DinnerRota() {
   const [editingDay, setEditingDay] = useState<string | null>(null);
@@ -220,13 +221,14 @@ export function DinnerRota() {
     editMealDictation.stop();
   };
 
-  // Compute fairness stats
   const fairnessStats = computeFairnessStats(assignments, profiles, fairnessRange);
 
-  // Calculate max count for visual indicator scaling
-  const maxCount = fairnessStats.counts.size > 0 
-    ? Math.max(...Array.from(fairnessStats.counts.values())) 
-    : 0;
+  // Convert fairness stats to array for display
+  const perPersonCounts = Array.from(fairnessStats.counts.entries()).map(([label, count]) => ({
+    label,
+    count,
+    color: fairnessStats.colors.get(label),
+  }));
 
   if (assignmentsLoading || profilesLoading) {
     return (
@@ -238,209 +240,121 @@ export function DinnerRota() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
+      <HeroHeader
+        imageSrc="/assets/generated/header-dinner.dim_1600x420.jpg"
+        alt="Family dinner cooking schedule and meal planning"
+      />
+
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold">Dinner Rota</h2>
-          <p className="text-muted-foreground">Weekly cooking schedule for the family</p>
+          <h2 className="text-3xl font-bold tracking-tight">Dinner Rota</h2>
+          <p className="text-muted-foreground mt-1">Weekly cooking schedule for the family</p>
         </div>
       </div>
 
-      <div className="relative">
-        <img
-          src="/assets/generated/family-cooking.dim_800x600.jpg"
-          alt="Family cooking together"
-          className="h-48 w-full rounded-lg object-cover"
-        />
-        <div className="absolute inset-0 rounded-lg bg-gradient-to-t from-background/80 to-transparent" />
-      </div>
-
-      {/* Fairness Section */}
-      <Card>
-        <CardHeader>
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <CardTitle className="flex items-center gap-2">
-                <ChefHat className="h-5 w-5" />
-                Fairness Indicator
-              </CardTitle>
-              <CardDescription>See who's cooking most and least</CardDescription>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <Button
-                variant={fairnessRange === 'last30days' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setFairnessRange('last30days')}
-              >
-                Last 30 Days
-              </Button>
-              <Button
-                variant={fairnessRange === 'alltime' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setFairnessRange('alltime')}
-              >
-                All Time
-              </Button>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {/* Period Indicator */}
-          <div className="mb-4 rounded-md bg-muted/50 px-3 py-2 text-sm text-muted-foreground">
-            <span className="font-medium">Period:</span> {fairnessStats.periodLabel}
-          </div>
-
-          {fairnessStats.isEmpty ? (
-            <div className="rounded-md border border-dashed p-6 text-center text-sm text-muted-foreground">
-              No cooking assignments in this period
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {/* Most and Least Cooked */}
-              <div className="grid gap-3 md:grid-cols-2">
-                {fairnessStats.mostCooked && (
-                  <div className="rounded-lg border bg-accent/50 p-4">
-                    <div className="mb-2 flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                      <TrendingUp className="h-4 w-4" />
-                      Most Cooked
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <PersonBadge
-                        label={fairnessStats.mostCooked.label}
-                        color={fairnessStats.mostCooked.color}
-                        variant="default"
-                      />
-                      <Badge variant="secondary" className="text-lg font-bold">
-                        {fairnessStats.mostCooked.count}
-                      </Badge>
-                    </div>
-                  </div>
-                )}
-                {fairnessStats.leastCooked && (
-                  <div className="rounded-lg border bg-accent/50 p-4">
-                    <div className="mb-2 flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                      <TrendingDown className="h-4 w-4" />
-                      Least Cooked
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <PersonBadge
-                        label={fairnessStats.leastCooked.label}
-                        color={fairnessStats.leastCooked.color}
-                        variant="default"
-                      />
-                      <Badge variant="secondary" className="text-lg font-bold">
-                        {fairnessStats.leastCooked.count}
-                      </Badge>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* All Counts with Visual Indicator */}
-              <div>
-                <div className="mb-3 text-sm font-medium text-muted-foreground">All Cooks</div>
-                <div className="space-y-3">
-                  {Array.from(fairnessStats.counts.entries())
-                    .sort((a, b) => b[1] - a[1]) // Sort by count descending
-                    .map(([label, count]) => {
-                      const color = fairnessStats.colors.get(label);
-                      const percentage = maxCount > 0 ? (count / maxCount) * 100 : 0;
-                      
-                      return (
-                        <div
-                          key={label}
-                          className="rounded-md border bg-card p-3"
-                        >
-                          <div className="mb-2 flex items-center justify-between gap-3">
-                            <PersonBadge label={label} color={color} variant="outline" size="sm" />
-                            <Badge variant="secondary">{count}</Badge>
-                          </div>
-                          {/* Visual indicator bar */}
-                          <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
-                            <div
-                              className="h-full rounded-full bg-primary transition-all duration-300"
-                              style={{ width: `${percentage}%` }}
-                            />
-                          </div>
-                        </div>
-                      );
-                    })}
-                </div>
+      {/* Fairness Indicator */}
+      {!fairnessStats.isEmpty && (
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-lg">Cooking Fairness</CardTitle>
+              <div className="flex items-center gap-2">
+                <Label htmlFor="fairness-range" className="text-sm text-muted-foreground">
+                  Period:
+                </Label>
+                <select
+                  id="fairness-range"
+                  value={fairnessRange}
+                  onChange={(e) => setFairnessRange(e.target.value as FairnessRange)}
+                  className="rounded-md border border-input bg-background px-3 py-1 text-sm"
+                >
+                  <option value="week">This Week</option>
+                  <option value="month">This Month</option>
+                  <option value="last4weeks">Last 4 Weeks</option>
+                  <option value="last30days">Last 30 Days</option>
+                  <option value="alltime">All Time</option>
+                </select>
               </div>
             </div>
-          )}
-        </CardContent>
-      </Card>
-
-      <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-        {weekDays.map((date) => {
-          const assignment = getAssignmentForDay(date);
-          const isToday = format(date, 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd');
-          const canEdit = canEditAssignment(assignment);
-          const canEditMeal = canEditMealDescription(assignment);
-          const cookDisplay = getCookingAssignmentDisplay(assignment, profiles);
-
-          return (
-            <Card key={date.toISOString()} className={isToday ? 'border-primary' : ''}>
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-lg">{format(date, 'EEEE')}</CardTitle>
-                  {isToday && <Badge>Today</Badge>}
-                </div>
-                <CardDescription className="flex items-center gap-1">
-                  <CalendarIcon className="h-3 w-3" />
-                  {format(date, 'MMM d, yyyy')}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {cookDisplay.label ? (
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2 rounded-md bg-accent p-3">
-                      <ChefHat className="h-5 w-5 text-accent-foreground" />
-                      <div className="flex flex-1 items-center gap-2">
-                        <PersonBadge label={cookDisplay.label} color={cookDisplay.color} variant="secondary" />
-                      </div>
-                    </div>
-                    {assignment?.description ? (
-                      <div className="group relative rounded-md bg-muted/50 p-3">
-                        <div className="pr-8">
-                          <p className="whitespace-pre-wrap text-sm text-foreground">{assignment.description}</p>
-                        </div>
-                        {canEditMeal && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="absolute right-2 top-2 h-6 w-6 opacity-0 transition-opacity group-hover:opacity-100"
-                            onClick={() => handleEditMeal(date)}
-                          >
-                            <Edit className="h-3 w-3" />
-                          </Button>
-                        )}
-                      </div>
-                    ) : canEditMeal ? (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="w-full"
-                        onClick={() => handleEditMeal(date)}
-                      >
-                        Add meal description
-                      </Button>
-                    ) : null}
-                    {assignment && (
-                      <Badge variant="outline" className="text-xs">
-                        Assigned by: {formatPrincipal(assignment.assignedBy)}
-                      </Badge>
+            <CardDescription>
+              {fairnessStats.periodLabel}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {perPersonCounts.map((stat) => (
+                <div key={stat.label} className="flex items-center justify-between">
+                  <PersonBadge label={stat.label} color={stat.color} />
+                  <div className="flex items-center gap-2">
+                    <Badge variant="secondary">{stat.count} times</Badge>
+                    {fairnessStats.mostCooked && stat.label === fairnessStats.mostCooked.label && (
+                      <TrendingUp className="h-4 w-4 text-primary" />
+                    )}
+                    {fairnessStats.leastCooked && stat.label === fairnessStats.leastCooked.label && (
+                      <TrendingDown className="h-4 w-4 text-muted-foreground" />
                     )}
                   </div>
-                ) : (
-                  <div className="rounded-md border border-dashed p-3 text-center text-sm text-muted-foreground">
-                    No one assigned
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Weekly Schedule */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {weekDays.map((day) => {
+          const assignment = getAssignmentForDay(day);
+          const cookDisplay = getCookingAssignmentDisplay(assignment, profiles);
+          const isToday = format(day, 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd');
+
+          return (
+            <Card key={day.toISOString()} className={isToday ? 'border-primary ring-2 ring-primary/20' : ''}>
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="text-lg">{format(day, 'EEEE')}</CardTitle>
+                    <CardDescription>{format(day, 'MMM d')}</CardDescription>
                   </div>
-                )}
-                {canEdit && (
-                  <Button variant="outline" className="w-full" onClick={() => handleAssign(date)}>
-                    {cookDisplay.label ? 'Change' : 'Assign'}
+                  {isToday && <Badge variant="default">Today</Badge>}
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {assignment ? (
+                  <>
+                    <div className="flex items-center gap-2">
+                      <ChefHat className="h-5 w-5 text-primary" />
+                      <PersonBadge label={cookDisplay.label} color={cookDisplay.color} />
+                    </div>
+                    {assignment.description && (
+                      <div className="rounded-md bg-muted p-3">
+                        <p className="text-sm text-muted-foreground mb-1 font-medium">Meal:</p>
+                        <p className="text-sm">{assignment.description}</p>
+                      </div>
+                    )}
+                    <div className="flex gap-2">
+                      {canEditAssignment(assignment) && (
+                        <Button variant="outline" size="sm" onClick={() => handleAssign(day)} className="flex-1">
+                          Edit Cook
+                        </Button>
+                      )}
+                      {canEditMealDescription(assignment) && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleEditMeal(day)}
+                          className="flex-1"
+                        >
+                          <Edit className="mr-1 h-3 w-3" />
+                          Meal
+                        </Button>
+                      )}
+                    </div>
+                  </>
+                ) : (
+                  <Button variant="outline" onClick={() => handleAssign(day)} className="w-full">
+                    Assign Cook
                   </Button>
                 )}
               </CardContent>
@@ -451,53 +365,50 @@ export function DinnerRota() {
 
       {/* Assign/Edit Cook Dialog */}
       <Dialog open={!!editingDay} onOpenChange={handleDialogClose}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
-            <DialogTitle>Assign Cook</DialogTitle>
-            <DialogDescription>Who will be cooking on this day?</DialogDescription>
+            <DialogTitle>
+              {editingDay && assignments.find((a) => a.day === editingDay) ? 'Edit' : 'Assign'} Cook
+            </DialogTitle>
+            <DialogDescription>
+              {editingDay && `For ${format(new Date(editingDay), 'EEEE, MMMM d')}`}
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <PersonProfileSelect
               value={cookPrincipal}
               onChange={setCookPrincipal}
               label="Cook"
-              placeholder="Select a person or enter Principal ID"
-              showMeButton={true}
+              placeholder="Select or enter principal"
             />
             <div className="space-y-2">
-              <Label htmlFor="cook-name">Cook name (optional)</Label>
+              <Label htmlFor="cook-name">Cook Name (optional)</Label>
               <Input
                 id="cook-name"
-                placeholder="Enter cook's name (e.g., Mom, Dad)"
                 value={cookName}
                 onChange={(e) => setCookName(e.target.value)}
+                placeholder="e.g., Mom, Dad, Alex"
               />
-              <p className="text-xs text-muted-foreground">
-                Optional: Enter a friendly name if not using a profile
-              </p>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="meal-description">What are you cooking (include ingredients)?</Label>
-              <div className="flex gap-2">
-                <Textarea
-                  id="meal-description"
-                  placeholder="e.g., Spaghetti Bolognese with ground beef, tomatoes, onions, garlic, and herbs"
-                  value={mealDescription}
-                  onChange={(e) => setMealDescription(e.target.value)}
-                  rows={4}
-                  className="flex-1"
-                />
+              <div className="flex items-center justify-between">
+                <Label htmlFor="meal-description">Meal Description</Label>
                 <VoiceDictationButton
                   isListening={assignMealDictation.isListening}
                   isSupported={assignMealDictation.isSupported}
-                  onStart={() => assignMealDictation.start()}
-                  onStop={() => assignMealDictation.stop()}
-                  disabled={assignCooking.isPending || updateCooking.isPending}
+                  onStart={assignMealDictation.start}
+                  onStop={assignMealDictation.stop}
+                  disabled={!!assignMealDictation.disabledReason}
+                  disabledReason={assignMealDictation.disabledReason || undefined}
                 />
               </div>
-              <p className="text-xs text-muted-foreground">
-                Describe the meal and list the main ingredients
-              </p>
+              <Textarea
+                id="meal-description"
+                value={mealDescription}
+                onChange={(e) => setMealDescription(e.target.value)}
+                placeholder="What's for dinner?"
+                rows={3}
+              />
             </div>
           </div>
           <DialogFooter>
@@ -513,34 +424,33 @@ export function DinnerRota() {
 
       {/* Edit Meal Description Dialog */}
       <Dialog open={!!editingMealDay} onOpenChange={handleMealDialogClose}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle>Edit Meal Description</DialogTitle>
-            <DialogDescription>Update what you're planning to cook with ingredients</DialogDescription>
+            <DialogDescription>
+              {editingMealDay && `For ${format(new Date(editingMealDay), 'EEEE, MMMM d')}`}
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="edit-meal-description">Meal Description</Label>
-              <div className="flex gap-2">
-                <Textarea
-                  id="edit-meal-description"
-                  placeholder="e.g., Spaghetti Bolognese with ground beef, tomatoes, onions, garlic, and herbs"
-                  value={mealDescription}
-                  onChange={(e) => setMealDescription(e.target.value)}
-                  rows={4}
-                  className="flex-1"
-                />
+              <div className="flex items-center justify-between">
+                <Label htmlFor="meal-desc-edit">Meal Description</Label>
                 <VoiceDictationButton
                   isListening={editMealDictation.isListening}
                   isSupported={editMealDictation.isSupported}
-                  onStart={() => editMealDictation.start()}
-                  onStop={() => editMealDictation.stop()}
-                  disabled={updateMealDesc.isPending}
+                  onStart={editMealDictation.start}
+                  onStop={editMealDictation.stop}
+                  disabled={!!editMealDictation.disabledReason}
+                  disabledReason={editMealDictation.disabledReason || undefined}
                 />
               </div>
-              <p className="text-xs text-muted-foreground">
-                Describe the meal and list the main ingredients
-              </p>
+              <Textarea
+                id="meal-desc-edit"
+                value={mealDescription}
+                onChange={(e) => setMealDescription(e.target.value)}
+                placeholder="What's for dinner?"
+                rows={4}
+              />
             </div>
           </div>
           <DialogFooter>

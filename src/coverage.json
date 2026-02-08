@@ -1,35 +1,58 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-08T00:02:00.400Z",
+  "generatedAt": "2026-02-08T00:33:45.642Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
-    "total": 2,
-    "implemented": 2,
+    "total": 3,
+    "implemented": 3,
     "items": [
       {
         "id": "REQ-1",
-        "summary": "Enhance the voice dictation UI so it provides a clear, subtle visual cue when the microphone is actively listening (i.e., SpeechRecognition has started), beyond the current icon pulse, and ensure the cue is visible in all places the VoiceDictationButton is used (e.g., AddTaskDialog and EditTaskDialog dictation controls).",
+        "summary": "Add a reusable hero/header section component that can be placed at the top of each main tab view and renders a static hero image with consistent styling (responsive, rounded corners, gradient overlay for text readability, and accessible alt text).",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/components/VoiceDictationButton.tsx"
+          "frontend/src/components/HeroHeader.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/components/VoiceDictationButton.tsx"
+          "frontend/src/components/HeroHeader.tsx"
         ]
       },
       {
         "id": "REQ-2",
-        "summary": "Add accessibility semantics for the listening state on the dictation control so assistive technologies can detect when dictation is active.",
+        "summary": "Add a distinct hero/header image at the top of each main tab view: Task List (frontend/src/components/TaskList.tsx), Dinner Rota (frontend/src/components/DinnerRota.tsx), Calendar (frontend/src/components/CalendarView.tsx), and People (frontend/src/components/People.tsx).",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/components/VoiceDictationButton.tsx"
+          "frontend/src/components/TaskList.tsx",
+          "frontend/src/components/DinnerRota.tsx",
+          "frontend/src/components/CalendarView.tsx",
+          "frontend/src/components/People.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/components/VoiceDictationButton.tsx"
+          "frontend/src/components/TaskList.tsx",
+          "frontend/src/components/DinnerRota.tsx",
+          "frontend/src/components/CalendarView.tsx",
+          "frontend/src/components/People.tsx"
+        ]
+      },
+      {
+        "id": "REQ-3",
+        "summary": "Add the generated hero images to the frontend as static assets under frontend/public/assets/generated and reference them via absolute paths (e.g., /assets/generated/...).",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/public/assets/generated/hero-task-list.dim_1600x400.jpg",
+          "frontend/public/assets/generated/hero-dinner-rota.dim_1600x400.jpg",
+          "frontend/public/assets/generated/hero-calendar.dim_1600x400.jpg",
+          "frontend/public/assets/generated/hero-people.dim_1600x400.jpg"
+        ],
+        "matchedFiles": [
+          "frontend/public/assets/generated/hero-task-list.dim_1600x400.jpg",
+          "frontend/public/assets/generated/hero-dinner-rota.dim_1600x400.jpg",
+          "frontend/public/assets/generated/hero-calendar.dim_1600x400.jpg",
+          "frontend/public/assets/generated/hero-people.dim_1600x400.jpg"
         ]
       }
     ]
@@ -39,7 +62,15 @@
     "feature_evidence.json",
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
-    "frontend/src/components/VoiceDictationButton.tsx",
+    "frontend/public/assets/generated/hero-calendar.dim_1600x400.jpg",
+    "frontend/public/assets/generated/hero-dinner-rota.dim_1600x400.jpg",
+    "frontend/public/assets/generated/hero-people.dim_1600x400.jpg",
+    "frontend/public/assets/generated/hero-task-list.dim_1600x400.jpg",
+    "frontend/src/components/CalendarView.tsx",
+    "frontend/src/components/DinnerRota.tsx",
+    "frontend/src/components/HeroHeader.tsx",
+    "frontend/src/components/People.tsx",
+    "frontend/src/components/TaskList.tsx",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",
