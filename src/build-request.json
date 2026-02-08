@@ -1,88 +1,66 @@
 {
   "kind": "build_request",
-  "title": "Add hero header images for each main tab (Task List, Dinner Rota, Calendar, People)",
+  "title": "Swap hero/header images for clean, modern visuals",
   "priority": "normal",
   "requirements": [
     {
       "id": "REQ-1",
-      "text": "Add a reusable hero/header section component that can be placed at the top of each main tab view and renders a static hero image with consistent styling (responsive, rounded corners, gradient overlay for text readability, and accessible alt text).",
+      "text": "Replace the existing hero/header images used at the top of each main tab with more visually appealing, clean, modern-day images while keeping the same image filenames and dimensions currently referenced by the UI.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-1"
+          "msg-user-1"
         ],
         "quotes": [
-          "Include some nice header hero images for each of the tasks, for each of the tabs, task list, calendar, people."
+          "Swap the header images for more visually appealing, clean, modern day images."
         ]
       },
       "acceptanceCriteria": [
-        "A reusable hero/header component exists and can be used by Task List, Dinner Rota, Calendar, and People views.",
-        "Hero section is responsive (maintains aspect ratio, crops via object-cover), has rounded corners, and uses an overlay to ensure any text remains readable.",
-        "All hero images have non-empty, descriptive alt text in English."
+        "The hero/header images for Tasks, Dinner Rota, Calendar, and People appear updated in the UI without layout changes.",
+        "The image paths referenced by the UI remain unchanged (same filenames) so no broken images occur.",
+        "Images feel clean/modern (natural light, minimal clutter, contemporary look) and remain readable behind the existing gradient overlay."
       ]
     },
     {
       "id": "REQ-2",
-      "text": "Add a distinct hero/header image at the top of each main tab view: Task List (frontend/src/components/TaskList.tsx), Dinner Rota (frontend/src/components/DinnerRota.tsx), Calendar (frontend/src/components/CalendarView.tsx), and People (frontend/src/components/People.tsx).",
+      "text": "Add the updated hero/header image files as static assets under frontend/public/assets/generated, matching the exact filenames referenced by the HeroHeader usage in each tab.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-1"
+          "msg-user-1"
         ],
         "quotes": [
-          "Include some nice header hero images for each of the tasks, for each of the tabs, task list, calendar, people."
+          "Swap the header images for more visually appealing, clean, modern day images."
         ]
       },
       "acceptanceCriteria": [
-        "Task List shows a hero image above the \"Household Tasks\" header content.",
-        "Dinner Rota shows a hero image in its header area (keeping or replacing the existing image block, but using the new consistent hero/header styling).",
-        "Calendar shows a hero image above the \"Calendar View\" header content.",
-        "People shows a hero image above the \"People\" header content.",
-        "No hero images are loaded via backend; all are served as static assets."
-      ]
-    },
-    {
-      "id": "REQ-3",
-      "text": "Add the generated hero images to the frontend as static assets under frontend/public/assets/generated and reference them via absolute paths (e.g., /assets/generated/...).",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "msg-1"
-        ],
-        "quotes": [
-          "Include some nice header hero images for each of the tasks, for each of the tabs, task list, calendar, people."
-        ]
-      },
-      "acceptanceCriteria": [
-        "All new hero image files exist under frontend/public/assets/generated.",
-        "Each tab references its corresponding hero image path and renders successfully in the browser without 404s."
+        "The following assets exist in frontend/public/assets/generated and load successfully in the browser: header-tasks.dim_1600x420.jpg, header-dinner.dim_1600x420.jpg, header-calendar.dim_1600x420.jpg, header-people.dim_1600x420.jpg.",
+        "No console 404s occur for the header image assets when navigating across all tabs."
       ]
     }
   ],
   "constraints": [
-    "Do not edit files under frontend/src/components/ui (read-only UI components).",
-    "Do not edit files under frontend/src/hooks/useInternetIdentity.ts, frontend/src/hooks/useInternetIdentity.tsx, frontend/src/hooks/useActor.ts, or frontend/src/main.tsx (immutable paths)."
+    "Do not edit files under frontend/src/components/ui or any other immutablePaths listed in SYSTEM_CONTEXT.",
+    "Keep the backend unchanged; this request is purely about swapping static hero/header images."
   ],
   "nonGoals": [
-    "Fixing backend data persistence/stable storage issues.",
-    "Adding new tabs or changing tab navigation structure.",
-    "Implementing image upload or user-customizable hero images."
+    "Fixing the 'backup backend is not ready' / add-task readiness issue.",
+    "Changing HeroHeader layout/behavior beyond what is required to swap images.",
+    "Replacing non-header images (e.g., login card image or empty-state images)."
   ],
   "imageRequirements": {
     "required": [
-      "Warm, cozy task-management themed hero banner with subtle household/clipboard motifs (hero-task-list.dim_1600x400.jpg)",
-      "Warm, family dinner/cooking themed hero banner with kitchen elements (hero-dinner-rota.dim_1600x400.jpg)",
-      "Clean planning/calendar themed hero banner with date grid motifs (hero-calendar.dim_1600x400.jpg)",
-      "Friendly people/community themed hero banner with abstract avatars/shapes (hero-people.dim_1600x400.jpg)"
+      "Clean modern household task organization photo banner (header-tasks.dim_1600x420.jpg)",
+      "Clean modern family dinner prep/cooking photo banner (header-dinner.dim_1600x420.jpg)",
+      "Clean modern calendar/planning photo banner (header-calendar.dim_1600x420.jpg)",
+      "Clean modern people/community-themed photo banner (header-people.dim_1600x420.jpg)"
     ],
     "edits": []
   },
   "userProfileUpdate": {
     "goalsToAdd": [],
     "goalsToRemove": [],
-    "preferencesToAdd": [
-      "Use English for any user-facing text."
-    ],
+    "preferencesToAdd": [],
     "preferencesToRemove": [],
     "miscToAdd": [],
     "miscToRemove": [],

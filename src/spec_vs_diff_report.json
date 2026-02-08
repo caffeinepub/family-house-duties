@@ -1,46 +1,37 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-02-08T00:33:45.638Z",
-  "summary": "A reusable HeroHeader component was added and integrated into TaskList, People, and (partially shown) CalendarView; DinnerRota import/use is suggested but not visible in the truncated region. However, the required static hero image assets and exact required filenames/paths are not evidenced in the diff, and at least one hero image reference (CalendarView) appears truncated/possibly incorrect. An additional non-requested generated image is referenced in TaskList.",
+  "generatedAt": "2026-02-08T01:17:16.843Z",
+  "summary": "The diff does not implement the requested hero/header image swaps or add the required static image assets; it only updates project_state.json metadata and references unrelated backend readiness issues.",
   "missing_requirements": [
     {
-      "id": "REQ-2",
-      "requirement": "Add a distinct hero/header image at the top of each main tab view (Task List, Dinner Rota, Calendar, People) using the consistent hero/header styling.",
-      "reason": "CalendarView’s HeroHeader imageSrc is shown as a truncated/possibly invalid path (ends with \".jp\" in the truncated snippet), so it is not verifiable that the Calendar hero renders successfully. DinnerRota’s actual HeroHeader placement is not visible in the truncated diff content, so it cannot be confirmed.",
+      "id": "REQ-1",
+      "requirement": "Replace the existing hero/header images used at the top of each main tab with more visually appealing, clean, modern-day images while keeping the same image filenames and dimensions currently referenced by the UI.",
+      "reason": "No frontend UI files or image assets were modified/added; only project_state.json was changed, so the hero/header images cannot be updated in the UI.",
       "evidence": [
-        "frontend/src/components/CalendarView.tsx",
-        "frontend/src/components/DinnerRota.tsx"
+        "project_state.json"
       ]
     },
     {
-      "id": "REQ-3",
-      "requirement": "Add the generated hero images under frontend/public/assets/generated and reference them via absolute paths like /assets/generated/...",
-      "reason": "The diff summary shows no added files under frontend/public/assets/generated, so the presence of the required hero image files cannot be confirmed. Additionally, the referenced hero filenames in code use a different naming pattern (e.g., header-*.dim_1600x420.jpg) than the BuildRequest-required names (hero-*.dim_1600x400.jpg).",
+      "id": "REQ-2",
+      "requirement": "Add the updated hero/header image files as static assets under frontend/public/assets/generated, matching the exact filenames referenced by the HeroHeader usage in each tab.",
+      "reason": "No files were added under frontend/public/assets/generated (no added files at all), so the required header image assets are not present.",
       "evidence": [
-        "frontend/src/components/TaskList.tsx",
-        "frontend/src/components/People.tsx",
-        "frontend/src/components/CalendarView.tsx"
+        "project_state.json"
       ]
     }
   ],
   "hallucinated_features": [
     {
-      "description": "Added/used an extra generated image asset (task-clipboard.dim_200x200.jpg) in the TaskList empty state, which was not part of the requested four hero header images.",
-      "reason": "BuildRequest only asks for four specific hero header banners for the main tabs; it does not request additional generated images for empty states.",
+      "description": "Tracking or prioritizing a backend readiness/add-task issue as part of this change (e.g., marking as a fix request, mentioning backend not ready).",
+      "reason": "The BuildRequest explicitly states the backend must remain unchanged and that fixing the 'backup backend is not ready' / add-task readiness issue is a non-goal, yet project metadata emphasizes this backend issue.",
       "evidence": [
-        "frontend/src/components/TaskList.tsx"
+        "project_state.json"
       ]
     }
   ],
-  "confidence": 0.72,
+  "confidence": 0.82,
   "changed_files": [
-    "frontend-file-summaries.txt",
-    "frontend/src/components/CalendarView.tsx",
-    "frontend/src/components/DinnerRota.tsx",
-    "frontend/src/components/HeroHeader.tsx",
-    "frontend/src/components/People.tsx",
-    "frontend/src/components/TaskList.tsx",
     "project_state.json"
   ]
 }

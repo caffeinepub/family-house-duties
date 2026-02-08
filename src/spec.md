@@ -1,11 +1,11 @@
 # Specification
 
 ## Summary
-**Goal:** Add consistent hero/header images to the top of each main tab (Task List, Dinner Rota, Calendar, People) using a reusable component and static frontend assets.
+**Goal:** Swap the hero/header images at the top of each main tab for cleaner, more modern visuals without changing layout or asset paths.
 
 **Planned changes:**
-- Create a reusable hero/header section component with responsive styling, rounded corners, a gradient overlay for text readability, and descriptive English alt text.
-- Add a distinct hero image to the top of Task List, Dinner Rota, Calendar, and People views using the shared hero/header component and consistent styling.
-- Add new generated hero images as static assets under `frontend/public/assets/generated` and reference them via absolute paths (e.g., `/assets/generated/...`) without any backend loading.
+- Replace the existing header image assets for Tasks, Dinner Rota, Calendar, and People with new clean/modern banner images.
+- Keep the exact same filenames and dimensions currently referenced by the UI so navigation across tabs produces no broken images or layout changes.
+- Add/overwrite the updated image files under `frontend/public/assets/generated` so they load successfully in the browser.
 
-**User-visible outcome:** Each main tab displays a polished, consistent hero banner image at the top of the page with accessible alt text and responsive layout.
+**User-visible outcome:** The Tasks, Dinner Rota, Calendar, and People tabs display refreshed, clean, modern header images with the same sizing and layout as before.

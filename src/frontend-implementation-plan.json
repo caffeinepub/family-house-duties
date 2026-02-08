@@ -1,84 +1,66 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Reusable hero header images for main tabs",
+  "title": "Swap tab hero/header images with modern static banners",
   "requirements": [
     {
       "id": "REQ-1",
-      "summary": "Create a reusable HeroHeader component with responsive, accessible hero image styling used across main tab views.",
+      "summary": "Replace the hero/header banner images for Tasks, Dinner Rota, Calendar, and People with clean modern visuals while keeping the exact same referenced filenames and dimensions.",
       "acceptanceCriteria": [
-        "A reusable hero/header component exists and can be used by Task List, Dinner Rota, Calendar, and People views.",
-        "Hero section is responsive (maintains aspect ratio, crops via object-cover), has rounded corners, and uses an overlay to ensure any text remains readable.",
-        "All hero images have non-empty, descriptive alt text in English."
+        "The hero/header images for Tasks, Dinner Rota, Calendar, and People appear updated in the UI without layout changes.",
+        "The image paths referenced by the UI remain unchanged (same filenames) so no broken images occur.",
+        "Images feel clean/modern (natural light, minimal clutter, contemporary look) and remain readable behind the existing gradient overlay."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/components/HeroHeader.tsx",
-          "operation": "create",
-          "description": "Create a reusable HeroHeader component that renders a static hero image with consistent styling: responsive aspect ratio, object-cover cropping, rounded corners, and a gradient overlay layer to improve text readability; supports passing non-empty English alt text and optional title/subtitle content."
+          "path": "frontend/public/assets/generated/header-tasks.dim_1600x420.jpg",
+          "operation": "modify",
+          "description": "Replace the binary image content with a clean, modern household task-organization banner while preserving the exact filename and 1600x420 dimensions."
+        },
+        {
+          "path": "frontend/public/assets/generated/header-dinner.dim_1600x420.jpg",
+          "operation": "modify",
+          "description": "Replace the binary image content with a clean, modern family dinner prep/cooking banner while preserving the exact filename and 1600x420 dimensions."
+        },
+        {
+          "path": "frontend/public/assets/generated/header-calendar.dim_1600x420.jpg",
+          "operation": "modify",
+          "description": "Replace the binary image content with a clean, modern calendar/planning banner while preserving the exact filename and 1600x420 dimensions."
+        },
+        {
+          "path": "frontend/public/assets/generated/header-people.dim_1600x420.jpg",
+          "operation": "modify",
+          "description": "Replace the binary image content with a clean, modern people/community-themed banner while preserving the exact filename and 1600x420 dimensions."
         }
       ]
     },
     {
       "id": "REQ-2",
-      "summary": "Add distinct hero images to Task List, Dinner Rota, Calendar, and People tab views using the new HeroHeader styling.",
+      "summary": "Ensure the updated hero/header images exist as static assets under frontend/public/assets/generated with the exact filenames used by each tab’s HeroHeader.",
       "acceptanceCriteria": [
-        "Task List shows a hero image above the \"Household Tasks\" header content.",
-        "Dinner Rota shows a hero image in its header area (keeping or replacing the existing image block, but using the new consistent hero/header styling).",
-        "Calendar shows a hero image above the \"Calendar View\" header content.",
-        "People shows a hero image above the \"People\" header content.",
-        "No hero images are loaded via backend; all are served as static assets."
+        "The following assets exist in frontend/public/assets/generated and load successfully in the browser: header-tasks.dim_1600x420.jpg, header-dinner.dim_1600x420.jpg, header-calendar.dim_1600x420.jpg, header-people.dim_1600x420.jpg.",
+        "No console 404s occur for the header image assets when navigating across all tabs."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/components/TaskList.tsx",
-          "operation": "modify",
-          "description": "Import and render the new HeroHeader component at the top of the Task List view, above the existing \"Household Tasks\" header area, using the static asset path /assets/generated/hero-task-list.dim_1600x400.jpg with a descriptive English alt text."
-        },
-        {
-          "path": "frontend/src/components/DinnerRota.tsx",
-          "operation": "modify",
-          "description": "Replace (or refactor) the existing header image block to use the new HeroHeader component for consistent styling, referencing /assets/generated/hero-dinner-rota.dim_1600x400.jpg with a descriptive English alt text; ensure it appears in the header area above the main Dinner Rota content."
-        },
-        {
-          "path": "frontend/src/components/CalendarView.tsx",
-          "operation": "modify",
-          "description": "Import and render the new HeroHeader component at the top of the Calendar view, above the existing \"Calendar View\" header area, referencing /assets/generated/hero-calendar.dim_1600x400.jpg with a descriptive English alt text."
-        },
-        {
-          "path": "frontend/src/components/People.tsx",
-          "operation": "modify",
-          "description": "Import and render the new HeroHeader component at the top of the People view, above the existing \"People\" header area, referencing /assets/generated/hero-people.dim_1600x400.jpg with a descriptive English alt text."
-        }
-      ]
-    },
-    {
-      "id": "REQ-3",
-      "summary": "Add generated hero images as static assets under frontend/public/assets/generated and reference them via absolute paths.",
-      "acceptanceCriteria": [
-        "All new hero image files exist under frontend/public/assets/generated.",
-        "Each tab references its corresponding hero image path and renders successfully in the browser without 404s."
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/public/assets/generated/hero-task-list.dim_1600x400.jpg",
+          "path": "frontend/public/assets/generated/header-tasks.dim_1600x420.jpg",
           "operation": "create",
-          "description": "Add the generated static hero image asset for the Task List tab: frontend/public/assets/generated/hero-task-list.dim_1600x400.jpg."
+          "description": "Add the updated Tasks header banner asset at this exact path/filename (if already present, keep the same filename and overwrite content with the new image)."
         },
         {
-          "path": "frontend/public/assets/generated/hero-dinner-rota.dim_1600x400.jpg",
+          "path": "frontend/public/assets/generated/header-dinner.dim_1600x420.jpg",
           "operation": "create",
-          "description": "Add the generated static hero image asset for the Dinner Rota tab: frontend/public/assets/generated/hero-dinner-rota.dim_1600x400.jpg."
+          "description": "Add the updated Dinner Rota header banner asset at this exact path/filename (if already present, keep the same filename and overwrite content with the new image)."
         },
         {
-          "path": "frontend/public/assets/generated/hero-calendar.dim_1600x400.jpg",
+          "path": "frontend/public/assets/generated/header-calendar.dim_1600x420.jpg",
           "operation": "create",
-          "description": "Add the generated static hero image asset for the Calendar tab: frontend/public/assets/generated/hero-calendar.dim_1600x400.jpg."
+          "description": "Add the updated Calendar header banner asset at this exact path/filename (if already present, keep the same filename and overwrite content with the new image)."
         },
         {
-          "path": "frontend/public/assets/generated/hero-people.dim_1600x400.jpg",
+          "path": "frontend/public/assets/generated/header-people.dim_1600x420.jpg",
           "operation": "create",
-          "description": "Add the generated static hero image asset for the People tab: frontend/public/assets/generated/hero-people.dim_1600x400.jpg."
+          "description": "Add the updated People header banner asset at this exact path/filename (if already present, keep the same filename and overwrite content with the new image)."
         }
       ]
     }

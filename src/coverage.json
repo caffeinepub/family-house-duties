@@ -1,58 +1,47 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-08T00:33:45.642Z",
+  "generatedAt": "2026-02-08T01:17:16.846Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
-    "total": 3,
-    "implemented": 3,
+    "total": 2,
+    "implemented": 2,
     "items": [
       {
         "id": "REQ-1",
-        "summary": "Add a reusable hero/header section component that can be placed at the top of each main tab view and renders a static hero image with consistent styling (responsive, rounded corners, gradient overlay for text readability, and accessible alt text).",
+        "summary": "Replace the existing hero/header images used at the top of each main tab with more visually appealing, clean, modern-day images while keeping the same image filenames and dimensions currently referenced by the UI.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/components/HeroHeader.tsx"
+          "frontend/public/assets/generated/header-tasks.dim_1600x420.jpg",
+          "frontend/public/assets/generated/header-dinner.dim_1600x420.jpg",
+          "frontend/public/assets/generated/header-calendar.dim_1600x420.jpg",
+          "frontend/public/assets/generated/header-people.dim_1600x420.jpg"
         ],
         "matchedFiles": [
-          "frontend/src/components/HeroHeader.tsx"
+          "frontend/public/assets/generated/header-tasks.dim_1600x420.jpg",
+          "frontend/public/assets/generated/header-dinner.dim_1600x420.jpg",
+          "frontend/public/assets/generated/header-calendar.dim_1600x420.jpg",
+          "frontend/public/assets/generated/header-people.dim_1600x420.jpg"
         ]
       },
       {
         "id": "REQ-2",
-        "summary": "Add a distinct hero/header image at the top of each main tab view: Task List (frontend/src/components/TaskList.tsx), Dinner Rota (frontend/src/components/DinnerRota.tsx), Calendar (frontend/src/components/CalendarView.tsx), and People (frontend/src/components/People.tsx).",
+        "summary": "Add the updated hero/header image files as static assets under frontend/public/assets/generated, matching the exact filenames referenced by the HeroHeader usage in each tab.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/components/TaskList.tsx",
-          "frontend/src/components/DinnerRota.tsx",
-          "frontend/src/components/CalendarView.tsx",
-          "frontend/src/components/People.tsx"
+          "frontend/public/assets/generated/header-tasks.dim_1600x420.jpg",
+          "frontend/public/assets/generated/header-dinner.dim_1600x420.jpg",
+          "frontend/public/assets/generated/header-calendar.dim_1600x420.jpg",
+          "frontend/public/assets/generated/header-people.dim_1600x420.jpg"
         ],
         "matchedFiles": [
-          "frontend/src/components/TaskList.tsx",
-          "frontend/src/components/DinnerRota.tsx",
-          "frontend/src/components/CalendarView.tsx",
-          "frontend/src/components/People.tsx"
-        ]
-      },
-      {
-        "id": "REQ-3",
-        "summary": "Add the generated hero images to the frontend as static assets under frontend/public/assets/generated and reference them via absolute paths (e.g., /assets/generated/...).",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/public/assets/generated/hero-task-list.dim_1600x400.jpg",
-          "frontend/public/assets/generated/hero-dinner-rota.dim_1600x400.jpg",
-          "frontend/public/assets/generated/hero-calendar.dim_1600x400.jpg",
-          "frontend/public/assets/generated/hero-people.dim_1600x400.jpg"
-        ],
-        "matchedFiles": [
-          "frontend/public/assets/generated/hero-task-list.dim_1600x400.jpg",
-          "frontend/public/assets/generated/hero-dinner-rota.dim_1600x400.jpg",
-          "frontend/public/assets/generated/hero-calendar.dim_1600x400.jpg",
-          "frontend/public/assets/generated/hero-people.dim_1600x400.jpg"
+          "frontend/public/assets/generated/header-tasks.dim_1600x420.jpg",
+          "frontend/public/assets/generated/header-dinner.dim_1600x420.jpg",
+          "frontend/public/assets/generated/header-calendar.dim_1600x420.jpg",
+          "frontend/public/assets/generated/header-people.dim_1600x420.jpg"
         ]
       }
     ]
@@ -60,17 +49,11 @@
   "changedFiles": [
     "build-request.json",
     "feature_evidence.json",
-    "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
-    "frontend/public/assets/generated/hero-calendar.dim_1600x400.jpg",
-    "frontend/public/assets/generated/hero-dinner-rota.dim_1600x400.jpg",
-    "frontend/public/assets/generated/hero-people.dim_1600x400.jpg",
-    "frontend/public/assets/generated/hero-task-list.dim_1600x400.jpg",
-    "frontend/src/components/CalendarView.tsx",
-    "frontend/src/components/DinnerRota.tsx",
-    "frontend/src/components/HeroHeader.tsx",
-    "frontend/src/components/People.tsx",
-    "frontend/src/components/TaskList.tsx",
+    "frontend/public/assets/generated/header-calendar.dim_1600x420.jpg",
+    "frontend/public/assets/generated/header-dinner.dim_1600x420.jpg",
+    "frontend/public/assets/generated/header-people.dim_1600x420.jpg",
+    "frontend/public/assets/generated/header-tasks.dim_1600x420.jpg",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",

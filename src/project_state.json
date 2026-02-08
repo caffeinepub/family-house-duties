@@ -1,35 +1,27 @@
 {
   "schemaVersion": "1.0.0",
   "projectStateVersion": 3,
-  "summary": "New project",
+  "summary": "Project includes a task/add-task workflow and a UI with header/hero images; work is ongoing to improve visuals and address backend readiness issues affecting task creation.",
   "architectural_notes": [],
   "known_issues": [
-    "Data is not persisting/showing after updates despite making the database/canister persistent (likely transient vs stable storage issue)."
+    "Add task function not working; error indicates the backup backend is not ready"
   ],
   "isFixRequest": true,
-  "imageRequirements": "## Required Images\n- Warm, cozy task-management themed hero banner with subtle household/clipboard motifs (hero-task-list.dim_1600x400.jpg)\n- Warm, family dinner/cooking themed hero banner with kitchen elements (hero-dinner-rota.dim_1600x400.jpg)\n- Clean planning/calendar themed hero banner with date grid motifs (hero-calendar.dim_1600x400.jpg)\n- Friendly people/community themed hero banner with abstract avatars/shapes (hero-people.dim_1600x400.jpg)",
+  "imageRequirements": "## Required Images\n- Clean modern household task organization photo banner (header-tasks.dim_1600x420.jpg)\n- Clean modern family dinner prep/cooking photo banner (header-dinner.dim_1600x420.jpg)\n- Clean modern calendar/planning photo banner (header-calendar.dim_1600x420.jpg)\n- Clean modern people/community-themed photo banner (header-people.dim_1600x420.jpg)",
   "existing_features": [
     {
-      "id": "feature-add-a-reusable-hero-header-section-component-that-can-be-placed-at-the-top-of-each-main-tab-view-and-renders-a-static-hero-image-with-consistent-styling-responsive-rounded-corners-gradient-overlay-for-text-readability-and-accessible-alt-text",
-      "title": "Add a reusable hero/header section component that can be placed at the top of each main tab view and renders a static hero image with consistent styling (responsive, rounded corners, gradient overlay for text readability, and accessible alt text).",
+      "id": "feature-replace-the-existing-hero-header-images-used-at-the-top-of-each-main-tab-with-more-visually-appealing-clean-modern-day-images-while-keeping-the-same-image-filenames-and-dimensions-currently-referenced-by-the-ui",
+      "title": "Replace the existing hero/header images used at the top of each main tab with more visually appealing, clean, modern-day images while keeping the same image filenames and dimensions currently referenced by the UI.",
       "reqIds": [
         "REQ-1"
       ],
       "version": 1
     },
     {
-      "id": "feature-add-a-distinct-hero-header-image-at-the-top-of-each-main-tab-view-task-list-frontend-src-components-tasklist-tsx-dinner-rota-frontend-src-components-dinnerrota-tsx-calendar-frontend-src-components-calendarview-tsx-and-people-frontend-src-components-people-tsx",
-      "title": "Add a distinct hero/header image at the top of each main tab view: Task List (frontend/src/components/TaskList.tsx), Dinner Rota (frontend/src/components/DinnerRota.tsx), Calendar (frontend/src/components/CalendarView.tsx), and People (frontend/src/components/People.tsx).",
+      "id": "feature-add-the-updated-hero-header-image-files-as-static-assets-under-frontend-public-assets-generated-matching-the-exact-filenames-referenced-by-the-heroheader-usage-in-each-tab",
+      "title": "Add the updated hero/header image files as static assets under frontend/public/assets/generated, matching the exact filenames referenced by the HeroHeader usage in each tab.",
       "reqIds": [
         "REQ-2"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-add-the-generated-hero-images-to-the-frontend-as-static-assets-under-frontend-public-assets-generated-and-reference-them-via-absolute-paths-e-g-assets-generated",
-      "title": "Add the generated hero images to the frontend as static assets under frontend/public/assets/generated and reference them via absolute paths (e.g., /assets/generated/...).",
-      "reqIds": [
-        "REQ-3"
       ],
       "version": 1
     }
@@ -37,13 +29,12 @@
   "new_feature_requests": [
     {
       "id": "AR-1",
-      "summary": "Add nice header/hero images for each main tab/section (Tasks, Task List, Calendar, People)",
+      "summary": "Swap the header images for more visually appealing, clean, modern images",
       "reqIds": [],
       "status": "pending"
     }
   ],
-  "gameProjectType": "none",
-  "projectName": "Add hero header images for each main tab (Task List, Dinner Rota, Calendar, People)",
+  "projectName": "Swap hero/header images for clean, modern visuals",
   "clarification_mode": "instant",
   "clarification_rounds": 0
 }
