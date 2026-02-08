@@ -175,7 +175,7 @@ export function EditTaskDialog({ task, open, onOpenChange }: EditTaskDialogProps
                   onStart={handleStartNameDictation}
                   onStop={handleStopNameDictation}
                   disabled={updateTask.isPending}
-                  disabledReason={updateTask.isPending ? 'Updating task...' : undefined}
+                  disabledReason={nameDictation.disabledReason || (updateTask.isPending ? 'Updating task...' : undefined)}
                 />
               </div>
             </div>
@@ -196,7 +196,7 @@ export function EditTaskDialog({ task, open, onOpenChange }: EditTaskDialogProps
                   onStart={handleStartDescriptionDictation}
                   onStop={handleStopDescriptionDictation}
                   disabled={updateTask.isPending}
-                  disabledReason={updateTask.isPending ? 'Updating task...' : undefined}
+                  disabledReason={descriptionDictation.disabledReason || (updateTask.isPending ? 'Updating task...' : undefined)}
                 />
               </div>
             </div>

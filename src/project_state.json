@@ -1,16 +1,22 @@
 {
   "schemaVersion": "1.0.0",
   "projectStateVersion": 3,
-  "summary": "New project",
+  "summary": "Mobile speech-to-text feature with an added UI cue indicating when the microphone is actively listening.",
   "architectural_notes": [],
-  "known_issues": [
-    "Speech-to-text task addition still not working; error indicates back-end is not ready."
-  ],
-  "isFixRequest": true,
+  "known_issues": [],
+  "isFixRequest": false,
   "existing_features": [
     {
-      "id": "feature-make-readiness-checks-use-real-initialization-error-state-so-the-app-shows-accurate-backend-connection-status-specifically-in-frontend-src-hooks-useactorwithreadiness-ts-consume-the-new-error-state-from-useactor-and-set-initerror-accordingly-ensure-the-derived-flags-behave-consistently-isinitializing-is-true-while-the-actor-query-is-fetching-and-no-actor-is-available-yet-isready-is-true-only-when-an-actor-exists-and-the-query-is-not-fetching-initerror-is-non-null-when-actor-initialization-failed-query-error",
-      "title": "Make readiness checks use real initialization error state so the app shows accurate backend connection status.\n\nSpecifically:\n- In frontend/src/hooks/useActorWithReadiness.ts, consume the new error state from useActor and set `initError` accordingly.\n- Ensure the derived flags behave consistently:\n  - `isInitializing` is true while the actor query is fetching and no actor is available yet.\n  - `isReady` is true only when an actor exists and the query is not fetching.\n  - `initError` is non-null when actor initialization failed (query error).",
+      "id": "feature-enhance-the-voice-dictation-ui-so-it-provides-a-clear-subtle-visual-cue-when-the-microphone-is-actively-listening-i-e-speechrecognition-has-started-beyond-the-current-icon-pulse-and-ensure-the-cue-is-visible-in-all-places-the-voicedictationbutton-is-used-e-g-addtaskdialog-and-edittaskdialog-dictation-controls",
+      "title": "Enhance the voice dictation UI so it provides a clear, subtle visual cue when the microphone is actively listening (i.e., SpeechRecognition has started), beyond the current icon pulse, and ensure the cue is visible in all places the VoiceDictationButton is used (e.g., AddTaskDialog and EditTaskDialog dictation controls).",
+      "reqIds": [
+        "REQ-1"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-accessibility-semantics-for-the-listening-state-on-the-dictation-control-so-assistive-technologies-can-detect-when-dictation-is-active",
+      "title": "Add accessibility semantics for the listening state on the dictation control so assistive technologies can detect when dictation is active.",
       "reqIds": [
         "REQ-2"
       ],
@@ -20,22 +26,12 @@
   "new_feature_requests": [
     {
       "id": "AR-1",
-      "summary": "Update the actor initialization hook to avoid failing actor creation due to access-control initialization and to surface initialization errors.\n\nSpecifically:\n- In frontend/src/hooks/useActor.ts, make access-control initialization (_initializeAccessControlWithSecret) conditional on a non-empty caffeineAdminToken.\n- Wrap the access-control initialization call in try/catch so that actor creation can still succeed (return the actor) even if access-control init fails.\n- Expose the React Query error state from the actor query (e.g., return an `error` field alongside `actor` and `isFetching`) so the UI can distinguish “still loading” vs “failed to connect/initialize”.",
-      "reqIds": [
-        "REQ-1"
-      ],
-      "status": "pending"
-    },
-    {
-      "id": "AR-3",
-      "summary": "Improve diagnostics for actor initialization to speed up troubleshooting of “backend not ready” reports.\n\nSpecifically:\n- Add structured console diagnostics around actor creation and access-control initialization steps in frontend/src/hooks/useActor.ts using existing diagnostics utilities (frontend/src/utils/deploymentDiagnostics.ts and/or frontend/src/utils/actorInitDiagnostics.ts).\n- Ensure diagnostics do not include sensitive values (do not log the admin token).",
-      "reqIds": [
-        "REQ-3"
-      ],
+      "summary": "Add a subtle UI cue/indicator when the mic is actively listening during mobile speech-to-text.",
+      "reqIds": [],
       "status": "pending"
     }
   ],
-  "projectName": "Fix false “Backend is not ready” by hardening actor initialization and surfacing real init errors",
+  "projectName": "Add clear UI indicator when voice dictation microphone is actively listening",
   "clarification_mode": "instant",
   "clarification_rounds": 0
 }

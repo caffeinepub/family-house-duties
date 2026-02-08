@@ -1,71 +1,55 @@
 {
   "kind": "build_request",
-  "title": "Fix false “Backend is not ready” by hardening actor initialization and surfacing real init errors",
-  "priority": "high",
+  "title": "Add clear UI indicator when voice dictation microphone is actively listening",
+  "priority": "normal",
   "requirements": [
     {
       "id": "REQ-1",
-      "text": "Update the actor initialization hook to avoid failing actor creation due to access-control initialization and to surface initialization errors.\n\nSpecifically:\n- In frontend/src/hooks/useActor.ts, make access-control initialization (_initializeAccessControlWithSecret) conditional on a non-empty caffeineAdminToken.\n- Wrap the access-control initialization call in try/catch so that actor creation can still succeed (return the actor) even if access-control init fails.\n- Expose the React Query error state from the actor query (e.g., return an `error` field alongside `actor` and `isFetching`) so the UI can distinguish “still loading” vs “failed to connect/initialize”.",
+      "text": "Enhance the voice dictation UI so it provides a clear, subtle visual cue when the microphone is actively listening (i.e., SpeechRecognition has started), beyond the current icon pulse, and ensure the cue is visible in all places the VoiceDictationButton is used (e.g., AddTaskDialog and EditTaskDialog dictation controls).",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-4"
+          "recent-messages-3"
         ],
         "quotes": [
-          "Still not working correctly. I think you'll be getting an error saying the back-end is not ready. Please fix."
+          "Yes, let's add a certain UI cue when the mic is actually listening."
         ]
       },
       "acceptanceCriteria": [
-        "When caffeineAdminToken is missing/empty, the app does not attempt to call _initializeAccessControlWithSecret during actor initialization.",
-        "If _initializeAccessControlWithSecret throws/traps, the actor is still returned when possible (so the app can proceed for non-admin use cases) and the error is available to the UI via the hook.",
-        "If actor creation fails (e.g., canister unavailable), the hook exposes a non-null error state (not just `actor: null`)."
+        "When dictation is actively listening, the mic control has an additional visible indicator (e.g., a small red 'live' dot, glow ring, or similar subtle accent) that is not shown when not listening.",
+        "The listening indicator turns on only while `isListening` is true for the active dictation field, and turns off immediately when dictation stops/ends/errors.",
+        "The indicator is visible and legible on both light and dark themes and does not rely solely on color (e.g., uses shape/animation as well).",
+        "The existing tooltip behavior remains correct (Start voice dictation vs Stop dictation), and the button remains operable on mobile."
       ]
     },
     {
       "id": "REQ-2",
-      "text": "Make readiness checks use real initialization error state so the app shows accurate backend connection status.\n\nSpecifically:\n- In frontend/src/hooks/useActorWithReadiness.ts, consume the new error state from useActor and set `initError` accordingly.\n- Ensure the derived flags behave consistently:\n  - `isInitializing` is true while the actor query is fetching and no actor is available yet.\n  - `isReady` is true only when an actor exists and the query is not fetching.\n  - `initError` is non-null when actor initialization failed (query error).",
+      "text": "Add accessibility semantics for the listening state on the dictation control so assistive technologies can detect when dictation is active.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-4"
+          "recent-messages-3"
         ],
         "quotes": [
-          "I think you'll be getting an error saying the back-end is not ready. Please fix."
+          "Yes, let's add a certain UI cue when the mic is actually listening."
         ]
       },
       "acceptanceCriteria": [
-        "When the backend canister cannot be reached or actor initialization fails, AddTaskDialog shows the “Backend connection failed…” message (from actorAvailability) instead of the generic “Backend is not ready…”.",
-        "When the actor is still being created, AddTaskDialog shows the “Connecting to backend…” message, and transitions to enabled submission automatically once ready.",
-        "When the actor is ready, the Add Task submit button is enabled (assuming required fields are filled) without requiring a page refresh."
-      ]
-    },
-    {
-      "id": "REQ-3",
-      "text": "Improve diagnostics for actor initialization to speed up troubleshooting of “backend not ready” reports.\n\nSpecifically:\n- Add structured console diagnostics around actor creation and access-control initialization steps in frontend/src/hooks/useActor.ts using existing diagnostics utilities (frontend/src/utils/deploymentDiagnostics.ts and/or frontend/src/utils/actorInitDiagnostics.ts).\n- Ensure diagnostics do not include sensitive values (do not log the admin token).",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "msg-4"
-        ],
-        "quotes": [
-          "Still not working correctly. I think you'll be getting an error saying the back-end is not ready. Please fix."
-        ]
-      },
-      "acceptanceCriteria": [
-        "Console output clearly indicates whether failure occurred during actor creation vs access-control initialization, without logging secrets.",
-        "A developer can reproduce a backend-down scenario and see a single, clear diagnostic failure path (no noisy repeated logs)."
+        "When listening, the dictation control exposes an appropriate state to screen readers (e.g., `aria-pressed=true` and/or an `aria-live` status text that announces \"Listening\" / \"Not listening\").",
+        "User-facing accessibility text is in English.",
+        "No accessibility attributes are added to any immutable-path files."
       ]
     }
   ],
   "constraints": [
-    "Keep all backend logic within the single Motoko actor in backend/main.mo (no new canisters/services).",
-    "Do not edit files under frontend/src/components/ui or any other frontend immutablePaths.",
-    "Use English for any user-facing text."
+    "Do not modify files under frontend/src/components/ui (Shadcn UI sources are read-only).",
+    "Do not modify any paths listed as immutable in SYSTEM_CONTEXT (compose existing hooks/components instead).",
+    "Keep the backend single-actor architecture unchanged; no backend changes are required for this UI-only cue."
   ],
   "nonGoals": [
-    "Implementing a new authentication provider (only Internet Identity is supported).",
-    "Adding new speech-to-text features beyond restoring backend connectivity/readiness behavior.",
-    "Changing backend authorization rules unless strictly required to resolve initialization failure."
+    "Do not add new authentication methods or third-party integrations.",
+    "Do not implement audio visualization, waveform rendering, or real-time transcription UI beyond the listening cue.",
+    "Do not change the underlying Web Speech API start/stop logic unless required to correctly reflect the existing `isListening` state."
   ],
   "imageRequirements": {
     "required": [],

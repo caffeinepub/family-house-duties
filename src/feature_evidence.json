@@ -2,10 +2,29 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-make-readiness-checks-use-real-initialization-error-state-so-the-app-shows-accurate-backend-connection-status-specifically-in-frontend-src-hooks-useactorwithreadiness-ts-consume-the-new-error-state-from-useactor-and-set-initerror-accordingly-ensure-the-derived-flags-behave-consistently-isinitializing-is-true-while-the-actor-query-is-fetching-and-no-actor-is-available-yet-isready-is-true-only-when-an-actor-exists-and-the-query-is-not-fetching-initerror-is-non-null-when-actor-initialization-failed-query-error",
-      "featureTitle": "Make readiness checks use real initialization error state so the app shows accurate backend connection status.\n\nSpecifically:\n- In frontend/src/hooks/useActorWithReadiness.ts, consume the new error state from useActor and set `initError` accordingly.\n- Ensure the derived flags behave consistently:\n  - `isInitializing` is true while the actor query is fetching and no actor is available yet.\n  - `isReady` is true only when an actor exists and the query is not fetching.\n  - `initError` is non-null when actor initialization failed (query error).",
+      "featureId": "feature-enhance-the-voice-dictation-ui-so-it-provides-a-clear-subtle-visual-cue-when-the-microphone-is-actively-listening-i-e-speechrecognition-has-started-beyond-the-current-icon-pulse-and-ensure-the-cue-is-visible-in-all-places-the-voicedictationbutton-is-used-e-g-addtaskdialog-and-edittaskdialog-dictation-controls",
+      "featureTitle": "Enhance the voice dictation UI so it provides a clear, subtle visual cue when the microphone is actively listening (i.e., SpeechRecognition has started), beyond the current icon pulse, and ensure the cue is visible in all places the VoiceDictationButton is used (e.g., AddTaskDialog and EditTaskDialog dictation controls).",
       "files": [
-        "frontend/src/hooks/useActorWithReadiness.ts"
+        "frontend/src/components/VoiceDictationButton.tsx"
+      ],
+      "components": [
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "authorization@4.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-1"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-add-accessibility-semantics-for-the-listening-state-on-the-dictation-control-so-assistive-technologies-can-detect-when-dictation-is-active",
+      "featureTitle": "Add accessibility semantics for the listening state on the dictation control so assistive technologies can detect when dictation is active.",
+      "files": [
+        "frontend/src/components/VoiceDictationButton.tsx"
       ],
       "components": [
         "core-infrastructure@1.0.2",

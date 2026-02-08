@@ -1,52 +1,38 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Harden actor initialization and surface real readiness/init errors",
+  "title": "Voice dictation: add a clear listening indicator + accessibility semantics",
   "requirements": [
     {
       "id": "REQ-1",
-      "summary": "Make access-control initialization conditional, non-blocking, and expose actor query error state to the UI.",
+      "summary": "Add a subtle but clearly visible “listening” indicator to VoiceDictationButton whenever SpeechRecognition is active, so it appears consistently everywhere the button is used.",
       "acceptanceCriteria": [
-        "When caffeineAdminToken is missing/empty, the app does not attempt to call _initializeAccessControlWithSecret during actor initialization.",
-        "If _initializeAccessControlWithSecret throws/traps, the actor is still returned when possible (so the app can proceed for non-admin use cases) and the error is available to the UI via the hook.",
-        "If actor creation fails (e.g., canister unavailable), the hook exposes a non-null error state (not just `actor: null`)."
+        "When dictation is actively listening, the mic control has an additional visible indicator (e.g., a small red 'live' dot, glow ring, or similar subtle accent) that is not shown when not listening.",
+        "The listening indicator turns on only while `isListening` is true for the active dictation field, and turns off immediately when dictation stops/ends/errors.",
+        "The indicator is visible and legible on both light and dark themes and does not rely solely on color (e.g., uses shape/animation as well).",
+        "The existing tooltip behavior remains correct (Start voice dictation vs Stop dictation), and the button remains operable on mobile."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/hooks/useActor.ts",
+          "path": "frontend/src/components/VoiceDictationButton.tsx",
           "operation": "modify",
-          "description": "Update the actor React Query to: (1) only call access-control initialization when getSecretParameter('caffeineAdminToken') returns a non-empty string, (2) wrap _initializeAccessControlWithSecret in try/catch so actor creation can still succeed for non-admin flows even if AC init fails, and (3) return the query error state from React Query alongside actor/isFetching (e.g., include an `error` field sourced from actorQuery.error). Also ensure actor creation failures propagate to React Query so `error` becomes non-null."
+          "description": "Enhance the existing shadcn-ui Button/Tooltip-based VoiceDictationButton to render an additional, subtle listening indicator when `isListening` is true (e.g., an overlaid dot + ring/glow/animation that also communicates state via shape/motion, not color alone), while preserving the current icon pulse and current tooltip text logic. Ensure the indicator styling works in both light/dark themes and does not reduce tap-target usability on mobile. Verify the component's usage instructions before implementing."
         }
       ]
     },
     {
       "id": "REQ-2",
-      "summary": "Use real actor initialization error state to derive consistent readiness flags for accurate backend status messaging.",
+      "summary": "Expose accessibility semantics for the dictation listening state so assistive technologies can detect and announce when dictation is active.",
       "acceptanceCriteria": [
-        "When the backend canister cannot be reached or actor initialization fails, AddTaskDialog shows the “Backend connection failed…” message (from actorAvailability) instead of the generic “Backend is not ready…”.",
-        "When the actor is still being created, AddTaskDialog shows the “Connecting to backend…” message, and transitions to enabled submission automatically once ready.",
-        "When the actor is ready, the Add Task submit button is enabled (assuming required fields are filled) without requiring a page refresh."
+        "When listening, the dictation control exposes an appropriate state to screen readers (e.g., `aria-pressed=true` and/or an `aria-live` status text that announces \"Listening\" / \"Not listening\").",
+        "User-facing accessibility text is in English.",
+        "No accessibility attributes are added to any immutable-path files."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/hooks/useActorWithReadiness.ts",
+          "path": "frontend/src/components/VoiceDictationButton.tsx",
           "operation": "modify",
-          "description": "Consume the newly exposed `error` state from useActor and set `initError` accordingly. Ensure derived flags follow the contract: `isInitializing` true only while fetching and no actor yet; `isReady` true only when actor exists and not fetching; `initError` non-null when actor initialization failed (query error)."
-        }
-      ]
-    },
-    {
-      "id": "REQ-3",
-      "summary": "Add structured, non-sensitive diagnostics for actor creation and access-control initialization to clarify failure origin without noisy repeats.",
-      "acceptanceCriteria": [
-        "Console output clearly indicates whether failure occurred during actor creation vs access-control initialization, without logging secrets.",
-        "A developer can reproduce a backend-down scenario and see a single, clear diagnostic failure path (no noisy repeated logs)."
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/hooks/useActor.ts",
-          "operation": "modify",
-          "description": "Add structured console diagnostics around actor creation and access-control initialization using existing utilities in frontend/src/utils/deploymentDiagnostics.ts and/or frontend/src/utils/actorInitDiagnostics.ts. Log step start/success/failure with safe, redacted details (e.g., log boolean `hasAdminToken` rather than the token). Adjust the actor query options to avoid noisy repeated logs on failures (e.g., disable React Query retries for the actor query and avoid unnecessary refetch triggers on error)."
+          "description": "Add screen-reader-detectable semantics for listening state on the dictation control (e.g., `aria-pressed` reflecting `isListening` and a small `aria-live` status message announcing \"Listening\" / \"Not listening\" in English). Keep existing `aria-label` and tooltip behavior correct, and ensure all a11y attributes are confined to this non-immutable component file. Verify the component's usage instructions before implementing."
         }
       ]
     }

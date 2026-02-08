@@ -14,6 +14,7 @@ export interface VoiceDictationState {
   isSupported: boolean;
   error: string | null;
   transcript: string;
+  disabledReason: string | null;
 }
 
 export function useVoiceDictation(options: VoiceDictationOptions = {}) {
@@ -39,8 +40,10 @@ export function useVoiceDictation(options: VoiceDictationOptions = {}) {
   const [isListening, setIsListening] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [transcript, setTranscript] = useState('');
+  const [disabledReason, setDisabledReason] = useState<string | null>(null);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const isStartingRef = useRef(false);
+  const startTimeoutRef = useRef<number | null>(null);
 
   // Check browser support
   const isSupported = typeof window !== 'undefined' && 
@@ -52,11 +55,13 @@ export function useVoiceDictation(options: VoiceDictationOptions = {}) {
   useEffect(() => {
     if (!isSupported) {
       voiceDictationDiagnostics.unsupported();
+      setDisabledReason('Voice input is not supported in this browser');
       return;
     }
 
     if (!isSecureContext) {
       voiceDictationDiagnostics.insecureContext();
+      setDisabledReason('Voice input requires HTTPS. Please use a secure connection.');
     }
   }, [isSupported, isSecureContext]);
 
@@ -80,6 +85,27 @@ export function useVoiceDictation(options: VoiceDictationOptions = {}) {
     }
   };
 
+  // Force reset recognition instance
+  const forceReset = useCallback(() => {
+    voiceDictationDiagnostics.forceReset();
+    
+    if (recognitionRef.current) {
+      try {
+        recognitionRef.current.abort();
+      } catch (e) {
+        // Ignore
+      }
+    }
+    
+    isStartingRef.current = false;
+    setIsListening(false);
+    
+    if (startTimeoutRef.current) {
+      clearTimeout(startTimeoutRef.current);
+      startTimeoutRef.current = null;
+    }
+  }, []);
+
   // Initialize recognition once
   useEffect(() => {
     if (!isSupported) return;
@@ -102,12 +128,22 @@ export function useVoiceDictation(options: VoiceDictationOptions = {}) {
       setIsListening(true);
       setError(null);
       isStartingRef.current = false;
+      
+      if (startTimeoutRef.current) {
+        clearTimeout(startTimeoutRef.current);
+        startTimeoutRef.current = null;
+      }
     };
 
     recognition.onend = () => {
       voiceDictationDiagnostics.ended();
       setIsListening(false);
       isStartingRef.current = false;
+      
+      if (startTimeoutRef.current) {
+        clearTimeout(startTimeoutRef.current);
+        startTimeoutRef.current = null;
+      }
     };
 
     recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
@@ -117,6 +153,11 @@ export function useVoiceDictation(options: VoiceDictationOptions = {}) {
       setError(errorMessage);
       setIsListening(false);
       isStartingRef.current = false;
+      
+      if (startTimeoutRef.current) {
+        clearTimeout(startTimeoutRef.current);
+        startTimeoutRef.current = null;
+      }
       
       if (onErrorRef.current) {
         onErrorRef.current(errorMessage);
@@ -162,21 +203,61 @@ export function useVoiceDictation(options: VoiceDictationOptions = {}) {
           // Ignore errors during cleanup
         }
       }
+      if (startTimeoutRef.current) {
+        clearTimeout(startTimeoutRef.current);
+      }
     };
   }, [isSupported, continuous, interimResults, lang]);
 
-  const start = useCallback(() => {
+  // Microphone permission preflight for mobile
+  const requestMicrophonePermission = useCallback(async (): Promise<boolean> => {
+    // Only attempt getUserMedia if available
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      voiceDictationDiagnostics.preflightSkipped('getUserMedia not available');
+      return true; // Skip preflight, let SpeechRecognition handle it
+    }
+
+    try {
+      voiceDictationDiagnostics.preflightStarted();
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      
+      // Immediately stop the stream - we just needed permission
+      stream.getTracks().forEach(track => track.stop());
+      
+      voiceDictationDiagnostics.preflightSuccess();
+      return true;
+    } catch (err: any) {
+      const errorMsg = err.name === 'NotAllowedError' 
+        ? 'Microphone permission denied. Please allow microphone access in your browser settings.'
+        : err.name === 'NotFoundError'
+        ? 'No microphone found. Please check your device.'
+        : 'Failed to access microphone. Please check your browser settings.';
+      
+      voiceDictationDiagnostics.preflightFailed(err.name, errorMsg);
+      setError(errorMsg);
+      
+      if (onErrorRef.current) {
+        onErrorRef.current(errorMsg);
+      }
+      
+      return false;
+    }
+  }, []);
+
+  const start = useCallback(async () => {
     if (!isSupported) {
-      const msg = 'Speech recognition is not supported in this browser.';
+      const msg = 'Voice input is not supported in this browser';
       setError(msg);
+      setDisabledReason(msg);
       voiceDictationDiagnostics.error('unsupported', msg);
       if (onErrorRef.current) onErrorRef.current(msg);
       return;
     }
 
     if (!isSecureContext) {
-      const msg = 'Microphone access requires a secure context (HTTPS). Please use HTTPS or localhost.';
+      const msg = 'Voice input requires HTTPS. Please use a secure connection.';
       setError(msg);
+      setDisabledReason(msg);
       voiceDictationDiagnostics.error('insecure-context', msg);
       if (onErrorRef.current) onErrorRef.current(msg);
       return;
@@ -199,30 +280,71 @@ export function useVoiceDictation(options: VoiceDictationOptions = {}) {
     voiceDictationDiagnostics.startRequested();
     isStartingRef.current = true;
 
+    // Set a timeout to recover from stuck "starting" state
+    startTimeoutRef.current = window.setTimeout(() => {
+      if (isStartingRef.current && !isListening) {
+        voiceDictationDiagnostics.startTimeout();
+        forceReset();
+        const msg = 'Speech recognition failed to start. Please try again.';
+        setError(msg);
+        if (onErrorRef.current) onErrorRef.current(msg);
+      }
+    }, 5000);
+
+    // Request microphone permission first (mobile-friendly)
+    const hasPermission = await requestMicrophonePermission();
+    if (!hasPermission) {
+      isStartingRef.current = false;
+      if (startTimeoutRef.current) {
+        clearTimeout(startTimeoutRef.current);
+        startTimeoutRef.current = null;
+      }
+      return;
+    }
+
     try {
       setTranscript('');
       setError(null);
       recognitionRef.current.start();
+      voiceDictationDiagnostics.startAttempted();
     } catch (err: any) {
       isStartingRef.current = false;
+      
+      if (startTimeoutRef.current) {
+        clearTimeout(startTimeoutRef.current);
+        startTimeoutRef.current = null;
+      }
       
       // Handle InvalidStateError (already started)
       if (err.name === 'InvalidStateError') {
         voiceDictationDiagnostics.error('invalid-state', 'Recognition already started');
-        // Try to recover by stopping and restarting
-        try {
-          recognitionRef.current.stop();
-          setTimeout(() => {
-            if (recognitionRef.current && !isListening) {
-              recognitionRef.current.start();
-            }
-          }, 100);
-        } catch (recoveryErr) {
-          const msg = 'Failed to start speech recognition. Please try again.';
-          setError(msg);
-          voiceDictationDiagnostics.error('recovery-failed', msg);
-          if (onErrorRef.current) onErrorRef.current(msg);
+        // Force reset and allow retry
+        forceReset();
+        
+        // Reinitialize the recognition instance
+        const SpeechRecognitionAPI = 
+          (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+        
+        if (SpeechRecognitionAPI) {
+          const newRecognition = new SpeechRecognitionAPI() as SpeechRecognition;
+          newRecognition.continuous = continuous;
+          newRecognition.interimResults = interimResults;
+          newRecognition.lang = lang;
+          newRecognition.maxAlternatives = 1;
+          
+          // Copy event handlers from current recognition
+          newRecognition.onstart = recognitionRef.current.onstart;
+          newRecognition.onend = recognitionRef.current.onend;
+          newRecognition.onerror = recognitionRef.current.onerror;
+          newRecognition.onresult = recognitionRef.current.onresult;
+          
+          recognitionRef.current = newRecognition;
+          voiceDictationDiagnostics.reinitialized();
         }
+        
+        const msg = 'Please tap the microphone button again to start.';
+        setError(msg);
+        if (onErrorRef.current) onErrorRef.current(msg);
       } else {
         const msg = err.message || 'Failed to start speech recognition. Please try again.';
         setError(msg);
@@ -230,7 +352,7 @@ export function useVoiceDictation(options: VoiceDictationOptions = {}) {
         if (onErrorRef.current) onErrorRef.current(msg);
       }
     }
-  }, [isSupported, isSecureContext, isListening]);
+  }, [isSupported, isSecureContext, isListening, continuous, interimResults, lang, requestMicrophonePermission, forceReset]);
 
   const stop = useCallback(() => {
     if (!recognitionRef.current) return;
@@ -246,11 +368,21 @@ export function useVoiceDictation(options: VoiceDictationOptions = {}) {
     try {
       recognitionRef.current.stop();
       isStartingRef.current = false;
+      
+      if (startTimeoutRef.current) {
+        clearTimeout(startTimeoutRef.current);
+        startTimeoutRef.current = null;
+      }
     } catch (err: any) {
       // Ignore errors when stopping
       voiceDictationDiagnostics.error('stop-failed', err.message || 'Stop failed');
       isStartingRef.current = false;
       setIsListening(false);
+      
+      if (startTimeoutRef.current) {
+        clearTimeout(startTimeoutRef.current);
+        startTimeoutRef.current = null;
+      }
     }
   }, [isListening]);
 
@@ -264,6 +396,7 @@ export function useVoiceDictation(options: VoiceDictationOptions = {}) {
     isSupported,
     error,
     transcript,
+    disabledReason,
     start,
     stop,
     reset,

@@ -45,27 +45,54 @@ export function VoiceDictationButton({
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
-          <Button
-            type="button"
-            variant={isListening ? 'default' : variant}
-            size={size}
-            disabled={isDisabled}
-            onClick={isListening ? onStop : onStart}
-            className={className}
-          >
-            {!isSupported || (disabled && !isListening) ? (
-              <MicOff className="h-4 w-4" />
-            ) : isListening ? (
-              <Mic className="h-4 w-4 animate-pulse" />
-            ) : (
-              <Mic className="h-4 w-4" />
+          <div className="relative inline-block">
+            <Button
+              type="button"
+              variant={isListening ? 'default' : variant}
+              size={size}
+              disabled={isDisabled}
+              onClick={isListening ? onStop : onStart}
+              className={className}
+              aria-label={tooltipMessage}
+              aria-pressed={isListening}
+            >
+              {!isSupported || (disabled && !isListening) ? (
+                <MicOff className="h-4 w-4" />
+              ) : isListening ? (
+                <Mic className="h-4 w-4 animate-pulse" />
+              ) : (
+                <Mic className="h-4 w-4" />
+              )}
+            </Button>
+            
+            {/* Listening indicator - visible red dot with glow ring */}
+            {isListening && (
+              <span 
+                className="absolute -top-0.5 -right-0.5 flex h-3 w-3"
+                aria-hidden="true"
+              >
+                {/* Animated ring/glow */}
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75"></span>
+                {/* Solid dot */}
+                <span className="relative inline-flex rounded-full h-3 w-3 bg-red-600 border border-white dark:border-gray-950"></span>
+              </span>
             )}
-          </Button>
+          </div>
         </TooltipTrigger>
         <TooltipContent>
           <p>{tooltipMessage}</p>
         </TooltipContent>
       </Tooltip>
+      
+      {/* Screen reader announcement for listening state */}
+      <span 
+        className="sr-only" 
+        role="status" 
+        aria-live="polite" 
+        aria-atomic="true"
+      >
+        {isListening ? 'Listening' : 'Not listening'}
+      </span>
     </TooltipProvider>
   );
 }

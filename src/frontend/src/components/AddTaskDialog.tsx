@@ -191,7 +191,7 @@ export function AddTaskDialog({ open, onOpenChange }: AddTaskDialogProps) {
                   onStart={handleStartNameDictation}
                   onStop={handleStopNameDictation}
                   disabled={addTaskMutation.isPending}
-                  disabledReason={addTaskMutation.isPending ? 'Adding task...' : undefined}
+                  disabledReason={nameDictation.disabledReason || (addTaskMutation.isPending ? 'Adding task...' : undefined)}
                 />
               </div>
             </div>
@@ -212,7 +212,7 @@ export function AddTaskDialog({ open, onOpenChange }: AddTaskDialogProps) {
                   onStart={handleStartDescriptionDictation}
                   onStop={handleStopDescriptionDictation}
                   disabled={addTaskMutation.isPending}
-                  disabledReason={addTaskMutation.isPending ? 'Adding task...' : undefined}
+                  disabledReason={descriptionDictation.disabledReason || (addTaskMutation.isPending ? 'Adding task...' : undefined)}
                 />
               </div>
             </div>
