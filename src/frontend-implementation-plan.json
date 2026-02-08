@@ -1,66 +1,52 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Swap tab hero/header images with modern static banners",
+  "title": "Fix Add Task disabled gating by decoupling actor readiness from background fetch",
   "requirements": [
     {
       "id": "REQ-1",
-      "summary": "Replace the hero/header banner images for Tasks, Dinner Rota, Calendar, and People with clean modern visuals while keeping the exact same referenced filenames and dimensions.",
+      "summary": "Decouple Add Task button enablement from React Query fetch state so it enables as soon as the backend actor exists (while still blocking when actor is missing/errored or mutation is pending).",
       "acceptanceCriteria": [
-        "The hero/header images for Tasks, Dinner Rota, Calendar, and People appear updated in the UI without layout changes.",
-        "The image paths referenced by the UI remain unchanged (same filenames) so no broken images occur.",
-        "Images feel clean/modern (natural light, minimal clutter, contemporary look) and remain readable behind the existing gradient overlay."
+        "When the user opens the Add Task dialog, the “Add Task” submit button becomes enabled as soon as the actor is available (even if a background fetch is happening), as long as a non-empty task name is provided and no mutation is pending.",
+        "The submit button remains disabled only when: task name is empty, addTask mutation is pending, or actor initialization has not produced an actor yet, or initialization errored.",
+        "The user can successfully add a task end-to-end: enter a task name, click “Add Task”, see success toast, dialog closes, and the task list updates."
       ],
       "file_operations": [
         {
-          "path": "frontend/public/assets/generated/header-tasks.dim_1600x420.jpg",
+          "path": "frontend/src/hooks/useActorWithReadiness.ts",
           "operation": "modify",
-          "description": "Replace the binary image content with a clean, modern household task-organization banner while preserving the exact filename and 1600x420 dimensions."
+          "description": "Fix readiness derivation so `isReady` reflects actor availability (actor exists) and is not gated by `isFetching`; keep `isInitializing` true only when no actor exists yet and initialization is still in progress. Ensure `initError` is preserved for failed initialization. (Do not modify immutable frontend/src/hooks/useActor.ts.)"
         },
         {
-          "path": "frontend/public/assets/generated/header-dinner.dim_1600x420.jpg",
+          "path": "frontend/src/utils/actorAvailability.ts",
           "operation": "modify",
-          "description": "Replace the binary image content with a clean, modern family dinner prep/cooking banner while preserving the exact filename and 1600x420 dimensions."
+          "description": "Align `isActorAvailable(...)` and related helpers with the updated readiness semantics so availability is based on “actor exists and no initError”, not on background fetch state; keep `getActorAvailabilityMessage(...)` behavior for initializing and error states."
         },
         {
-          "path": "frontend/public/assets/generated/header-calendar.dim_1600x420.jpg",
+          "path": "frontend/src/components/AddTaskDialog.tsx",
           "operation": "modify",
-          "description": "Replace the binary image content with a clean, modern calendar/planning banner while preserving the exact filename and 1600x420 dimensions."
-        },
-        {
-          "path": "frontend/public/assets/generated/header-people.dim_1600x420.jpg",
-          "operation": "modify",
-          "description": "Replace the binary image content with a clean, modern people/community-themed banner while preserving the exact filename and 1600x420 dimensions."
+          "description": "Update submit-button disabled logic to rely on actor existence/initialization error (via updated `useActorWithReadiness` + `actorAvailability` helpers) rather than React Query fetch-in-progress; ensure the button is enabled when actor exists even if background fetch is happening, and remains disabled only for empty task name, pending addTask mutation, missing actor, or init error."
         }
       ]
     },
     {
       "id": "REQ-2",
-      "summary": "Ensure the updated hero/header images exist as static assets under frontend/public/assets/generated with the exact filenames used by each tab’s HeroHeader.",
+      "summary": "Keep Add Task disabled-state messaging accurate during backend initialization/failure and provide a clear tooltip when the task name is missing.",
       "acceptanceCriteria": [
-        "The following assets exist in frontend/public/assets/generated and load successfully in the browser: header-tasks.dim_1600x420.jpg, header-dinner.dim_1600x420.jpg, header-calendar.dim_1600x420.jpg, header-people.dim_1600x420.jpg.",
-        "No console 404s occur for the header image assets when navigating across all tabs."
+        "If the backend actor is still initializing (no actor yet), the dialog shows the existing connection message (“Connecting to backend… please wait a moment.”) and the submit button stays disabled.",
+        "If backend initialization fails, the dialog shows the existing failure message (“Backend connection failed. Please refresh the page and try again.”) and the submit button stays disabled.",
+        "If the only reason the button is disabled is missing task name, the tooltip/title explains “Task name is required.”"
       ],
       "file_operations": [
         {
-          "path": "frontend/public/assets/generated/header-tasks.dim_1600x420.jpg",
-          "operation": "create",
-          "description": "Add the updated Tasks header banner asset at this exact path/filename (if already present, keep the same filename and overwrite content with the new image)."
+          "path": "frontend/src/components/AddTaskDialog.tsx",
+          "operation": "modify",
+          "description": "Ensure the connection/failure helper messages remain the only ones shown when actor is initializing/failed, and adjust the submit button `title`/tooltip string so that when the only disabled reason is missing name it exactly reads “Task name is required.” (including punctuation)."
         },
         {
-          "path": "frontend/public/assets/generated/header-dinner.dim_1600x420.jpg",
-          "operation": "create",
-          "description": "Add the updated Dinner Rota header banner asset at this exact path/filename (if already present, keep the same filename and overwrite content with the new image)."
-        },
-        {
-          "path": "frontend/public/assets/generated/header-calendar.dim_1600x420.jpg",
-          "operation": "create",
-          "description": "Add the updated Calendar header banner asset at this exact path/filename (if already present, keep the same filename and overwrite content with the new image)."
-        },
-        {
-          "path": "frontend/public/assets/generated/header-people.dim_1600x420.jpg",
-          "operation": "create",
-          "description": "Add the updated People header banner asset at this exact path/filename (if already present, keep the same filename and overwrite content with the new image)."
+          "path": "frontend/src/utils/actorAvailability.ts",
+          "operation": "modify",
+          "description": "Confirm messaging strings remain exactly as required for initializing and failure states and that the generic “not ready” message is not shown in cases where an actor exists but a background fetch is in progress."
         }
       ]
     }

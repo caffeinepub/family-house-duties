@@ -149,7 +149,7 @@ export function AddTaskDialog({ open, onOpenChange }: AddTaskDialogProps) {
     onOpenChange(false);
   };
 
-  // Determine if submit should be disabled
+  // Determine if submit should be disabled based on actor existence and initialization error
   const actorNotReady = !isActorAvailable({ isReady, isInitializing, initError });
   const isSubmitDisabled = !taskName.trim() || addTaskMutation.isPending || actorNotReady;
 
@@ -160,7 +160,7 @@ export function AddTaskDialog({ open, onOpenChange }: AddTaskDialogProps) {
   } else if (addTaskMutation.isPending) {
     disabledReason = 'Adding task…';
   } else if (!taskName.trim()) {
-    disabledReason = 'Task name is required';
+    disabledReason = 'Task name is required.';
   }
 
   return (

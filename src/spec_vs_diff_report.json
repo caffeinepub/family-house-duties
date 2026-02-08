@@ -1,37 +1,35 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-02-08T01:17:16.843Z",
-  "summary": "The diff does not implement the requested hero/header image swaps or add the required static image assets; it only updates project_state.json metadata and references unrelated backend readiness issues.",
+  "generatedAt": "2026-02-08T01:32:42.073Z",
+  "summary": "Diff introduces a new `useActorWithReadiness` hook and shared actor-availability utilities, and updates `AddTaskDialog` to gate submission based on actor availability. However, the diff excerpt does not provide clear evidence that the submit button’s disabled/enabled state and user-facing disabled-state messaging/tooltip behavior fully match the specified acceptance criteria.",
   "missing_requirements": [
     {
       "id": "REQ-1",
-      "requirement": "Replace the existing hero/header images used at the top of each main tab with more visually appealing, clean, modern-day images while keeping the same image filenames and dimensions currently referenced by the UI.",
-      "reason": "No frontend UI files or image assets were modified/added; only project_state.json was changed, so the hero/header images cannot be updated in the UI.",
+      "requirement": "Ensure the “Add Task” submit button becomes enabled as soon as the actor is available (even if a background fetch is happening), and remains disabled only for: empty task name, pending mutation, no actor yet, or initialization error; end-to-end add task succeeds (toast, dialog closes, list updates).",
+      "reason": "While `useActorWithReadiness` defines `isReady` as `!!actor && !isError` (not gated by `isFetching`), the provided `AddTaskDialog.tsx` excerpt is truncated before any button disabled-state logic, tooltip/title logic, dialog close on success, and list refresh behavior can be verified from the diff summary alone.",
       "evidence": [
-        "project_state.json"
+        "frontend/src/hooks/useActorWithReadiness.ts",
+        "frontend/src/components/AddTaskDialog.tsx (truncated)"
       ]
     },
     {
       "id": "REQ-2",
-      "requirement": "Add the updated hero/header image files as static assets under frontend/public/assets/generated, matching the exact filenames referenced by the HeroHeader usage in each tab.",
-      "reason": "No files were added under frontend/public/assets/generated (no added files at all), so the required header image assets are not present.",
+      "requirement": "Accurate, user-friendly disabled-state messaging: show existing “Connecting to backend… please wait a moment.” when initializing (no actor yet) and disable submit; show existing failure message on init failure and disable submit; if only missing task name, tooltip/title explains “Task name is required.”",
+      "reason": "Utilities to generate the exact messages were added, and `handleSubmit` toasts an error message when actor is unavailable, but the diff excerpt does not show the dialog displaying the connection/failure message while initializing/failed, nor does it show the submit button tooltip/title behavior for the 'Task name is required.' case.",
       "evidence": [
-        "project_state.json"
+        "frontend/src/utils/actorAvailability.ts",
+        "frontend/src/components/AddTaskDialog.tsx (truncated)"
       ]
     }
   ],
-  "hallucinated_features": [
-    {
-      "description": "Tracking or prioritizing a backend readiness/add-task issue as part of this change (e.g., marking as a fix request, mentioning backend not ready).",
-      "reason": "The BuildRequest explicitly states the backend must remain unchanged and that fixing the 'backup backend is not ready' / add-task readiness issue is a non-goal, yet project metadata emphasizes this backend issue.",
-      "evidence": [
-        "project_state.json"
-      ]
-    }
-  ],
-  "confidence": 0.82,
+  "hallucinated_features": [],
+  "confidence": 0.56,
   "changed_files": [
+    "frontend-file-summaries.txt",
+    "frontend/src/components/AddTaskDialog.tsx",
+    "frontend/src/hooks/useActorWithReadiness.ts",
+    "frontend/src/utils/actorAvailability.ts",
     "project_state.json"
   ]
 }

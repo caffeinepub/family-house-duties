@@ -22,9 +22,10 @@ export function useActorWithReadiness(): UseActorWithReadinessResult {
   const error = 'error' in actorResult ? actorResult.error : null;
   const isError = 'isError' in actorResult ? actorResult.isError : false;
   
-  // Derive readiness state from actor and isFetching
-  const isReady = !!actor && !isFetching;
-  const isInitializing = isFetching && !actor;
+  // Derive readiness state: actor is ready as soon as it exists (not gated by background fetch)
+  const isReady = !!actor && !isError;
+  // Initializing only when no actor exists yet and we're still fetching
+  const isInitializing = !actor && isFetching;
   
   // Expose initialization error from React Query
   const initError = isError && error ? (error instanceof Error ? error : new Error(String(error))) : null;

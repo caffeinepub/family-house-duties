@@ -1,7 +1,7 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-08T01:17:16.846Z",
+  "generatedAt": "2026-02-08T01:32:42.078Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
@@ -12,36 +12,30 @@
     "items": [
       {
         "id": "REQ-1",
-        "summary": "Replace the existing hero/header images used at the top of each main tab with more visually appealing, clean, modern-day images while keeping the same image filenames and dimensions currently referenced by the UI.",
+        "summary": "Fix the actor readiness logic so the Add Task submit button is not incorrectly disabled (grayed out) when the backend actor already exists but React Query reports a fetch in progress.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/public/assets/generated/header-tasks.dim_1600x420.jpg",
-          "frontend/public/assets/generated/header-dinner.dim_1600x420.jpg",
-          "frontend/public/assets/generated/header-calendar.dim_1600x420.jpg",
-          "frontend/public/assets/generated/header-people.dim_1600x420.jpg"
+          "frontend/src/hooks/useActorWithReadiness.ts",
+          "frontend/src/utils/actorAvailability.ts",
+          "frontend/src/components/AddTaskDialog.tsx"
         ],
         "matchedFiles": [
-          "frontend/public/assets/generated/header-tasks.dim_1600x420.jpg",
-          "frontend/public/assets/generated/header-dinner.dim_1600x420.jpg",
-          "frontend/public/assets/generated/header-calendar.dim_1600x420.jpg",
-          "frontend/public/assets/generated/header-people.dim_1600x420.jpg"
+          "frontend/src/hooks/useActorWithReadiness.ts",
+          "frontend/src/utils/actorAvailability.ts",
+          "frontend/src/components/AddTaskDialog.tsx"
         ]
       },
       {
         "id": "REQ-2",
-        "summary": "Add the updated hero/header image files as static assets under frontend/public/assets/generated, matching the exact filenames referenced by the HeroHeader usage in each tab.",
+        "summary": "Ensure the disabled state messaging for the Add Task submit button remains accurate and user-friendly while the actor is initializing or has failed to initialize.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/public/assets/generated/header-tasks.dim_1600x420.jpg",
-          "frontend/public/assets/generated/header-dinner.dim_1600x420.jpg",
-          "frontend/public/assets/generated/header-calendar.dim_1600x420.jpg",
-          "frontend/public/assets/generated/header-people.dim_1600x420.jpg"
+          "frontend/src/components/AddTaskDialog.tsx",
+          "frontend/src/utils/actorAvailability.ts"
         ],
         "matchedFiles": [
-          "frontend/public/assets/generated/header-tasks.dim_1600x420.jpg",
-          "frontend/public/assets/generated/header-dinner.dim_1600x420.jpg",
-          "frontend/public/assets/generated/header-calendar.dim_1600x420.jpg",
-          "frontend/public/assets/generated/header-people.dim_1600x420.jpg"
+          "frontend/src/components/AddTaskDialog.tsx",
+          "frontend/src/utils/actorAvailability.ts"
         ]
       }
     ]
@@ -49,11 +43,11 @@
   "changedFiles": [
     "build-request.json",
     "feature_evidence.json",
+    "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
-    "frontend/public/assets/generated/header-calendar.dim_1600x420.jpg",
-    "frontend/public/assets/generated/header-dinner.dim_1600x420.jpg",
-    "frontend/public/assets/generated/header-people.dim_1600x420.jpg",
-    "frontend/public/assets/generated/header-tasks.dim_1600x420.jpg",
+    "frontend/src/components/AddTaskDialog.tsx",
+    "frontend/src/hooks/useActorWithReadiness.ts",
+    "frontend/src/utils/actorAvailability.ts",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",

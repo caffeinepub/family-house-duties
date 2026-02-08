@@ -1,60 +1,55 @@
 {
   "kind": "build_request",
-  "title": "Swap hero/header images for clean, modern visuals",
-  "priority": "normal",
+  "title": "Fix Add Task button being disabled due to incorrect actor readiness gating",
+  "priority": "high",
   "requirements": [
     {
       "id": "REQ-1",
-      "text": "Replace the existing hero/header images used at the top of each main tab with more visually appealing, clean, modern-day images while keeping the same image filenames and dimensions currently referenced by the UI.",
+      "text": "Fix the actor readiness logic so the Add Task submit button is not incorrectly disabled (grayed out) when the backend actor already exists but React Query reports a fetch in progress.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-user-1"
+          "msg-1"
         ],
         "quotes": [
-          "Swap the header images for more visually appealing, clean, modern day images."
+          "The add task function is not working correctly. It seems to be grayed out or disabled. Can you please fix this?"
         ]
       },
       "acceptanceCriteria": [
-        "The hero/header images for Tasks, Dinner Rota, Calendar, and People appear updated in the UI without layout changes.",
-        "The image paths referenced by the UI remain unchanged (same filenames) so no broken images occur.",
-        "Images feel clean/modern (natural light, minimal clutter, contemporary look) and remain readable behind the existing gradient overlay."
+        "When the user opens the Add Task dialog, the “Add Task” submit button becomes enabled as soon as the actor is available (even if a background fetch is happening), as long as a non-empty task name is provided and no mutation is pending.",
+        "The submit button remains disabled only when: task name is empty, addTask mutation is pending, or actor initialization has not produced an actor yet, or initialization errored.",
+        "The user can successfully add a task end-to-end: enter a task name, click “Add Task”, see success toast, dialog closes, and the task list updates."
       ]
     },
     {
       "id": "REQ-2",
-      "text": "Add the updated hero/header image files as static assets under frontend/public/assets/generated, matching the exact filenames referenced by the HeroHeader usage in each tab.",
+      "text": "Ensure the disabled state messaging for the Add Task submit button remains accurate and user-friendly while the actor is initializing or has failed to initialize.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-user-1"
+          "msg-1"
         ],
         "quotes": [
-          "Swap the header images for more visually appealing, clean, modern day images."
+          "It seems to be grayed out or disabled."
         ]
       },
       "acceptanceCriteria": [
-        "The following assets exist in frontend/public/assets/generated and load successfully in the browser: header-tasks.dim_1600x420.jpg, header-dinner.dim_1600x420.jpg, header-calendar.dim_1600x420.jpg, header-people.dim_1600x420.jpg.",
-        "No console 404s occur for the header image assets when navigating across all tabs."
+        "If the backend actor is still initializing (no actor yet), the dialog shows the existing connection message (“Connecting to backend… please wait a moment.”) and the submit button stays disabled.",
+        "If backend initialization fails, the dialog shows the existing failure message (“Backend connection failed. Please refresh the page and try again.”) and the submit button stays disabled.",
+        "If the only reason the button is disabled is missing task name, the tooltip/title explains “Task name is required.”"
       ]
     }
   ],
   "constraints": [
-    "Do not edit files under frontend/src/components/ui or any other immutablePaths listed in SYSTEM_CONTEXT.",
-    "Keep the backend unchanged; this request is purely about swapping static hero/header images."
+    "Do not edit files under frontend/src/components/ui (read-only UI components).",
+    "Do not edit frontend/src/hooks/useInternetIdentity.ts(x), frontend/src/hooks/useActor.ts, or frontend/src/main.tsx (immutable paths)."
   ],
   "nonGoals": [
-    "Fixing the 'backup backend is not ready' / add-task readiness issue.",
-    "Changing HeroHeader layout/behavior beyond what is required to swap images.",
-    "Replacing non-header images (e.g., login card image or empty-state images)."
+    "Adding new task features (e.g., new fields, categories, priorities).",
+    "Changing backend task schema or authorization logic."
   ],
   "imageRequirements": {
-    "required": [
-      "Clean modern household task organization photo banner (header-tasks.dim_1600x420.jpg)",
-      "Clean modern family dinner prep/cooking photo banner (header-dinner.dim_1600x420.jpg)",
-      "Clean modern calendar/planning photo banner (header-calendar.dim_1600x420.jpg)",
-      "Clean modern people/community-themed photo banner (header-people.dim_1600x420.jpg)"
-    ],
+    "required": [],
     "edits": []
   },
   "userProfileUpdate": {

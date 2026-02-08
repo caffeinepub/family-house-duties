@@ -1,40 +1,32 @@
 {
   "schemaVersion": "1.0.0",
   "projectStateVersion": 3,
-  "summary": "Project includes a task/add-task workflow and a UI with header/hero images; work is ongoing to improve visuals and address backend readiness issues affecting task creation.",
+  "summary": "New project",
   "architectural_notes": [],
   "known_issues": [
-    "Add task function not working; error indicates the backup backend is not ready"
+    "Add task function appears grayed out/disabled and not working correctly."
   ],
   "isFixRequest": true,
-  "imageRequirements": "## Required Images\n- Clean modern household task organization photo banner (header-tasks.dim_1600x420.jpg)\n- Clean modern family dinner prep/cooking photo banner (header-dinner.dim_1600x420.jpg)\n- Clean modern calendar/planning photo banner (header-calendar.dim_1600x420.jpg)\n- Clean modern people/community-themed photo banner (header-people.dim_1600x420.jpg)",
   "existing_features": [
     {
-      "id": "feature-replace-the-existing-hero-header-images-used-at-the-top-of-each-main-tab-with-more-visually-appealing-clean-modern-day-images-while-keeping-the-same-image-filenames-and-dimensions-currently-referenced-by-the-ui",
-      "title": "Replace the existing hero/header images used at the top of each main tab with more visually appealing, clean, modern-day images while keeping the same image filenames and dimensions currently referenced by the UI.",
+      "id": "feature-fix-the-actor-readiness-logic-so-the-add-task-submit-button-is-not-incorrectly-disabled-grayed-out-when-the-backend-actor-already-exists-but-react-query-reports-a-fetch-in-progress",
+      "title": "Fix the actor readiness logic so the Add Task submit button is not incorrectly disabled (grayed out) when the backend actor already exists but React Query reports a fetch in progress.",
       "reqIds": [
         "REQ-1"
       ],
       "version": 1
     },
     {
-      "id": "feature-add-the-updated-hero-header-image-files-as-static-assets-under-frontend-public-assets-generated-matching-the-exact-filenames-referenced-by-the-heroheader-usage-in-each-tab",
-      "title": "Add the updated hero/header image files as static assets under frontend/public/assets/generated, matching the exact filenames referenced by the HeroHeader usage in each tab.",
+      "id": "feature-ensure-the-disabled-state-messaging-for-the-add-task-submit-button-remains-accurate-and-user-friendly-while-the-actor-is-initializing-or-has-failed-to-initialize",
+      "title": "Ensure the disabled state messaging for the Add Task submit button remains accurate and user-friendly while the actor is initializing or has failed to initialize.",
       "reqIds": [
         "REQ-2"
       ],
       "version": 1
     }
   ],
-  "new_feature_requests": [
-    {
-      "id": "AR-1",
-      "summary": "Swap the header images for more visually appealing, clean, modern images",
-      "reqIds": [],
-      "status": "pending"
-    }
-  ],
-  "projectName": "Swap hero/header images for clean, modern visuals",
+  "new_feature_requests": [],
+  "projectName": "Fix Add Task button being disabled due to incorrect actor readiness gating",
   "clarification_mode": "instant",
   "clarification_rounds": 0
 }

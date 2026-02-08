@@ -21,10 +21,7 @@ export function getActorAvailabilityMessage(state: ActorAvailabilityState): stri
     return 'Connecting to backend… please wait a moment.';
   }
   
-  if (!state.isReady) {
-    return 'Backend is not ready. Please try again in a moment.';
-  }
-  
+  // No message when actor exists (even if background fetch is happening)
   return '';
 }
 
@@ -40,6 +37,7 @@ export function guardActorAvailability(state: ActorAvailabilityState): void {
 
 /**
  * Check if the actor is available for mutations.
+ * Actor is available when it exists and initialization didn't error.
  */
 export function isActorAvailable(state: ActorAvailabilityState): boolean {
   return state.isReady && !state.initError;

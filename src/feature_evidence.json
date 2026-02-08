@@ -2,9 +2,13 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-replace-the-existing-hero-header-images-used-at-the-top-of-each-main-tab-with-more-visually-appealing-clean-modern-day-images-while-keeping-the-same-image-filenames-and-dimensions-currently-referenced-by-the-ui",
-      "featureTitle": "Replace the existing hero/header images used at the top of each main tab with more visually appealing, clean, modern-day images while keeping the same image filenames and dimensions currently referenced by the UI.",
-      "files": [],
+      "featureId": "feature-fix-the-actor-readiness-logic-so-the-add-task-submit-button-is-not-incorrectly-disabled-grayed-out-when-the-backend-actor-already-exists-but-react-query-reports-a-fetch-in-progress",
+      "featureTitle": "Fix the actor readiness logic so the Add Task submit button is not incorrectly disabled (grayed out) when the backend actor already exists but React Query reports a fetch in progress.",
+      "files": [
+        "frontend/src/components/AddTaskDialog.tsx",
+        "frontend/src/hooks/useActorWithReadiness.ts",
+        "frontend/src/utils/actorAvailability.ts"
+      ],
       "components": [
         "core-infrastructure@1.0.2",
         "shadcn-ui@1.0.0",
@@ -19,9 +23,12 @@
       "confidence": "high"
     },
     {
-      "featureId": "feature-add-the-updated-hero-header-image-files-as-static-assets-under-frontend-public-assets-generated-matching-the-exact-filenames-referenced-by-the-heroheader-usage-in-each-tab",
-      "featureTitle": "Add the updated hero/header image files as static assets under frontend/public/assets/generated, matching the exact filenames referenced by the HeroHeader usage in each tab.",
-      "files": [],
+      "featureId": "feature-ensure-the-disabled-state-messaging-for-the-add-task-submit-button-remains-accurate-and-user-friendly-while-the-actor-is-initializing-or-has-failed-to-initialize",
+      "featureTitle": "Ensure the disabled state messaging for the Add Task submit button remains accurate and user-friendly while the actor is initializing or has failed to initialize.",
+      "files": [
+        "frontend/src/components/AddTaskDialog.tsx",
+        "frontend/src/utils/actorAvailability.ts"
+      ],
       "components": [
         "core-infrastructure@1.0.2",
         "shadcn-ui@1.0.0",
