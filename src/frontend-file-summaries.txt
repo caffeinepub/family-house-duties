@@ -1,13 +1,13 @@
 {
-  "frontend/src/App.tsx": "Main application component with Internet Identity authentication flow, TodayFocus panel above four-tab navigation (Task List, Dinner Rota, Calendar, People), wrapped with ThemeProvider for dark mode support.",
+  "frontend/src/App.tsx": "Main application component with Internet Identity authentication flow, ThemeProvider with persistent storage, TodayFocus panel, and four-tab navigation (Task List, Dinner Rota, Calendar, People).",
   "frontend/src/hooks/useQueries.ts": "React Query hooks for all backend operations with actor readiness guards using useActorWithReadiness that prevent mutations when backend is not ready and show user-friendly error messages.",
-  "frontend/src/components/Header.tsx": "Application header displaying the app title, icon, and authenticated user dropdown menu showing shortened principal ID with logout functionality.",
+  "frontend/src/components/Header.tsx": "Application header with app branding, authenticated user dropdown menu including theme mode control and logout functionality.",
   "frontend/src/components/Footer.tsx": "Footer component with copyright notice and caffeine.ai attribution link with heart icon.",
-  "frontend/src/components/TaskList.tsx": "Task management interface with hero header image, displaying tasks with PersonBadge components showing profile names and colors for creators and assignees, with fallback to shortened principals.",
+  "frontend/src/components/TaskList.tsx": "Task management interface with hero header, displaying tasks grouped by day with PersonBadge components, using semantic theme tokens for proper dark mode support.",
   "frontend/src/components/AddTaskDialog.tsx": "Dialog form for creating new tasks with voice dictation support, comprehensive error handling, and actor availability checks that enable the submit button as soon as the actor exists (even during background fetches), with proper tooltip showing \"Task name is required.\" when that's the only disabled reason.",
   "frontend/src/components/EditTaskDialog.tsx": "Dialog form for editing existing tasks with voice dictation support for Task Name and Description fields, stopping dictation when task changes or dialog closes, disabledReason propagation for clear user feedback, and proper error handling via toast notifications.",
-  "frontend/src/components/DinnerRota.tsx": "Weekly dinner cooking schedule with hero header image, voice dictation support for meal description textareas, PersonProfileSelect for cook assignment, and fairness indicator showing cooking distribution statistics.",
-  "frontend/src/components/CalendarView.tsx": "Calendar component with hero header image and Month/Week/Day view modes displaying tasks, cooking assignments, and recurring chores with profile-based labels and color indicators from People Profiles.",
+  "frontend/src/components/DinnerRota.tsx": "Weekly dinner cooking schedule with hero header, voice dictation support, PersonProfileSelect for cook assignment, fairness indicator showing cooking distribution statistics, and proper dark mode styling using semantic theme tokens.",
+  "frontend/src/components/CalendarView.tsx": "Calendar component with hero header, Month/Week/Day view modes, recurring chores toggle, displaying tasks and cooking assignments with profile-based labels using semantic theme tokens for dark mode compatibility.",
   "frontend/src/index.css": "Global styles with Ocean Breeze OKLCH color system featuring deep teal (195° hue) primary, coral (15° hue) accent, and seafoam green (160° hue) success colors with proper light/dark mode support and increased border radius (0.75rem).",
   "frontend/src/components/LoginScreen.tsx": "Full-screen login interface with Internet Identity authentication, featuring app branding and family cooking hero image.",
   "frontend/src/components/ProfileSetup.tsx": "Profile setup screen for first-time users to enter their name after authentication, displayed before accessing the main app.",
@@ -24,7 +24,7 @@
   "frontend/src/utils/personProfiles.ts": "Utility functions to resolve Principal IDs to display labels and colors using People Profiles with safe fallback to shortened principal strings.",
   "frontend/src/components/PersonBadge.tsx": "Reusable badge component displaying a person's name with an optional color indicator dot, supporting multiple variants and sizes.",
   "frontend/src/components/PersonProfileSelect.tsx": "Reusable form control for selecting assignees from People Profiles with dropdown or manual Principal ID entry modes and \"Me\" button.",
-  "frontend/src/components/People.tsx": "People management UI with hero header image, profile list cards showing name/color/avatar, create/edit/delete dialogs with color picker, and permission checks for own-profile editing.",
+  "frontend/src/components/People.tsx": "People management UI with hero header, profile list cards, create/edit/delete dialogs with color picker, permission checks, and proper dark mode support using semantic theme tokens.",
   "frontend/src/config.ts": "Configuration module that creates and initializes the backend actor with proper agent setup, loading canister IDs from env.json and handling both local and mainnet environments.",
   "frontend/src/utils/deploymentDiagnostics.ts": "Diagnostic utility providing structured logging for deployment and initialization steps with actionable error guidance for common failure scenarios.",
   "frontend/src/backend.d.ts": "TypeScript interface definitions for the backend canister including all methods and the _initializeAccessControlWithSecret method required for access control initialization.",
@@ -49,5 +49,6 @@
   "frontend/src/hooks/useActorWithReadiness.ts": "Wrapper hook around useActor that exposes readiness state (isReady, isInitializing, initError) for mutation gating, with isReady now based on actor existence rather than background fetch state.",
   "frontend/src/components/HeroHeader.tsx": "Reusable hero header component that displays a responsive hero image with rounded corners, gradient overlay for text readability, and optional title/subtitle overlay text.",
   "frontend/theme-scheme-suggestions.md": "Documentation of three distinct color scheme options (Ocean Breeze, Forest Harmony, Lavender Dusk) with Ocean Breeze selected as the default implementation featuring deep teal primary and coral accents.",
-  "frontend/tailwind.config.js": "Tailwind configuration with extended color tokens mapped to OKLCH CSS variables, added success color utility, enhanced shadow utilities (soft, medium), and maintained all existing theme extensions."
+  "frontend/tailwind.config.js": "Tailwind configuration with extended color tokens mapped to OKLCH CSS variables, added success color utility, enhanced shadow utilities (soft, medium), and maintained all existing theme extensions.",
+  "frontend/src/components/ThemeModeControl.tsx": "Theme mode selector component using next-themes with radio group for Light/Dark/System options displayed in a dropdown menu."
 }

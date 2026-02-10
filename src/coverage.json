@@ -1,39 +1,68 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-10T01:14:59.285Z",
+  "generatedAt": "2026-02-10T01:29:55.835Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
-    "total": 1,
-    "implemented": 1,
+    "total": 3,
+    "implemented": 3,
     "items": [
       {
-        "id": "REQ-3",
-        "summary": "Provide 3 distinct, coherent color scheme suggestions for the app (each with a short name and a brief description), and implement one chosen default scheme by updating the app’s theme tokens (CSS variables) so the updated palette applies consistently across the existing UI (header, tabs, cards, buttons, dialogs, gradients) in both light and dark mode.",
+        "id": "REQ-1",
+        "summary": "Add a theme mode control (Light / Dark / System) to the authenticated app header UI so users can switch between themes at runtime.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/theme-scheme-suggestions.md",
-          "frontend/src/index.css"
+          "frontend/src/components/ThemeModeControl.tsx",
+          "frontend/src/components/Header.tsx"
         ],
         "matchedFiles": [
-          "frontend/theme-scheme-suggestions.md",
-          "frontend/src/index.css"
+          "frontend/src/components/ThemeModeControl.tsx",
+          "frontend/src/components/Header.tsx"
+        ]
+      },
+      {
+        "id": "REQ-2",
+        "summary": "Persist the user’s selected theme mode across sessions and apply it consistently on both the login screen and the authenticated app.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/App.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/App.tsx"
+        ]
+      },
+      {
+        "id": "REQ-3",
+        "summary": "Ensure the existing Tailwind/Shadcn theme tokens apply correctly in dark mode across major screens (Task List, Dinner Rota, Calendar, People) without introducing low-contrast text or broken component backgrounds.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/components/TaskList.tsx",
+          "frontend/src/components/DinnerRota.tsx",
+          "frontend/src/components/CalendarView.tsx",
+          "frontend/src/components/People.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/components/DinnerRota.tsx",
+          "frontend/src/components/CalendarView.tsx",
+          "frontend/src/components/People.tsx"
         ]
       }
     ]
   },
   "changedFiles": [
     "build-request.json",
-    "caffeine.lock.json",
     "feature_evidence.json",
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
-    "frontend/src/index.css",
-    "frontend/tailwind.config.js",
-    "frontend/theme-scheme-suggestions.md",
+    "frontend/src/App.tsx",
+    "frontend/src/components/CalendarView.tsx",
+    "frontend/src/components/DinnerRota.tsx",
+    "frontend/src/components/Header.tsx",
+    "frontend/src/components/People.tsx",
+    "frontend/src/components/ThemeModeControl.tsx",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",

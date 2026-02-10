@@ -148,7 +148,7 @@ export function CalendarView() {
           />
 
           {/* Full Month Grid */}
-          <Card>
+          <Card className="bg-card border-border">
             <CardContent className="p-6">
               <div className="mb-6 flex items-center justify-between">
                 <h3 className="text-xl font-semibold">{format(currentMonth, 'MMMM yyyy')}</h3>
@@ -182,12 +182,12 @@ export function CalendarView() {
                       key={day.toISOString()}
                       className={`min-h-24 rounded-lg border p-2 ${
                         isCurrentMonth ? 'bg-card' : 'bg-muted/30'
-                      } ${isToday ? 'border-primary ring-2 ring-primary/20' : ''}`}
+                      } ${isToday ? 'border-primary ring-2 ring-primary/20' : 'border-border'}`}
                     >
-                      <div className="mb-1 text-sm font-medium">{format(day, 'd')}</div>
+                      <div className="mb-1 text-sm font-medium text-foreground">{format(day, 'd')}</div>
                       <div className="space-y-1">
                         {cookDisplay.label && (
-                          <div className="flex items-center gap-1 rounded bg-accent px-1.5 py-0.5 text-xs">
+                          <div className="flex items-center gap-1 rounded bg-accent/80 px-1.5 py-0.5 text-xs text-accent-foreground">
                             <ChefHat className="h-3 w-3" />
                             {cookDisplay.color && (
                               <span
@@ -201,7 +201,7 @@ export function CalendarView() {
                         {dayChores.slice(0, 1).map((chore) => (
                           <div
                             key={chore.id.toString()}
-                            className="flex items-center gap-1 truncate rounded bg-secondary/50 px-1.5 py-0.5 text-xs text-secondary-foreground"
+                            className="flex items-center gap-1 truncate rounded bg-secondary px-1.5 py-0.5 text-xs text-secondary-foreground"
                           >
                             <ListTodo className="h-3 w-3 flex-shrink-0" />
                             <span className="truncate">{chore.name}</span>
@@ -215,8 +215,8 @@ export function CalendarView() {
                             key={task.id.toString()}
                             className={`truncate rounded px-1.5 py-0.5 text-xs ${
                               task.completed
-                                ? 'bg-success/10 text-success line-through'
-                                : 'bg-primary/10 text-primary'
+                                ? 'bg-success/20 text-success line-through'
+                                : 'bg-primary/20 text-primary'
                             }`}
                           >
                             {task.name}
@@ -231,13 +231,13 @@ export function CalendarView() {
                 })}
               </div>
 
-              <div className="mt-6 flex flex-wrap gap-4 border-t pt-4">
+              <div className="mt-6 flex flex-wrap gap-4 border-t border-border pt-4">
                 <div className="flex items-center gap-2">
-                  <div className="h-3 w-3 rounded bg-primary/10" />
+                  <div className="h-3 w-3 rounded bg-primary/20" />
                   <span className="text-sm text-muted-foreground">Pending Task</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="h-3 w-3 rounded bg-success/10" />
+                  <div className="h-3 w-3 rounded bg-success/20" />
                   <span className="text-sm text-muted-foreground">Completed Task</span>
                 </div>
                 <div className="flex items-center gap-2">

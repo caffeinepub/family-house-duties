@@ -20,8 +20,8 @@ export default function App() {
   // Show loading state while initializing
   if (isInitializing) {
     return (
-      <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-        <div className="flex min-h-screen items-center justify-center">
+      <ThemeProvider attribute="class" defaultTheme="system" enableSystem storageKey="family-house-duties-theme">
+        <div className="flex min-h-screen items-center justify-center bg-background">
           <Skeleton className="h-32 w-64" />
         </div>
       </ThemeProvider>
@@ -31,7 +31,7 @@ export default function App() {
   // Show login screen if not authenticated
   if (!isAuthenticated) {
     return (
-      <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+      <ThemeProvider attribute="class" defaultTheme="system" enableSystem storageKey="family-house-duties-theme">
         <LoginScreen />
         <Toaster />
       </ThemeProvider>
@@ -40,8 +40,8 @@ export default function App() {
 
   // Show main app
   return (
-    <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-      <div className="flex min-h-screen flex-col">
+    <ThemeProvider attribute="class" defaultTheme="system" enableSystem storageKey="family-house-duties-theme">
+      <div className="flex min-h-screen flex-col bg-background">
         <Header />
         <main className="flex-1 container py-8">
           <TodayFocus />

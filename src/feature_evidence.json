@@ -2,11 +2,51 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-provide-3-distinct-coherent-color-scheme-suggestions-for-the-app-each-with-a-short-name-and-a-brief-description-and-implement-one-chosen-default-scheme-by-updating-the-app-s-theme-tokens-css-variables-so-the-updated-palette-applies-consistently-across-the-existing-ui-header-tabs-cards-buttons-dialogs-gradients-in-both-light-and-dark-mode",
-      "featureTitle": "Provide 3 distinct, coherent color scheme suggestions for the app (each with a short name and a brief description), and implement one chosen default scheme by updating the app’s theme tokens (CSS variables) so the updated palette applies consistently across the existing UI (header, tabs, cards, buttons, dialogs, gradients) in both light and dark mode.",
+      "featureId": "feature-add-a-theme-mode-control-light-dark-system-to-the-authenticated-app-header-ui-so-users-can-switch-between-themes-at-runtime",
+      "featureTitle": "Add a theme mode control (Light / Dark / System) to the authenticated app header UI so users can switch between themes at runtime.",
       "files": [
-        "frontend/src/index.css",
-        "frontend/theme-scheme-suggestions.md"
+        "frontend/src/components/Header.tsx",
+        "frontend/src/components/ThemeModeControl.tsx"
+      ],
+      "components": [
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "authorization@4.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-1"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-persist-the-user-s-selected-theme-mode-across-sessions-and-apply-it-consistently-on-both-the-login-screen-and-the-authenticated-app",
+      "featureTitle": "Persist the user’s selected theme mode across sessions and apply it consistently on both the login screen and the authenticated app.",
+      "files": [
+        "frontend/src/App.tsx"
+      ],
+      "components": [
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "authorization@4.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-2"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-ensure-the-existing-tailwind-shadcn-theme-tokens-apply-correctly-in-dark-mode-across-major-screens-task-list-dinner-rota-calendar-people-without-introducing-low-contrast-text-or-broken-component-backgrounds",
+      "featureTitle": "Ensure the existing Tailwind/Shadcn theme tokens apply correctly in dark mode across major screens (Task List, Dinner Rota, Calendar, People) without introducing low-contrast text or broken component backgrounds.",
+      "files": [
+        "frontend/src/components/CalendarView.tsx",
+        "frontend/src/components/DinnerRota.tsx",
+        "frontend/src/components/People.tsx"
       ],
       "components": [
         "core-infrastructure@1.0.2",

@@ -7,8 +7,24 @@
   "isFixRequest": false,
   "existing_features": [
     {
-      "id": "feature-provide-3-distinct-coherent-color-scheme-suggestions-for-the-app-each-with-a-short-name-and-a-brief-description-and-implement-one-chosen-default-scheme-by-updating-the-app-s-theme-tokens-css-variables-so-the-updated-palette-applies-consistently-across-the-existing-ui-header-tabs-cards-buttons-dialogs-gradients-in-both-light-and-dark-mode",
-      "title": "Provide 3 distinct, coherent color scheme suggestions for the app (each with a short name and a brief description), and implement one chosen default scheme by updating the app’s theme tokens (CSS variables) so the updated palette applies consistently across the existing UI (header, tabs, cards, buttons, dialogs, gradients) in both light and dark mode.",
+      "id": "feature-add-a-theme-mode-control-light-dark-system-to-the-authenticated-app-header-ui-so-users-can-switch-between-themes-at-runtime",
+      "title": "Add a theme mode control (Light / Dark / System) to the authenticated app header UI so users can switch between themes at runtime.",
+      "reqIds": [
+        "REQ-1"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-persist-the-user-s-selected-theme-mode-across-sessions-and-apply-it-consistently-on-both-the-login-screen-and-the-authenticated-app",
+      "title": "Persist the user’s selected theme mode across sessions and apply it consistently on both the login screen and the authenticated app.",
+      "reqIds": [
+        "REQ-2"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-ensure-the-existing-tailwind-shadcn-theme-tokens-apply-correctly-in-dark-mode-across-major-screens-task-list-dinner-rota-calendar-people-without-introducing-low-contrast-text-or-broken-component-backgrounds",
+      "title": "Ensure the existing Tailwind/Shadcn theme tokens apply correctly in dark mode across major screens (Task List, Dinner Rota, Calendar, People) without introducing low-contrast text or broken component backgrounds.",
       "reqIds": [
         "REQ-3"
       ],
@@ -18,12 +34,12 @@
   "new_feature_requests": [
     {
       "id": "AR-1",
-      "summary": "Propose and apply a nicer app color scheme (provide design suggestions)",
+      "summary": "Add a dark mode feature",
       "reqIds": [],
       "status": "pending"
     }
   ],
-  "projectName": "Propose and apply a nicer app color scheme (light/dark)",
+  "projectName": "Add user-selectable dark mode (light/dark/system) with persistence",
   "clarification_mode": "instant",
   "clarification_rounds": 0
 }

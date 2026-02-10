@@ -1,41 +1,83 @@
 {
   "kind": "build_request",
-  "title": "Propose and apply a nicer app color scheme (light/dark)",
+  "title": "Add user-selectable dark mode (light/dark/system) with persistence",
   "priority": "normal",
   "requirements": [
     {
-      "id": "REQ-3",
-      "text": "Provide 3 distinct, coherent color scheme suggestions for the app (each with a short name and a brief description), and implement one chosen default scheme by updating the app’s theme tokens (CSS variables) so the updated palette applies consistently across the existing UI (header, tabs, cards, buttons, dialogs, gradients) in both light and dark mode.",
+      "id": "REQ-1",
+      "text": "Add a theme mode control (Light / Dark / System) to the authenticated app header UI so users can switch between themes at runtime.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-1"
+          "msg-4"
         ],
         "quotes": [
-          "Can you give the app a nicer color scheme? You give me the suggestions."
+          "yes please add a dark mode feature too"
         ]
       },
       "acceptanceCriteria": [
-        "A short list of 3 color scheme suggestions is included in the change description (name + brief description for each).",
-        "One scheme is selected as the default and applied by modifying the existing theme CSS variables in frontend/src/index.css for both :root (light) and .dark (dark).",
-        "Primary/secondary/accent/muted/background/foreground/border/ring/destructive/success and chart/sidebar tokens remain defined and produce a cohesive look.",
-        "The Login screen background gradient (currently using from-background to muted/20) and key UI surfaces (Header bg-card, Cards, TabsList) visually reflect the new palette without requiring component-by-component hardcoded colors.",
-        "Text contrast remains readable in both light and dark mode (e.g., primary buttons have clear primary-foreground contrast; muted-foreground remains legible on muted backgrounds)."
+        "When signed in, the Header includes a clearly discoverable control (e.g., in the user dropdown) to select Light, Dark, or System theme.",
+        "Selecting a theme updates the app styling immediately without requiring a page refresh.",
+        "The control uses English labels: \"Light\", \"Dark\", \"System\"."
+      ]
+    },
+    {
+      "id": "REQ-2",
+      "text": "Persist the user’s selected theme mode across sessions and apply it consistently on both the login screen and the authenticated app.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-4"
+        ],
+        "quotes": [
+          "yes please add a dark mode feature too"
+        ]
+      },
+      "acceptanceCriteria": [
+        "If the user selects Light/Dark/System, the choice is retained after reload and browser restart.",
+        "The login screen (unauthenticated view) and the authenticated app both reflect the stored theme selection.",
+        "Default behavior remains \"System\" when the user has not explicitly chosen a theme."
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "text": "Ensure the existing Tailwind/Shadcn theme tokens apply correctly in dark mode across major screens (Task List, Dinner Rota, Calendar, People) without introducing low-contrast text or broken component backgrounds.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-4"
+        ],
+        "quotes": [
+          "yes please add a dark mode feature too"
+        ]
+      },
+      "acceptanceCriteria": [
+        "In Dark mode, text on cards, dialogs, dropdowns, tabs, and muted sections remains readable (no foreground/background clashes).",
+        "No hard-coded light-only colors remain in the major screens that cause obvious visual breakage in Dark mode.",
+        "Toggling between Light and Dark does not break layout or cause missing UI elements."
       ]
     }
   ],
   "constraints": [
-    "Do not edit files under frontend/src/hooks/useInternetIdentity.ts, frontend/src/hooks/useInternetIdentity.tsx, frontend/src/hooks/useActor.ts, frontend/src/main.tsx, or anything in frontend/src/components/ui (immutable paths).",
-    "Keep theming implemented via existing Tailwind + CSS variable tokens (oklch(var(--...))) rather than introducing a new styling system.",
-    "Do not add new authentication providers; Internet Identity remains the only auth mechanism."
+    "Do not modify files under frontend/src/components/ui (Shadcn UI sources are read-only and must be composed, not edited).",
+    "Do not edit immutable paths listed by the platform (e.g., frontend/src/hooks/useInternetIdentity.ts(x), frontend/src/hooks/useActor.ts, frontend/src/main.tsx)."
   ],
   "nonGoals": [
-    "Adding new product features or screens beyond updating the visual theme.",
-    "Backend changes or schema/state migrations.",
-    "Replacing or regenerating existing images (e.g., the login illustration) unless explicitly requested."
+    "No backend (Motoko) changes are required for dark mode.",
+    "No new authentication methods or third-party theming libraries beyond what is already present."
   ],
   "imageRequirements": {
     "required": [],
     "edits": []
+  },
+  "userProfileUpdate": {
+    "goalsToAdd": [],
+    "goalsToRemove": [],
+    "preferencesToAdd": [],
+    "preferencesToRemove": [],
+    "miscToAdd": [],
+    "miscToRemove": [],
+    "fieldsToSet": {},
+    "fieldsToDelete": []
   }
 }

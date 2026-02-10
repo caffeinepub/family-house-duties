@@ -1,38 +1,19 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-02-10T01:14:59.282Z",
-  "summary": "REQ-3 appears largely implemented: 3 color scheme suggestions are provided (with one selected) and the default palette is applied by updating CSS variable theme tokens in frontend/src/index.css for both light (:root) and dark (.dark), including primary/secondary/accent/muted/background/foreground/border/ring/destructive/success plus chart/sidebar tokens. Some additional, unrequested project/meta changes and a radius adjustment were also included.",
+  "generatedAt": "2026-02-10T01:29:55.832Z",
+  "summary": "Implemented a user-selectable theme mode control (Light/Dark/System) in the authenticated Header dropdown, added app-wide theming via next-themes ThemeProvider with a persistent storageKey, and wrapped both authenticated and unauthenticated (login/loading) views so the stored theme applies across sessions. Major-screen dark-mode token compliance is suggested by file summaries but cannot be fully verified from the truncated diffs.",
   "missing_requirements": [],
-  "hallucinated_features": [
-    {
-      "description": "Changed global border radius token (--radius) to 0.75rem as part of the theme update.",
-      "reason": "REQ-3 focuses on updating the color palette via theme tokens; changing sizing/shape (radius) is not requested.",
-      "evidence": [
-        "frontend/src/index.css"
-      ]
-    },
-    {
-      "description": "Added a project-level/project management state file update (project_state.json) marking/adding feature request tracking.",
-      "reason": "BuildRequest scope is theming changes and providing scheme suggestions; project tracking metadata updates are not requested.",
-      "evidence": [
-        "project_state.json"
-      ]
-    },
-    {
-      "description": "Updated/added repository meta documentation/summary artifacts (frontend-file-summaries.txt).",
-      "reason": "Not requested by REQ-3; appears to be an auxiliary summary file unrelated to implementing the theme tokens.",
-      "evidence": [
-        "frontend-file-summaries.txt"
-      ]
-    }
-  ],
-  "confidence": 0.66,
+  "hallucinated_features": [],
+  "confidence": 0.72,
   "changed_files": [
     "frontend-file-summaries.txt",
-    "frontend/src/index.css",
-    "frontend/tailwind.config.js",
-    "frontend/theme-scheme-suggestions.md",
+    "frontend/src/App.tsx",
+    "frontend/src/components/CalendarView.tsx",
+    "frontend/src/components/DinnerRota.tsx",
+    "frontend/src/components/Header.tsx",
+    "frontend/src/components/People.tsx",
+    "frontend/src/components/ThemeModeControl.tsx",
     "project_state.json"
   ]
 }

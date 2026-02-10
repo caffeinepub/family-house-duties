@@ -149,7 +149,7 @@ export function People() {
       </div>
 
       {profiles.length === 0 ? (
-        <Card>
+        <Card className="bg-card border-border">
           <CardContent className="flex flex-col items-center justify-center py-16">
             <Users className="mb-6 h-16 w-16 text-muted-foreground/50" />
             <p className="text-lg font-medium">No profiles yet</p>
@@ -159,7 +159,7 @@ export function People() {
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {profiles.map((profile) => (
-            <Card key={profile.principal.toString()}>
+            <Card key={profile.principal.toString()} className="bg-card border-border">
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3">
@@ -206,26 +206,26 @@ export function People() {
         </div>
       )}
 
+      {/* Add/Edit Dialog */}
       <Dialog open={isAddDialogOpen || !!editingProfile} onOpenChange={handleCloseDialog}>
-        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent className="bg-card">
           <DialogHeader>
-            <DialogTitle>{editingProfile ? 'Edit Profile' : 'Add Person Profile'}</DialogTitle>
+            <DialogTitle>{editingProfile ? 'Edit' : 'Add'} Person Profile</DialogTitle>
             <DialogDescription>
-              {editingProfile
-                ? 'Update the profile information'
-                : 'Create a profile with a name and color for a family member'}
+              {editingProfile ? 'Update the profile details' : 'Create a new person profile with a name and color'}
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 py-4">
+          <div className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="principal">Principal ID</Label>
               <div className="flex gap-2">
                 <Input
                   id="principal"
+                  placeholder="Enter principal ID"
                   value={principalInput}
                   onChange={(e) => setPrincipalInput(e.target.value)}
-                  placeholder="Enter principal ID"
                   disabled={!!editingProfile}
+                  className="bg-background text-foreground"
                 />
                 {!editingProfile && (
                   <Button type="button" variant="outline" onClick={fillMyPrincipal}>
@@ -238,9 +238,10 @@ export function People() {
               <Label htmlFor="display-name">Display Name</Label>
               <Input
                 id="display-name"
+                placeholder="Enter name"
                 value={displayName}
                 onChange={(e) => setDisplayName(e.target.value)}
-                placeholder="e.g., Mom, Dad, Alex"
+                className="bg-background text-foreground"
               />
             </div>
             <div className="space-y-2">
@@ -251,7 +252,7 @@ export function People() {
                     key={color}
                     type="button"
                     className={`h-10 w-10 rounded-full transition-all ${
-                      selectedColor === color ? 'ring-2 ring-offset-2 ring-primary scale-110' : ''
+                      selectedColor === color ? 'ring-4 ring-ring ring-offset-2 ring-offset-background' : ''
                     }`}
                     style={{ backgroundColor: color }}
                     onClick={() => setSelectedColor(color)}

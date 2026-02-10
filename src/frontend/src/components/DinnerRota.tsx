@@ -207,27 +207,14 @@ export function DinnerRota() {
     );
   };
 
-  const handleDialogClose = () => {
-    setEditingDay(null);
-    setCookPrincipal('');
-    setCookName('');
-    setMealDescription('');
-    assignMealDictation.stop();
-  };
-
-  const handleMealDialogClose = () => {
-    setEditingMealDay(null);
-    setMealDescription('');
-    editMealDictation.stop();
-  };
-
   const fairnessStats = computeFairnessStats(assignments, profiles, fairnessRange);
 
-  // Convert fairness stats to array for display
-  const perPersonCounts = Array.from(fairnessStats.counts.entries()).map(([label, count]) => ({
+  // Convert fairness stats to array format for display
+  const cookCountsArray = Array.from(fairnessStats.counts.entries()).map(([label, count]) => ({
     label,
     count,
     color: fairnessStats.colors.get(label),
+    principal: label, // Use label as identifier for comparison
   }));
 
   if (assignmentsLoading || profilesLoading) {
@@ -240,7 +227,7 @@ export function DinnerRota() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <HeroHeader
         imageSrc="/assets/generated/header-dinner.dim_1600x420.jpg"
         alt="Family dinner cooking schedule and meal planning"
@@ -254,108 +241,104 @@ export function DinnerRota() {
       </div>
 
       {/* Fairness Indicator */}
-      {!fairnessStats.isEmpty && (
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-lg">Cooking Fairness</CardTitle>
-              <div className="flex items-center gap-2">
-                <Label htmlFor="fairness-range" className="text-sm text-muted-foreground">
-                  Period:
-                </Label>
-                <select
-                  id="fairness-range"
-                  value={fairnessRange}
-                  onChange={(e) => setFairnessRange(e.target.value as FairnessRange)}
-                  className="rounded-md border border-input bg-background px-3 py-1 text-sm"
-                >
-                  <option value="week">This Week</option>
-                  <option value="month">This Month</option>
-                  <option value="last4weeks">Last 4 Weeks</option>
-                  <option value="last30days">Last 30 Days</option>
-                  <option value="alltime">All Time</option>
-                </select>
-              </div>
-            </div>
-            <CardDescription>
-              {fairnessStats.periodLabel}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
+      <Card className="bg-card border-border">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-lg">Cooking Distribution</CardTitle>
+            <select
+              value={fairnessRange}
+              onChange={(e) => setFairnessRange(e.target.value as FairnessRange)}
+              className="rounded-md border border-input bg-background px-3 py-1.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+            >
+              <option value="week">This Week</option>
+              <option value="month">This Month</option>
+              <option value="last4weeks">Last 4 Weeks</option>
+              <option value="last30days">Last 30 Days</option>
+              <option value="alltime">All Time</option>
+            </select>
+          </div>
+          <CardDescription>
+            {fairnessStats.periodLabel}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {fairnessStats.isEmpty ? (
+            <p className="text-sm text-muted-foreground">No cooking assignments in this period</p>
+          ) : (
             <div className="space-y-3">
-              {perPersonCounts.map((stat) => (
+              {cookCountsArray.map((stat) => (
                 <div key={stat.label} className="flex items-center justify-between">
                   <PersonBadge label={stat.label} color={stat.color} />
                   <div className="flex items-center gap-2">
-                    <Badge variant="secondary">{stat.count} times</Badge>
-                    {fairnessStats.mostCooked && stat.label === fairnessStats.mostCooked.label && (
-                      <TrendingUp className="h-4 w-4 text-primary" />
+                    <Badge variant="secondary" className="font-mono">
+                      {stat.count} {stat.count === 1 ? 'time' : 'times'}
+                    </Badge>
+                    {fairnessStats.mostCooked && stat.label === fairnessStats.mostCooked.label && stat.count > 0 && (
+                      <TrendingUp className="h-4 w-4 text-destructive" />
                     )}
-                    {fairnessStats.leastCooked && stat.label === fairnessStats.leastCooked.label && (
-                      <TrendingDown className="h-4 w-4 text-muted-foreground" />
+                    {fairnessStats.leastCooked && stat.label === fairnessStats.leastCooked.label && cookCountsArray.length > 1 && (
+                      <TrendingDown className="h-4 w-4 text-success" />
                     )}
                   </div>
                 </div>
               ))}
             </div>
-          </CardContent>
-        </Card>
-      )}
+          )}
+        </CardContent>
+      </Card>
 
       {/* Weekly Schedule */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {weekDays.map((day) => {
           const assignment = getAssignmentForDay(day);
           const cookDisplay = getCookingAssignmentDisplay(assignment, profiles);
-          const isToday = format(day, 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd');
+          const canEdit = canEditAssignment(assignment);
+          const canEditMeal = canEditMealDescription(assignment);
 
           return (
-            <Card key={day.toISOString()} className={isToday ? 'border-primary ring-2 ring-primary/20' : ''}>
+            <Card key={day.toISOString()} className="bg-card border-border">
               <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
+                <div className="flex items-start justify-between">
                   <div>
-                    <CardTitle className="text-lg">{format(day, 'EEEE')}</CardTitle>
+                    <CardTitle className="text-base">{format(day, 'EEEE')}</CardTitle>
                     <CardDescription>{format(day, 'MMM d')}</CardDescription>
                   </div>
-                  {isToday && <Badge variant="default">Today</Badge>}
+                  {canEdit && (
+                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleAssign(day)}>
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                  )}
                 </div>
               </CardHeader>
               <CardContent className="space-y-3">
                 {assignment ? (
                   <>
                     <div className="flex items-center gap-2">
-                      <ChefHat className="h-5 w-5 text-primary" />
-                      <PersonBadge label={cookDisplay.label} color={cookDisplay.color} />
+                      <ChefHat className="h-4 w-4 text-muted-foreground" />
+                      <PersonBadge label={cookDisplay.label} color={cookDisplay.color} size="sm" />
                     </div>
                     {assignment.description && (
-                      <div className="rounded-md bg-muted p-3">
-                        <p className="text-sm text-muted-foreground mb-1 font-medium">Meal:</p>
-                        <p className="text-sm">{assignment.description}</p>
+                      <div className="rounded-md bg-muted p-3 text-sm text-foreground">
+                        <p className="font-medium mb-1">Meal:</p>
+                        <p className="text-muted-foreground">{assignment.description}</p>
                       </div>
                     )}
-                    <div className="flex gap-2">
-                      {canEditAssignment(assignment) && (
-                        <Button variant="outline" size="sm" onClick={() => handleAssign(day)} className="flex-1">
-                          Edit Cook
-                        </Button>
-                      )}
-                      {canEditMealDescription(assignment) && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleEditMeal(day)}
-                          className="flex-1"
-                        >
-                          <Edit className="mr-1 h-3 w-3" />
-                          Meal
-                        </Button>
-                      )}
-                    </div>
+                    {canEditMeal && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full"
+                        onClick={() => handleEditMeal(day)}
+                      >
+                        Edit Meal
+                      </Button>
+                    )}
                   </>
                 ) : (
-                  <Button variant="outline" onClick={() => handleAssign(day)} className="w-full">
-                    Assign Cook
-                  </Button>
+                  <div className="flex flex-col items-center justify-center py-6 text-center">
+                    <ChefHat className="h-8 w-8 text-muted-foreground/50 mb-2" />
+                    <p className="text-sm text-muted-foreground">No cook assigned</p>
+                  </div>
                 )}
               </CardContent>
             </Card>
@@ -364,30 +347,29 @@ export function DinnerRota() {
       </div>
 
       {/* Assign/Edit Cook Dialog */}
-      <Dialog open={!!editingDay} onOpenChange={handleDialogClose}>
-        <DialogContent className="sm:max-w-[500px]">
+      <Dialog open={!!editingDay} onOpenChange={() => setEditingDay(null)}>
+        <DialogContent className="bg-card">
           <DialogHeader>
             <DialogTitle>
-              {editingDay && assignments.find((a) => a.day === editingDay) ? 'Edit' : 'Assign'} Cook
+              {assignments.find((a) => a.day === editingDay) ? 'Edit' : 'Assign'} Cook
             </DialogTitle>
             <DialogDescription>
-              {editingDay && `For ${format(new Date(editingDay), 'EEEE, MMMM d')}`}
+              {editingDay && format(new Date(editingDay), 'EEEE, MMMM d, yyyy')}
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 py-4">
+          <div className="space-y-4">
             <PersonProfileSelect
               value={cookPrincipal}
               onChange={setCookPrincipal}
-              label="Cook"
-              placeholder="Select or enter principal"
             />
             <div className="space-y-2">
               <Label htmlFor="cook-name">Cook Name (optional)</Label>
               <Input
                 id="cook-name"
+                placeholder="Enter cook name"
                 value={cookName}
                 onChange={(e) => setCookName(e.target.value)}
-                placeholder="e.g., Mom, Dad, Alex"
+                className="bg-background text-foreground"
               />
             </div>
             <div className="space-y-2">
@@ -396,23 +378,24 @@ export function DinnerRota() {
                 <VoiceDictationButton
                   isListening={assignMealDictation.isListening}
                   isSupported={assignMealDictation.isSupported}
-                  onStart={assignMealDictation.start}
-                  onStop={assignMealDictation.stop}
                   disabled={!!assignMealDictation.disabledReason}
                   disabledReason={assignMealDictation.disabledReason || undefined}
+                  onStart={assignMealDictation.start}
+                  onStop={assignMealDictation.stop}
                 />
               </div>
               <Textarea
                 id="meal-description"
+                placeholder="What's for dinner?"
                 value={mealDescription}
                 onChange={(e) => setMealDescription(e.target.value)}
-                placeholder="What's for dinner?"
                 rows={3}
+                className="bg-background text-foreground"
               />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={handleDialogClose}>
+            <Button variant="outline" onClick={() => setEditingDay(null)}>
               Cancel
             </Button>
             <Button onClick={handleSave} disabled={assignCooking.isPending || updateCooking.isPending}>
@@ -423,38 +406,37 @@ export function DinnerRota() {
       </Dialog>
 
       {/* Edit Meal Description Dialog */}
-      <Dialog open={!!editingMealDay} onOpenChange={handleMealDialogClose}>
-        <DialogContent className="sm:max-w-[500px]">
+      <Dialog open={!!editingMealDay} onOpenChange={() => setEditingMealDay(null)}>
+        <DialogContent className="bg-card">
           <DialogHeader>
             <DialogTitle>Edit Meal Description</DialogTitle>
             <DialogDescription>
-              {editingMealDay && `For ${format(new Date(editingMealDay), 'EEEE, MMMM d')}`}
+              {editingMealDay && format(new Date(editingMealDay), 'EEEE, MMMM d, yyyy')}
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="meal-desc-edit">Meal Description</Label>
-                <VoiceDictationButton
-                  isListening={editMealDictation.isListening}
-                  isSupported={editMealDictation.isSupported}
-                  onStart={editMealDictation.start}
-                  onStop={editMealDictation.stop}
-                  disabled={!!editMealDictation.disabledReason}
-                  disabledReason={editMealDictation.disabledReason || undefined}
-                />
-              </div>
-              <Textarea
-                id="meal-desc-edit"
-                value={mealDescription}
-                onChange={(e) => setMealDescription(e.target.value)}
-                placeholder="What's for dinner?"
-                rows={4}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="edit-meal-description">Meal Description</Label>
+              <VoiceDictationButton
+                isListening={editMealDictation.isListening}
+                isSupported={editMealDictation.isSupported}
+                disabled={!!editMealDictation.disabledReason}
+                disabledReason={editMealDictation.disabledReason || undefined}
+                onStart={editMealDictation.start}
+                onStop={editMealDictation.stop}
               />
             </div>
+            <Textarea
+              id="edit-meal-description"
+              placeholder="What's for dinner?"
+              value={mealDescription}
+              onChange={(e) => setMealDescription(e.target.value)}
+              rows={3}
+              className="bg-background text-foreground"
+            />
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={handleMealDialogClose}>
+            <Button variant="outline" onClick={() => setEditingMealDay(null)}>
               Cancel
             </Button>
             <Button onClick={handleSaveMealDescription} disabled={updateMealDesc.isPending}>

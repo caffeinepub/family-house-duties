@@ -1,28 +1,73 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "App color scheme suggestions + updated light/dark theme tokens",
+  "title": "User-selectable theme mode (Light/Dark/System) with persistence",
   "requirements": [
     {
-      "id": "REQ-3",
-      "summary": "Provide 3 cohesive color scheme suggestions and apply one selected scheme by updating existing theme CSS variables so the palette consistently affects the current UI in light and dark mode.",
+      "id": "REQ-1",
+      "summary": "Add a Light/Dark/System theme mode control to the authenticated Header user menu for runtime switching.",
       "acceptanceCriteria": [
-        "A short list of 3 color scheme suggestions is included in the change description (name + brief description for each).",
-        "One scheme is selected as the default and applied by modifying the existing theme CSS variables in frontend/src/index.css for both :root (light) and .dark (dark).",
-        "Primary/secondary/accent/muted/background/foreground/border/ring/destructive/success and chart/sidebar tokens remain defined and produce a cohesive look.",
-        "The Login screen background gradient (currently using from-background to muted/20) and key UI surfaces (Header bg-card, Cards, TabsList) visually reflect the new palette without requiring component-by-component hardcoded colors.",
-        "Text contrast remains readable in both light and dark mode (e.g., primary buttons have clear primary-foreground contrast; muted-foreground remains legible on muted backgrounds)."
+        "When signed in, the Header includes a clearly discoverable control (e.g., in the user dropdown) to select Light, Dark, or System theme.",
+        "Selecting a theme updates the app styling immediately without requiring a page refresh.",
+        "The control uses English labels: \"Light\", \"Dark\", \"System\"."
       ],
       "file_operations": [
         {
-          "path": "frontend/theme-scheme-suggestions.md",
+          "path": "frontend/src/components/ThemeModeControl.tsx",
           "operation": "create",
-          "description": "Add a short, reviewable list of 3 distinct app color scheme suggestions (name + brief description each) and clearly indicate which one is chosen as the default to implement. (This file serves as the required ‘change description’ artifact.)"
+          "description": "Create a Header-ready theme mode control using next-themes for runtime switching and shadcn-ui DropdownMenu primitives (e.g., radio items) for the Light/Dark/System selector. Verify the component's usage instructions before implementing."
         },
         {
-          "path": "frontend/src/index.css",
+          "path": "frontend/src/components/Header.tsx",
           "operation": "modify",
-          "description": "Update the existing light (:root) and dark (.dark) CSS variable theme tokens (oklch(var(--...))) to apply the selected default scheme across the app (header, tabs, cards, buttons, dialogs, gradients). Ensure tokens remain defined for: primary/secondary/accent/muted/background/foreground/border/ring/destructive/success plus chart and sidebar tokens, with readable contrast in both modes (including the LoginScreen gradient from-background to muted/20)."
+          "description": "Wire the new ThemeModeControl into the authenticated user dropdown (keeping labels exactly \"Light\", \"Dark\", \"System\"), ensuring it is clearly discoverable and updates theme immediately via next-themes. Verify the component's usage instructions before implementing."
+        }
+      ]
+    },
+    {
+      "id": "REQ-2",
+      "summary": "Persist the selected theme across sessions and apply it consistently on login and authenticated views with a System default.",
+      "acceptanceCriteria": [
+        "If the user selects Light/Dark/System, the choice is retained after reload and browser restart.",
+        "The login screen (unauthenticated view) and the authenticated app both reflect the stored theme selection.",
+        "Default behavior remains \"System\" when the user has not explicitly chosen a theme."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/App.tsx",
+          "operation": "modify",
+          "description": "Configure the existing next-themes ThemeProvider to use a consistent storageKey (local persistence) and keep defaultTheme=\"system\" with enableSystem so the stored selection applies to both LoginScreen and the authenticated app; avoid changes to immutable files. Verify the component's usage instructions before implementing."
+        }
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "summary": "Ensure Tailwind/Shadcn theme tokens render correctly in dark mode across Task List, Dinner Rota, Calendar, and People screens without low-contrast or broken backgrounds.",
+      "acceptanceCriteria": [
+        "In Dark mode, text on cards, dialogs, dropdowns, tabs, and muted sections remains readable (no foreground/background clashes).",
+        "No hard-coded light-only colors remain in the major screens that cause obvious visual breakage in Dark mode.",
+        "Toggling between Light and Dark does not break layout or cause missing UI elements."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/TaskList.tsx",
+          "operation": "modify",
+          "description": "Audit and adjust any non-token styling so Task List content (cards, muted/completed states, badges, icon buttons) uses theme semantic classes (bg-card/bg-background/text-foreground/text-muted-foreground, etc.) and remains readable in dark mode without hard-coded light-only colors."
+        },
+        {
+          "path": "frontend/src/components/DinnerRota.tsx",
+          "operation": "modify",
+          "description": "Audit and adjust Dinner Rota UI (cards, dialogs, form controls, the native select, and muted meal sections) to ensure text/background contrast in dark mode, replacing any light-only styling with semantic theme tokens."
+        },
+        {
+          "path": "frontend/src/components/CalendarView.tsx",
+          "operation": "modify",
+          "description": "Audit and adjust Calendar screen styling (month grid day tiles, badges/labels, and accent/secondary chips) so background + foreground pairings use semantic tokens (e.g., ensure accent surfaces use matching foreground) and remain readable in dark mode."
+        },
+        {
+          "path": "frontend/src/components/People.tsx",
+          "operation": "modify",
+          "description": "Audit and adjust People screen styling (cards, dialogs, and color picker selection ring/offset) to ensure dark-mode-friendly contrast and no hard-coded light-only backgrounds/offsets."
         }
       ]
     }

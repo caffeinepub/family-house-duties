@@ -1,4 +1,4 @@
-import { Home, LogOut, User } from 'lucide-react';
+import { Home, LogOut, User, Palette } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useInternetIdentity } from '../hooks/useInternetIdentity';
 import { useQueryClient } from '@tanstack/react-query';
@@ -11,6 +11,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { ThemeModeControl } from './ThemeModeControl';
 
 export function Header() {
   const { identity, clear, loginStatus } = useInternetIdentity();
@@ -61,6 +62,12 @@ export function Header() {
                     <p className="text-xs leading-none text-muted-foreground">{getPrincipalShort()}</p>
                   </div>
                 </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuLabel className="flex items-center gap-2 font-normal text-muted-foreground">
+                  <Palette className="h-4 w-4" />
+                  <span className="text-xs">Theme</span>
+                </DropdownMenuLabel>
+                <ThemeModeControl />
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleLogout} disabled={loginStatus === 'logging-in'}>
                   <LogOut className="mr-2 h-4 w-4" />
