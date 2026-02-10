@@ -49,6 +49,9 @@ export default {
                     DEFAULT: 'oklch(var(--card))',
                     foreground: 'oklch(var(--card-foreground))'
                 },
+                success: {
+                    DEFAULT: 'oklch(var(--success) / <alpha-value>)'
+                },
                 chart: {
                     1: 'oklch(var(--chart-1))',
                     2: 'oklch(var(--chart-2))',
@@ -73,7 +76,9 @@ export default {
                 sm: 'calc(var(--radius) - 4px)'
             },
             boxShadow: {
-                xs: '0 1px 2px 0 rgba(0,0,0,0.05)'
+                xs: '0 1px 2px 0 rgba(0,0,0,0.05)',
+                soft: '0 2px 8px -2px rgba(0,0,0,0.08)',
+                medium: '0 4px 16px -4px rgba(0,0,0,0.12)'
             },
             keyframes: {
                 'accordion-down': {

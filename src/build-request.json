@@ -1,65 +1,41 @@
 {
   "kind": "build_request",
-  "title": "Fix Add Task button being disabled due to incorrect actor readiness gating",
-  "priority": "high",
+  "title": "Propose and apply a nicer app color scheme (light/dark)",
+  "priority": "normal",
   "requirements": [
     {
-      "id": "REQ-1",
-      "text": "Fix the actor readiness logic so the Add Task submit button is not incorrectly disabled (grayed out) when the backend actor already exists but React Query reports a fetch in progress.",
+      "id": "REQ-3",
+      "text": "Provide 3 distinct, coherent color scheme suggestions for the app (each with a short name and a brief description), and implement one chosen default scheme by updating the app’s theme tokens (CSS variables) so the updated palette applies consistently across the existing UI (header, tabs, cards, buttons, dialogs, gradients) in both light and dark mode.",
       "target": "frontend",
       "source": {
         "messageIds": [
           "msg-1"
         ],
         "quotes": [
-          "The add task function is not working correctly. It seems to be grayed out or disabled. Can you please fix this?"
+          "Can you give the app a nicer color scheme? You give me the suggestions."
         ]
       },
       "acceptanceCriteria": [
-        "When the user opens the Add Task dialog, the “Add Task” submit button becomes enabled as soon as the actor is available (even if a background fetch is happening), as long as a non-empty task name is provided and no mutation is pending.",
-        "The submit button remains disabled only when: task name is empty, addTask mutation is pending, or actor initialization has not produced an actor yet, or initialization errored.",
-        "The user can successfully add a task end-to-end: enter a task name, click “Add Task”, see success toast, dialog closes, and the task list updates."
-      ]
-    },
-    {
-      "id": "REQ-2",
-      "text": "Ensure the disabled state messaging for the Add Task submit button remains accurate and user-friendly while the actor is initializing or has failed to initialize.",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "msg-1"
-        ],
-        "quotes": [
-          "It seems to be grayed out or disabled."
-        ]
-      },
-      "acceptanceCriteria": [
-        "If the backend actor is still initializing (no actor yet), the dialog shows the existing connection message (“Connecting to backend… please wait a moment.”) and the submit button stays disabled.",
-        "If backend initialization fails, the dialog shows the existing failure message (“Backend connection failed. Please refresh the page and try again.”) and the submit button stays disabled.",
-        "If the only reason the button is disabled is missing task name, the tooltip/title explains “Task name is required.”"
+        "A short list of 3 color scheme suggestions is included in the change description (name + brief description for each).",
+        "One scheme is selected as the default and applied by modifying the existing theme CSS variables in frontend/src/index.css for both :root (light) and .dark (dark).",
+        "Primary/secondary/accent/muted/background/foreground/border/ring/destructive/success and chart/sidebar tokens remain defined and produce a cohesive look.",
+        "The Login screen background gradient (currently using from-background to muted/20) and key UI surfaces (Header bg-card, Cards, TabsList) visually reflect the new palette without requiring component-by-component hardcoded colors.",
+        "Text contrast remains readable in both light and dark mode (e.g., primary buttons have clear primary-foreground contrast; muted-foreground remains legible on muted backgrounds)."
       ]
     }
   ],
   "constraints": [
-    "Do not edit files under frontend/src/components/ui (read-only UI components).",
-    "Do not edit frontend/src/hooks/useInternetIdentity.ts(x), frontend/src/hooks/useActor.ts, or frontend/src/main.tsx (immutable paths)."
+    "Do not edit files under frontend/src/hooks/useInternetIdentity.ts, frontend/src/hooks/useInternetIdentity.tsx, frontend/src/hooks/useActor.ts, frontend/src/main.tsx, or anything in frontend/src/components/ui (immutable paths).",
+    "Keep theming implemented via existing Tailwind + CSS variable tokens (oklch(var(--...))) rather than introducing a new styling system.",
+    "Do not add new authentication providers; Internet Identity remains the only auth mechanism."
   ],
   "nonGoals": [
-    "Adding new task features (e.g., new fields, categories, priorities).",
-    "Changing backend task schema or authorization logic."
+    "Adding new product features or screens beyond updating the visual theme.",
+    "Backend changes or schema/state migrations.",
+    "Replacing or regenerating existing images (e.g., the login illustration) unless explicitly requested."
   ],
   "imageRequirements": {
     "required": [],
     "edits": []
-  },
-  "userProfileUpdate": {
-    "goalsToAdd": [],
-    "goalsToRemove": [],
-    "preferencesToAdd": [],
-    "preferencesToRemove": [],
-    "miscToAdd": [],
-    "miscToRemove": [],
-    "fieldsToSet": {},
-    "fieldsToDelete": []
   }
 }

@@ -2,12 +2,11 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-fix-the-actor-readiness-logic-so-the-add-task-submit-button-is-not-incorrectly-disabled-grayed-out-when-the-backend-actor-already-exists-but-react-query-reports-a-fetch-in-progress",
-      "featureTitle": "Fix the actor readiness logic so the Add Task submit button is not incorrectly disabled (grayed out) when the backend actor already exists but React Query reports a fetch in progress.",
+      "featureId": "feature-provide-3-distinct-coherent-color-scheme-suggestions-for-the-app-each-with-a-short-name-and-a-brief-description-and-implement-one-chosen-default-scheme-by-updating-the-app-s-theme-tokens-css-variables-so-the-updated-palette-applies-consistently-across-the-existing-ui-header-tabs-cards-buttons-dialogs-gradients-in-both-light-and-dark-mode",
+      "featureTitle": "Provide 3 distinct, coherent color scheme suggestions for the app (each with a short name and a brief description), and implement one chosen default scheme by updating the app’s theme tokens (CSS variables) so the updated palette applies consistently across the existing UI (header, tabs, cards, buttons, dialogs, gradients) in both light and dark mode.",
       "files": [
-        "frontend/src/components/AddTaskDialog.tsx",
-        "frontend/src/hooks/useActorWithReadiness.ts",
-        "frontend/src/utils/actorAvailability.ts"
+        "frontend/src/index.css",
+        "frontend/theme-scheme-suggestions.md"
       ],
       "components": [
         "core-infrastructure@1.0.2",
@@ -18,27 +17,7 @@
         "github-export-icp-cli@1.0.0"
       ],
       "testIds": [
-        "REQ-1"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-ensure-the-disabled-state-messaging-for-the-add-task-submit-button-remains-accurate-and-user-friendly-while-the-actor-is-initializing-or-has-failed-to-initialize",
-      "featureTitle": "Ensure the disabled state messaging for the Add Task submit button remains accurate and user-friendly while the actor is initializing or has failed to initialize.",
-      "files": [
-        "frontend/src/components/AddTaskDialog.tsx",
-        "frontend/src/utils/actorAvailability.ts"
-      ],
-      "components": [
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "authorization@4.0.0",
-        "github-export-icp-cli@1.0.0"
-      ],
-      "testIds": [
-        "REQ-2"
+        "REQ-3"
       ],
       "confidence": "high"
     }

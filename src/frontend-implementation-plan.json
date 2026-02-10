@@ -1,52 +1,28 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Fix Add Task disabled gating by decoupling actor readiness from background fetch",
+  "title": "App color scheme suggestions + updated light/dark theme tokens",
   "requirements": [
     {
-      "id": "REQ-1",
-      "summary": "Decouple Add Task button enablement from React Query fetch state so it enables as soon as the backend actor exists (while still blocking when actor is missing/errored or mutation is pending).",
+      "id": "REQ-3",
+      "summary": "Provide 3 cohesive color scheme suggestions and apply one selected scheme by updating existing theme CSS variables so the palette consistently affects the current UI in light and dark mode.",
       "acceptanceCriteria": [
-        "When the user opens the Add Task dialog, the “Add Task” submit button becomes enabled as soon as the actor is available (even if a background fetch is happening), as long as a non-empty task name is provided and no mutation is pending.",
-        "The submit button remains disabled only when: task name is empty, addTask mutation is pending, or actor initialization has not produced an actor yet, or initialization errored.",
-        "The user can successfully add a task end-to-end: enter a task name, click “Add Task”, see success toast, dialog closes, and the task list updates."
+        "A short list of 3 color scheme suggestions is included in the change description (name + brief description for each).",
+        "One scheme is selected as the default and applied by modifying the existing theme CSS variables in frontend/src/index.css for both :root (light) and .dark (dark).",
+        "Primary/secondary/accent/muted/background/foreground/border/ring/destructive/success and chart/sidebar tokens remain defined and produce a cohesive look.",
+        "The Login screen background gradient (currently using from-background to muted/20) and key UI surfaces (Header bg-card, Cards, TabsList) visually reflect the new palette without requiring component-by-component hardcoded colors.",
+        "Text contrast remains readable in both light and dark mode (e.g., primary buttons have clear primary-foreground contrast; muted-foreground remains legible on muted backgrounds)."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/hooks/useActorWithReadiness.ts",
-          "operation": "modify",
-          "description": "Fix readiness derivation so `isReady` reflects actor availability (actor exists) and is not gated by `isFetching`; keep `isInitializing` true only when no actor exists yet and initialization is still in progress. Ensure `initError` is preserved for failed initialization. (Do not modify immutable frontend/src/hooks/useActor.ts.)"
+          "path": "frontend/theme-scheme-suggestions.md",
+          "operation": "create",
+          "description": "Add a short, reviewable list of 3 distinct app color scheme suggestions (name + brief description each) and clearly indicate which one is chosen as the default to implement. (This file serves as the required ‘change description’ artifact.)"
         },
         {
-          "path": "frontend/src/utils/actorAvailability.ts",
+          "path": "frontend/src/index.css",
           "operation": "modify",
-          "description": "Align `isActorAvailable(...)` and related helpers with the updated readiness semantics so availability is based on “actor exists and no initError”, not on background fetch state; keep `getActorAvailabilityMessage(...)` behavior for initializing and error states."
-        },
-        {
-          "path": "frontend/src/components/AddTaskDialog.tsx",
-          "operation": "modify",
-          "description": "Update submit-button disabled logic to rely on actor existence/initialization error (via updated `useActorWithReadiness` + `actorAvailability` helpers) rather than React Query fetch-in-progress; ensure the button is enabled when actor exists even if background fetch is happening, and remains disabled only for empty task name, pending addTask mutation, missing actor, or init error."
-        }
-      ]
-    },
-    {
-      "id": "REQ-2",
-      "summary": "Keep Add Task disabled-state messaging accurate during backend initialization/failure and provide a clear tooltip when the task name is missing.",
-      "acceptanceCriteria": [
-        "If the backend actor is still initializing (no actor yet), the dialog shows the existing connection message (“Connecting to backend… please wait a moment.”) and the submit button stays disabled.",
-        "If backend initialization fails, the dialog shows the existing failure message (“Backend connection failed. Please refresh the page and try again.”) and the submit button stays disabled.",
-        "If the only reason the button is disabled is missing task name, the tooltip/title explains “Task name is required.”"
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/components/AddTaskDialog.tsx",
-          "operation": "modify",
-          "description": "Ensure the connection/failure helper messages remain the only ones shown when actor is initializing/failed, and adjust the submit button `title`/tooltip string so that when the only disabled reason is missing name it exactly reads “Task name is required.” (including punctuation)."
-        },
-        {
-          "path": "frontend/src/utils/actorAvailability.ts",
-          "operation": "modify",
-          "description": "Confirm messaging strings remain exactly as required for initializing and failure states and that the generic “not ready” message is not shown in cases where an actor exists but a background fetch is in progress."
+          "description": "Update the existing light (:root) and dark (.dark) CSS variable theme tokens (oklch(var(--...))) to apply the selected default scheme across the app (header, tabs, cards, buttons, dialogs, gradients). Ensure tokens remain defined for: primary/secondary/accent/muted/background/foreground/border/ring/destructive/success plus chart and sidebar tokens, with readable contrast in both modes (including the LoginScreen gradient from-background to muted/20)."
         }
       ]
     }

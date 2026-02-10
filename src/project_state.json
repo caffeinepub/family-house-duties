@@ -3,30 +3,27 @@
   "projectStateVersion": 3,
   "summary": "New project",
   "architectural_notes": [],
-  "known_issues": [
-    "Add task function appears grayed out/disabled and not working correctly."
-  ],
-  "isFixRequest": true,
+  "known_issues": [],
+  "isFixRequest": false,
   "existing_features": [
     {
-      "id": "feature-fix-the-actor-readiness-logic-so-the-add-task-submit-button-is-not-incorrectly-disabled-grayed-out-when-the-backend-actor-already-exists-but-react-query-reports-a-fetch-in-progress",
-      "title": "Fix the actor readiness logic so the Add Task submit button is not incorrectly disabled (grayed out) when the backend actor already exists but React Query reports a fetch in progress.",
+      "id": "feature-provide-3-distinct-coherent-color-scheme-suggestions-for-the-app-each-with-a-short-name-and-a-brief-description-and-implement-one-chosen-default-scheme-by-updating-the-app-s-theme-tokens-css-variables-so-the-updated-palette-applies-consistently-across-the-existing-ui-header-tabs-cards-buttons-dialogs-gradients-in-both-light-and-dark-mode",
+      "title": "Provide 3 distinct, coherent color scheme suggestions for the app (each with a short name and a brief description), and implement one chosen default scheme by updating the app’s theme tokens (CSS variables) so the updated palette applies consistently across the existing UI (header, tabs, cards, buttons, dialogs, gradients) in both light and dark mode.",
       "reqIds": [
-        "REQ-1"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-ensure-the-disabled-state-messaging-for-the-add-task-submit-button-remains-accurate-and-user-friendly-while-the-actor-is-initializing-or-has-failed-to-initialize",
-      "title": "Ensure the disabled state messaging for the Add Task submit button remains accurate and user-friendly while the actor is initializing or has failed to initialize.",
-      "reqIds": [
-        "REQ-2"
+        "REQ-3"
       ],
       "version": 1
     }
   ],
-  "new_feature_requests": [],
-  "projectName": "Fix Add Task button being disabled due to incorrect actor readiness gating",
+  "new_feature_requests": [
+    {
+      "id": "AR-1",
+      "summary": "Propose and apply a nicer app color scheme (provide design suggestions)",
+      "reqIds": [],
+      "status": "pending"
+    }
+  ],
+  "projectName": "Propose and apply a nicer app color scheme (light/dark)",
   "clarification_mode": "instant",
   "clarification_rounds": 0
 }

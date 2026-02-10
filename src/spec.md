@@ -1,11 +1,11 @@
 # Specification
 
 ## Summary
-**Goal:** Ensure the “Add Task” submit button is enabled/disabled based on true actor availability and form/mutation state, not incorrectly blocked by background fetching.
+**Goal:** Improve the app’s visual appearance by proposing nicer color schemes and applying a cohesive default palette across the UI in both light and dark mode.
 
 **Planned changes:**
-- Update the Add Task dialog’s readiness/disabled gating to treat the actor as “ready” as soon as an actor instance exists, even if React Query is currently fetching.
-- Keep the submit button disabled only when: task name is empty, add-task mutation is pending, actor is not yet initialized (no actor), or actor initialization errored.
-- Ensure the dialog messaging/tooltip remains accurate and user-friendly for: connecting state, backend init failure, and missing task name.
+- Provide 3 distinct, coherent color scheme suggestions (each with a short name and brief description) in the change description.
+- Select one scheme as the default and update existing theme CSS variables in `frontend/src/index.css` for both `:root` (light) and `.dark` (dark).
+- Ensure the updated tokens apply consistently across existing UI surfaces (header, tabs, cards, buttons, dialogs, gradients) via the existing Tailwind + CSS variable token system.
 
-**User-visible outcome:** Users can open the Add Task dialog, enter a task name, and successfully add a task end-to-end; the button no longer stays grayed out just because a background fetch is in progress, and the dialog clearly explains any remaining disabled states.
+**User-visible outcome:** The app has a refreshed, cohesive light/dark color theme (including the login background gradient and key UI surfaces) with readable contrast throughout, without any new features or screens.
